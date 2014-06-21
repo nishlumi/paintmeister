@@ -1,0 +1,124 @@
+﻿bodyl{
+	
+}
+/*===============================================================
+  UI parts and button area
+*/
+.button {
+	width : 70px;
+	height : 30px;
+}
+.statbutton {
+	width : 45%; /*60px;*/
+	height : 40px;
+	background-color : #c4fab3;
+	border : 0;
+}
+.statbutton2 {
+	width : 30%;
+	height : 60px;
+	background-color : #c4fab3;
+	border : 0;
+}
+
+#ctrlpanel {
+	display : none;
+	margin-top : 5px;
+	margin-left : 10px;
+	position:fixed;
+	width:100%;
+}
+#info_panel {
+	margin : 0;
+	padding :0;
+	width : 100%;
+}
+#sysbtn_panel {
+	float : left;
+	/*margin-right : 1em;*/
+	width : 15%;
+}
+.button-panel{
+	width : 85%;
+	/*margin-left:1em; 
+	margin-top:10px; 
+	margin-right:10em; 
+	margin-bottom:3px;*/
+}
+#menupanel {
+	display : none;
+	width : 100%;
+	height : 30%;
+	position : absolute;
+	top : 80px;
+	left : 0;
+	background-color : #D9D9D9;
+	padding : 2px;
+	z-index : 10;
+	opacity : 0.85;
+}
+#menu_left {
+	width : 25%;
+	height : 50%;
+	float : left;
+	opacity : 1;
+}
+#menu_right {
+	width : 75%;
+	height : 50%;
+	margin-left : 2em;
+	opacity : 1;
+}
+#menu_bottom {
+	clear : both;
+	width : 100%;
+	height : 50%;
+}
+
+#colorpicker {
+	height : 32px;
+	/*width : 7em;*/
+	float:left;
+}
+#colorpalette {
+	width : 100%;
+}
+.explain_palette {
+	float:left;
+	vertical-align : center;
+	height : 30px;
+	width : 2%;
+}
+#palettepanel {
+	width : 50%;
+	border-collapse:collapse;
+}
+.palette_button {
+	width : 10%;
+	height : 32px;
+	border : 1px solid #808080;
+	background-color : #FFFFFF;
+	text-align : center;
+}
+
+.layer_button {
+	width : 32px;
+	height : 32px;
+	background-color : #FFFFFF;
+	color : #000000;
+	
+}
+.layer_button_show {
+	border : 1px solid #808080;
+}
+.layer_button_hidden {
+	border : 3px double #808080;
+}
+.layer_button_selected {
+	width : 32px;
+	height : 32px;
+	background-color : #AAAAFF;
+	color : #FFFFFF;
+	
+}
+

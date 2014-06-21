@@ -1,0 +1,102 @@
+
+.apptitle {
+	background-color:#46ff51;
+	color:white;
+    margin-top : 45px;
+    padding-left : 120px;
+}
+.peninfo {
+	border-collapse:collapse;
+}
+.infofont {
+	font-size : 10pt;
+}
+.explain_panel {
+	border:1px dashed black;
+	background-color : #c4fab3;
+}
+.debugmsg {
+	display : none;
+	position : relative;
+	left : 600px;
+}
+
+/*===============================================================
+  Core UI parts, important define
+*/
+
+#prespanel {
+	float : left;
+	width : 45px;
+	height : 40%;
+	margin-top:60px; 
+	display : none;
+	background-color : #999999;
+	color : #FFFFFF;
+	position : relative;
+}
+#presval {
+	margin-left : 5px;
+}
+#pres_curline{
+
+	/*margin-top : 75px;*/
+	margin-left : -75px;
+	padding-left : 0;
+	width : 200px;
+	height : 200px;
+	-webkit-transform : rotate(-90deg);
+	transform : rotate(-90deg);
+}
+
+.base-panel{
+	margin-left:45px; 
+	margin-top: 5rem; /*60px; */
+	margin-right:20px; 
+	margin-bottom:2px;
+	/*border:2px solid #808080;
+	width:600px;
+	float : left;*/
+	width : 95%;
+
+	
+	position : relative;
+};
+#canvaspanel {
+	/*width : 70%;
+	margin-left : auto;
+	margin-right : auto;*/
+	border:2px solid #808080;
+
+}
+#canvaspanel .main-canvas{
+	-ms-touch-action:none;
+	touch-action:none;
+	-webkit-touch-action:none;
+	border:2px solid #808080;
+	background-color: transparent;
+	position : absolute;
+	top : 0px;
+	left : 0px;
+	z-index : 1;
+	cursor : crosshair;
+}
+.mostbase-canvas {
+	/*background-image: url('../images/work_area_background.png');
+	background-repeat: repeat;*/
+	background-color: transparent;
+	-ms-touch-action:none;
+	touch-action:none;
+	-webkit-touch-action:none;
+	border:2px solid #808080;
+	position : absolute;
+	top : 0;
+	left : 0;
+	z-index : 1;
+	cursor : crosshair;
+}
+
+.dummy-canvas {
+	display : none;
+	position : absolute;
+}
