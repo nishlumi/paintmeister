@@ -1,0 +1,13 @@
+paintmeister 更新履歴
+============
+※特に影響があるプラットフォームについては()で記すものとする。
+
+
+PaintMeister (1.0.0.0) WebApp, ChromeApps, ストアアプリ
+
+・初版リリース。
+
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/06/20 22:41:00
+ChromeApps		- 2014/06/20 22:41:00
+ストアアプリ		- 
