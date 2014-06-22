@@ -2,6 +2,22 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
+PaintMeister (1.0.0.8)
+
+・(WebApp)InternetExplorer使用時に画像の保存が正常にできなかったのを修正。
+・(WebApp/ChromeApps)上記にともないChrome使用時の保存処理も整理。
+・(WebApp)SPACEキーでメニューパネルを出した場合に、勝手にスクロールしてしまうことがあるのを修正。
+・鉛筆を改良
+・エアブラシを改良
+・ネオンペンを微改良
+・メニューパネルの中にバージョン番号を表記するようにした
+・メモリの解放処理を強化
+
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/06/22 14:00:00
+ChromeApps		- 
+ストアアプリ		- 
+
 
 PaintMeister (1.0.0.0) WebApp, ChromeApps, ストアアプリ
 
