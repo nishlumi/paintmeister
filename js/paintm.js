@@ -14,7 +14,7 @@ function saveImage() {
 		//---function start
 		var c = Draw.canvas.getContext("2d");
 		c.clearRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-		c.fillStyle = "#0000FF";
+		c.fillStyle = "#FFFFFF";
 		c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
 		for (var obj in Draw.layer) {
 			c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
@@ -29,7 +29,7 @@ function saveImage() {
 			console.log("writableEntry=");
 			console.log(writableEntry);
 			writeFileEntry(writableEntry, blob, function(e) {
-				$.jGrowl("ƒLƒƒƒ“ƒoƒX‚Ì‰æ‘œ‚ğ•Û‘¶‚µ‚Ü‚µ‚½");
+				$.jGrowl("ã‚­ãƒ£ãƒ³ãƒã‚¹ã®ç”»åƒã‚’ä¿å­˜ã—ã¾ã—ãŸ");
 			});
 		});
 	}else{
@@ -70,7 +70,7 @@ function ElementTransform(element, value) {
 				}
 			}
 			var relkey = ["81","87"];
-			//---è“®•Mˆ³ƒCƒxƒ“ƒg
+			//---æ‰‹å‹•ç­†åœ§ã‚¤ãƒ™ãƒ³ãƒˆ
 			if (document.getElementById("chk_enable_handpres").checked) {
 				if ((event.keyCode == "81") || (event.keyCode == "87")) {
 					Draw.keyLikePres += virtual_pressure[event.keyCode];
@@ -92,11 +92,11 @@ function ElementTransform(element, value) {
 		Draw.initialize();
 		ColorPalette.initialize();
 		document.getElementById("btn_menu").addEventListener("click", function(event) {
-			if (event.target.innerHTML.charCodeAt() == "9660") { //ŠJ‚­
+			if (event.target.innerHTML.charCodeAt() == "9660") { //é–‹ã
 				document.getElementById("menupanel").style.display = "block";
 				event.target.innerHTML = "&#9650;";
 				event.target.style.backgroundColor = "#91d780";
-			}else{ //•Â‚¶‚é
+			}else{ //é–‰ã˜ã‚‹
 				document.getElementById("menupanel").style.display = "none";
 				event.target.innerHTML = "&#9660;";
 				event.target.style.backgroundColor = "#c4fab3";
@@ -107,7 +107,7 @@ function ElementTransform(element, value) {
 		document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
 		document.getElementById("canvas_height").max = Math.floor((window.innerHeight-70) / 100) * 100;
 		document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-		//---ƒLƒƒƒ“ƒoƒXŠO‚©‚çƒ^ƒbƒ`‚µ‚½‚Ü‚Ü“ü‚Á‚½‚Æ‚«‚Ì‚½‚ß‚Ì•`‰æ§Œä
+		//---ã‚­ãƒ£ãƒ³ãƒã‚¹å¤–ã‹ã‚‰ã‚¿ãƒƒãƒã—ãŸã¾ã¾å…¥ã£ãŸã¨ãã®ãŸã‚ã®æç”»åˆ¶å¾¡
 		var touchstart = 'touchstart';
 		var touchend = 'touchend';
 		if (window.PointerEvent){
