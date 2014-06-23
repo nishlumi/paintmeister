@@ -90,13 +90,13 @@ var PenType = {
 		setNeonpen : function(context) {
 			this.current = ["neonpen",8,this.parent.colorpicker.value,false];
 			context.globalCompositeOperation = "source-over";
-			context.globalAlpha = 1.0;
+			context.globalAlpha = 0.85;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current[1] * 0.7;
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
-			context.shadowBlur = 9;
+			context.shadowBlur = 10;
 			context.lineCap = "round";
 			
 			this.updateInfo("ネオンペン",context.lineWidth);
@@ -441,52 +441,140 @@ var PenType = {
 				StYarr.push(startY);
 				Xarr.push(offsetX);
 				Yarr.push(offsetY);
-				alparr.push(0.095 * hairpressure * 2);
-				widarr.push(this.current[1] * 1.5);
-				shadowarr.push(35);
+				alparr.push(0.3 * hairpressure * 2);
+				widarr.push(this.current[1]);
+				shadowarr.push(15);
 				caparr.push("round");
 				//2点目：上
-				/*StXarr.push(startX);
-				StYarr.push(startY - (this.current[1] * 0.45));
-				Xarr.push(offsetX);
-				Yarr.push(offsetY - (this.current[1] * 0.45));
-				alparr.push(0.1 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.15);
-				shadowarr.push(20);
-				//3点目：下
+				compoarr.push("source-over");
 				StXarr.push(startX);
-				StYarr.push(startY + (this.current[1] * 0.45));
+				StYarr.push(startY - (this.current[1] * 0.55));
 				Xarr.push(offsetX);
+				Yarr.push(offsetY - (this.current[1] * 0.55));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("butt");
+				//2点目：上,左
+				/*compoarr.push("source-over");
+				StXarr.push(startX - (this.current[1] * 0.45));
+				StYarr.push(startY - (this.current[1] * 0.45));
+				Xarr.push(offsetX - (this.current[1] * 0.45));
+				Yarr.push(offsetY - (this.current[1] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);*/
+				caparr.push("round");
+					//2点目：上,左2
+					compoarr.push("source-over");
+					StXarr.push(startX - (this.current[1] * 0.25));
+					StYarr.push(startY - (this.current[1] * 0.25));
+					Xarr.push(offsetX - (this.current[1] * 0.25));
+					Yarr.push(offsetY - (this.current[1] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current[1] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//2点目：上,右
+				/*compoarr.push("source-over");
+				StXarr.push(startX + (this.current[1] * 0.45));
+				StYarr.push(startY - (this.current[1] * 0.45));
+				Xarr.push(offsetX + (this.current[1] * 0.45));
+				Yarr.push(offsetY - (this.current[1] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//2点目：上,右2
+					compoarr.push("source-over");
+					StXarr.push(startX + (this.current[1] * 0.25));
+					StYarr.push(startY - (this.current[1] * 0.25));
+					Xarr.push(offsetX + (this.current[1] * 0.25));
+					Yarr.push(offsetY - (this.current[1] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current[1] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//3点目：下
+				compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY + (this.current[1] * 0.55));
+				Xarr.push(offsetX);
+				Yarr.push(offsetY + (this.current[1] * 0.55));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(5);
+				caparr.push("butt");
+				//3点目：下,左
+				/*compoarr.push("source-over");
+				StXarr.push(startX - (this.current[1] * 0.45));
+				StYarr.push(startY + (this.current[1] * 0.45));
+				Xarr.push(offsetX - (this.current[1] * 0.45));
 				Yarr.push(offsetY + (this.current[1] * 0.45));
-				alparr.push(0.1 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.15);
-				shadowarr.push(20);
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//3点目：下,左2
+					compoarr.push("source-over");
+					StXarr.push(startX - (this.current[1] * 0.25));
+					StYarr.push(startY + (this.current[1] * 0.25));
+					Xarr.push(offsetX - (this.current[1] * 0.25));
+					Yarr.push(offsetY + (this.current[1] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current[1] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//3点目：下,右
+				/*compoarr.push("source-over");
+				StXarr.push(startX + (this.current[1] * 0.45));
+				StYarr.push(startY + (this.current[1] * 0.45));
+				Xarr.push(offsetX + (this.current[1] * 0.45));
+				Yarr.push(offsetY + (this.current[1] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//3点目：下,右2
+					compoarr.push("source-over");
+					StXarr.push(startX + (this.current[1] * 0.25));
+					StYarr.push(startY + (this.current[1] * 0.25));
+					Xarr.push(offsetX + (this.current[1] * 0.25));
+					Yarr.push(offsetY + (this.current[1] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current[1] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
 				//3点目：左
-				StXarr.push(startX - (this.current[1] * 0.25));
+				compoarr.push("source-over");
+				StXarr.push(startX - (this.current[1] * 0.45));
 				StYarr.push(startY);
 				Xarr.push(offsetX - (this.current[1] * 0.25));
 				Yarr.push(offsetY);
-				alparr.push(0.2 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.15);
-				shadowarr.push(20);
+				alparr.push(0.05 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");
 				//4点目：右
-				StXarr.push(startX + (this.current[1] * 0.25));
+				compoarr.push("source-over");
+				StXarr.push(startX + (this.current[1] * 0.45));
 				StYarr.push(startY);
 				Xarr.push(offsetX + (this.current[1] * 0.25));
 				Yarr.push(offsetY);
-				alparr.push(0.2 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.15);
-				shadowarr.push(20);*/
+				alparr.push(0.05 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");
 				//5点目：中心（再度）
 				compoarr.push("source-over");
-				StXarr.push(startX- (this.current[1] * 0.25));
-				StYarr.push(startY- (this.current[1] * 0.25));
-				Xarr.push(offsetX- (this.current[1] * 0.25));
-				Yarr.push(offsetY- (this.current[1] * 0.25));
-				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 2.0);
-				shadowarr.push(10);
-				caparr.push("butt");
+				StXarr.push(startX);
+				StYarr.push(startY);
+				Xarr.push(offsetX);
+				Yarr.push(offsetY);
+				alparr.push(0.09 * hairpressure * 2);
+				widarr.push(this.current[1]);
+				shadowarr.push(5);
+				caparr.push("round");
 				for (var i = 0; i < StXarr.length; i++) {
 					context.globalCompositeOperation = compoarr[i];
 					context.globalAlpha = alparr[i];
@@ -526,29 +614,29 @@ var PenType = {
 				StYarr.push(startY);
 				Xarr.push(offsetX);
 				Yarr.push(offsetY);
-				alparr.push(0.1 * hairpressure * 2);
-				widarr.push(this.current[1]);
+				alparr.push(0.5 * hairpressure * 2);
+				widarr.push(this.current[1] * 0.90);
 				shadowarr.push(1);
-				caparr.push("round");
+				caparr.push("butt");
 				//5点目：中心（再度）ベースの線
 				compoarr.push("source-over");
-				StXarr.push(startX);
-				StYarr.push(startY);
-				Xarr.push(offsetX);
-				Yarr.push(offsetY);
-				alparr.push(0.55 * hairpressure * 2);
-				widarr.push(this.current[1]*0.9);
-				shadowarr.push(10);
-				caparr.push("butt");
+				StXarr.push(startX + (this.current[1] * 0.05));
+				StYarr.push(startY - (this.current[1] * 0.09));
+				Xarr.push(offsetX + (this.current[1] * 0.05));
+				Yarr.push(offsetY - (this.current[1] * 0.09));
+				alparr.push(1 * hairpressure * 2);
+				widarr.push(this.current[1]*0.6);
+				shadowarr.push(2);
+				caparr.push("round");
 				//6点目：中心（再々度）
 				compoarr.push("source-over");
-				StXarr.push(startX);
-				StYarr.push(startY);
-				Xarr.push(offsetX);
-				Yarr.push(offsetY);
-				alparr.push(0.12 * hairpressure * 2);
-				widarr.push(this.current[1]*0.5);
-				shadowarr.push(20);
+				StXarr.push(startX - (this.current[1] * 0.06));
+				StYarr.push(startY + (this.current[1] * 0.085));
+				Xarr.push(offsetX - (this.current[1] * 0.06));
+				Yarr.push(offsetY + (this.current[1] * 0.085));
+				alparr.push(1 * hairpressure * 2);
+				widarr.push(this.current[1]*0.6);
+				shadowarr.push(2);
 				caparr.push("round");
 				for (var i = 0; i < StXarr.length; i++) {
 					context.globalCompositeOperation = compoarr[i];
@@ -590,9 +678,11 @@ var PenType = {
 			
 			this.simplepen.addEventListener("click", function(event) {
 				Draw.pen.setSimplePen(Draw.context);
+				document.getElementById("btn_menu").click();
 			}, false);
 			this.pencil.addEventListener("click", function(event) {
 				Draw.pen.setPencil(Draw.context);
+				document.getElementById("btn_menu").click();
 			}, false);
 			this.airbrush.addEventListener("click", function(event) {
 				Draw.pen.setAirbrush(Draw.context); // change edit style to "airbrush".

@@ -40,8 +40,8 @@ function saveImage(data) {
             var c = Draw.canvas.getContext("2d");
             c.clearRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
             for (var obj in Draw.layer) {
-                c.globalAlpha = Draw.layer[obj].canvas.getContext("2d").globalAlpha;
-                c.globalCompositeOperation = Draw.layer[obj].canvas.getContext("2d").globalCompositeOperation;
+                c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
+                c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
                 c.drawImage(Draw.layer[obj].canvas, 0, 0);
             }
 
@@ -103,7 +103,8 @@ function ElementTransform(element, value) {
         if (event.keyCode == "32") { //SPACE
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("btn_menu").click();
-                return;
+
+                return event.preventDefault();
             }
         } else if (event.keyCode == "90" && event.ctrlKey) { //Ctrl + Z
             if (document.getElementById("initialsetup").style.display == "none") {
@@ -147,11 +148,12 @@ function ElementTransform(element, value) {
             document.getElementById("menupanel").style.display = "none";
             event.target.innerHTML = "&#9660;";
             event.target.style.backgroundColor = "#c4fab3";
+            document.body.focus();
         }
     }, false);
     document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 50) / 100) * 100;
     document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 70) / 100) * 100 - 50;
+    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 70) / 100) * 100;
     document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
     //---キャンバス外からタッチしたまま入ったときのための描画制御
     var touchstart = 'touchstart';
@@ -177,6 +179,7 @@ function ElementTransform(element, value) {
     document.body.addEventListener(touchend, function (event) {
         Draw.drawing = false;
     }, false);
+
     console.log(window.innerWidth + "/" + window.innerHeight);
 
     app.start();

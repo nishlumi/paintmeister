@@ -1,3 +1,5 @@
+var appname = "PaintMeister";
+var appversion = "1.0.0.8";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -162,8 +164,8 @@ function calculatePosition(eventtype,event,target,opt) {
 				var c = Draw.canvas.getContext("2d");
 				c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 				for (var obj in Draw.layer) {
-					c.globalAlpha = Draw.layer[obj].canvas.getContext("2d").globalAlpha;
-					c.globalCompositeOperation = Draw.layer[obj].canvas.getContext("2d").globalCompositeOperation;
+					c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
+					c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
 					c.drawImage(Draw.layer[obj].canvas,0,0);
 				}
 				var d1 = Draw.layer[0].canvas.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
@@ -292,7 +294,8 @@ function calculatePosition(eventtype,event,target,opt) {
 				);
 				document.getElementById("btn_menu").click();
 			},false);
-
+			
+			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
 		},
 		clearBody : function (){
 			//参照コンテキストをメインのキャンバスに戻す
@@ -302,6 +305,9 @@ function calculatePosition(eventtype,event,target,opt) {
 			Draw.removeLayerAll();
 			//---メインのキャンバスだけは直接クリアのみ
 			Draw.context.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+			for (var i = 0; i < Draw.undohist.length; i++) {
+				delete Draw.undohist[i];
+			}
 			Draw.undohist.splice(0,Draw.undohist.length);
 			Draw.redohist.splice(0,Draw.redohist.length);
 			Draw.undohist = [];
@@ -357,7 +363,10 @@ function calculatePosition(eventtype,event,target,opt) {
 			//---Undoに保管
 			//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
 			this.undohist.push(new UndoBuffer(Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-			if (this.undohist.length > this.defaults.undo.max) this.undohist.shift();
+			if (this.undohist.length > this.defaults.undo.max) {
+				var o = this.undohist.shift();
+				delete o;
+			}
 			console.log(this.undohist);
 			//document.getElementById("log3").innerHTML = event.keyCode;
 			console.log("start, event.button=");
@@ -395,8 +404,8 @@ function calculatePosition(eventtype,event,target,opt) {
 			offsetY = pos.y;
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.drawing) {
-			console.log("move, event.button=");
-			console.log(event);
+			//console.log("move, event.button=");
+			//console.log(event);
 				//pen pressure calc
 				this.pen.prepare(event,this.context,this.keyLikePres);
 				//document.getElementById("info_pen_size").innerHTML = this.context.lineWidth;

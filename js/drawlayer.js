@@ -19,6 +19,8 @@
 		this.mode = "";
 		this.selected = false;
 		this.isvisible = true;
+		this.Alpha = 1.0;
+		this.CompositeOperation = "source-over";
 		
 		this.select = function(oldcontext){
 			var ls = own.parent.layer;
@@ -278,6 +280,8 @@
 					document.getElementById("canvaspanel").removeChild(document.getElementById(own.canvas.id));
 					//own.control.remove();
 					document.getElementById("lay_btns").removeChild(document.getElementById(own.control.id));
+					delete own.canvas;
+					delete own.control;
 					flag = true;
 				}
 			}else{
