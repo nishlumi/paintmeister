@@ -15,8 +15,8 @@ PaintMeister (1.0.0.8)
 
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/06/22 14:00:00
-ChromeApps		- 
-ストアアプリ		- 
+ChromeApps		- 2014/06/24 22:30:00
+ストアアプリ		- 2014/06/24 22:14:00
 
 
 PaintMeister (1.0.0.0) WebApp, ChromeApps, ストアアプリ
