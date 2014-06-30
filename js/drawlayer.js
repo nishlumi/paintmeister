@@ -251,11 +251,13 @@
 			own.canvas.height = own.canvassize.h;
 			own.canvas.style.zIndex = laylength+1;
 			document.getElementById("canvaspanel").appendChild(own.canvas);
-			var winwid = window.innerWidth;
+			/*var winwid = window.innerWidth;
 			var sa = winwid - own.canvassize.w;
-			var space = Math.floor(sa / 2)-30;
-			own.parent.canvasspace = space;
-			ElementTransform(own.canvas,"translate("+space+"px)");
+			var say = window.innerHeight - own.canvassize.h;
+			var space = Math.floor(sa / 2) - 30;
+			var spacey = Math.floor(say / 2) - 30;
+			own.parent.canvasspace = {"w" : space, "h" : spacey};
+			ElementTransform(own.canvas,"translate("+space+"px," + spacey + "px)");*/
 			
 			own.control = document.createElement("button");
 			own.control.id = "lay_btn" + own.originID;

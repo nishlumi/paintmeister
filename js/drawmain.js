@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.0.8";
+var appversion = "1.0.5.13";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -43,7 +43,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}else{
 			if (event.type == eventtype) {
-				pos.x = event.changedTouches[0].pageX - target.offsetLeft - opt.offset + event.layerX - opt.canvasspace; // for Android
+				pos.x = event.changedTouches[0].pageX - target.offsetLeft - opt.offset + event.layerX - opt.canvasspace.w; // for Android
 			}else{
 				pos.x = event.layerX - opt.offset;
 			}
@@ -61,7 +61,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}else{
 			if (event.type == eventtype) {
-				pos.y = event.changedTouches[0].pageY - target.offsetTop - opt.offset + event.layerY; // for Android
+				pos.y = event.changedTouches[0].pageY - target.offsetTop - opt.offset + event.layerY - opt.canvasspace.h; // for Android
 			}else{
 				pos.y = event.layerY - opt.offset;
 			}
@@ -163,10 +163,14 @@ function calculatePosition(eventtype,event,target,opt) {
 				//ダミーのキャンバスから統合した画像を作成
 				var c = Draw.canvas.getContext("2d");
 				c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+				c.fillStyle = "#FFFFFF";
+				c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
 				for (var obj in Draw.layer) {
-					c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
-					c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-					c.drawImage(Draw.layer[obj].canvas,0,0);
+					if (Draw.layer[obj].isvisible) {
+						c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
+						c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
+						c.drawImage(Draw.layer[obj].canvas,0,0);
+					}
 				}
 				var d1 = Draw.layer[0].canvas.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 				var strd1 = "";
@@ -192,6 +196,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				console.log("undohist=");
 				console.log(obj);
 				//未操作の場合、取得した一つ前の状態が現在の状態と同じ場合
+				if (!obj) return;
 				if (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.image.data) {
 					obj = Draw.undohist.pop();
 				}
@@ -240,6 +245,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.makecanvasbtn.addEventListener("click", function(event) {
 				var wi = document.getElementById("canvas_width").value;
 				var he = document.getElementById("canvas_height").value;
+				console.log("wi=" + wi + ", he=" + he);
 				function createbody(){
 					document.getElementById("initialsetup").style.display = "none";
 					document.getElementById("apptitle").style.display = "none";
@@ -257,7 +263,17 @@ function calculatePosition(eventtype,event,target,opt) {
 					Draw.defaults.canvas.size = [wi, he];
 					document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
 					//document.getElementById("btn_panel").style.visibility = "visible";
-					
+					Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+					/*var winwid = window.innerWidth;
+					var sa = window.innerWidth - Draw.canvassize[0];
+					var say = window.innerHeight - Draw.canvassize[1];
+					var space = Math.floor(sa / 2) - 30;
+					var spacey = Math.floor(say / 2) - (say * 0.2);
+					Draw.canvasspace = {"w" : space, "h" : spacey};
+					//document.getElementById("basepanel").style.left = (45 + space) + "px";
+					console.log("left="+space + "/" + spacey);
+					ElementTransform(document.getElementById("basepanel"),"translate("+space+"px," + spacey + "px)");
+					*/
 					//---ダミーのキャンバスも作成
 					Draw.canvas = document.createElement("canvas");
 					Draw.canvas.id = "dumcanvas";
@@ -321,6 +337,8 @@ function calculatePosition(eventtype,event,target,opt) {
 			//own.control.remove();
 			document.getElementById("lay_btns").removeChild(document.getElementById(Draw.layer[0].control.id));
 			Draw.layer.splice(0,1);
+			
+			ElementTransform(document.getElementById("basepanel"),"translate(0,0)");
 			document.getElementById("initialsetup").style.display = "block";
 			document.getElementById("apptitle").style.display = "block";
 			document.getElementById("ctrlpanel").style.display = "none";
@@ -347,6 +365,16 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 			this.layer.splice(1,this.layer.length);
 		},
+		resizeCanvasMargin : function (winwidth, winheight){
+			var sa = winwidth - this.canvassize[0];
+			var say = winheight - this.canvassize[1];
+			var space = Math.floor(sa / 2) - (sa * 0.075); //30;
+			var spacey = Math.floor(say / 2) - 80; //(say * 0.2);
+			this.canvasspace = {"w" : space, "h" : spacey};
+			//document.getElementById("basepanel").style.left = (45 + space) + "px";
+			console.log("left="+space + "/" + spacey);
+			ElementTransform(document.getElementById("basepanel"),"translate("+space+"px," + spacey + "px)");
+		},
 		touchStart : function(event) {
 			this.drawing = true;
 			
@@ -359,7 +387,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			document.getElementById("info_currentpos").textContent = this.startX + "x" + this.startY;
 			//document.getElementById("log2").innerHTML = event.button;
 			//---右クリック、スタイラスペンの反対側は消しゴムに設定
-			if ((event.button == 2) || (event.button == 5)) this.pen.setEraser(this.context);
+			if ((event.button == 2) || (event.button == 5)) this.pen.setEraser(this.context,{"size":this.sizebar.value});
 			//---Undoに保管
 			//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
 			this.undohist.push(new UndoBuffer(Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));

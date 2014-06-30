@@ -39,10 +39,14 @@ function saveImage(data) {
             Windows.Storage.CachedFileManager.deferUpdates(file);
             var c = Draw.canvas.getContext("2d");
             c.clearRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
+            c.fillStyle = "#FFFFFF";
+            c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
             for (var obj in Draw.layer) {
-                c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
-                c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-                c.drawImage(Draw.layer[obj].canvas, 0, 0);
+                if (Draw.layer[obj].isvisible) {
+                    c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
+                    c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
+                    c.drawImage(Draw.layer[obj].canvas, 0, 0);
+                }
             }
 
             var imgdata = c.getImageData(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
@@ -153,7 +157,7 @@ function ElementTransform(element, value) {
     }, false);
     document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 50) / 100) * 100;
     document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 70) / 100) * 100;
+    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 80) / 100) * 100;
     document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
     //---キャンバス外からタッチしたまま入ったときのための描画制御
     var touchstart = 'touchstart';

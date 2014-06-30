@@ -12,18 +12,72 @@ user-select: none; /* CSS3 */
 .button {
 	width : 70px;
 	height : 30px;
+	overflow : hidden;
 }
 .statbutton {
 	width : 45%; /*60px;*/
 	height : 40px;
 	background-color : #c4fab3;
 	border : 0;
+	overflow : hidden;
 }
+.statbutton:active {
+	background-color : #91d780;
+}
+
 .statbutton2 {
 	width : 30%;
 	height : 60px;
 	background-color : #c4fab3;
 	border : 0;
+	overflow : hidden;
+}
+.statbutton2:active {
+	background-color : #91d780;
+}
+
+.stat_new {
+	background-color:#FFB99C;
+}
+.stat_new:active {
+	background-color:#DD977A;
+}
+.stat_save {
+	background-color:#C2CEFF;
+}
+.stat_save:active {
+	background-color:#90ACDD;
+}
+.brushbutton {
+	width : 12.5%;
+	height : 1.4rem;
+	background-color : #E4E444;
+	border : 0;
+	font-weight : 600;
+	overflow : hidden;
+	margin-bottom : 2px;
+}
+.brushbutton:hover {
+	width : 12.5%;
+	background-color : #949444;
+	border : 0;
+	font-weight : 600;
+	overflow : hidden;
+}
+.brush-special {
+	background-color : #E4AA5D;
+}
+.brush-special:hover {
+	background-color : #C2883B;
+}
+#btn_makecanvas {
+	width : 100%;
+	height : 3em;
+	background-color : #c4fab3;
+	border : 0;
+}
+#btn_makecanvas:active {
+	background-color : #91d780;
 }
 
 #ctrlpanel {
@@ -67,6 +121,7 @@ user-select: none; /* CSS3 */
 	height : 50%;
 	float : left;
 	opacity : 1;
+	border : 4px inset #ADADAD;
 }
 #menu_right {
 	width : 75%;

@@ -14,6 +14,7 @@ var PenType = {
 		fudepen : null,
 		calligraphy : null,
 		oilpaint : null,
+		oilpaintv : null,
 		eraser : null, 
 			
 		fillpen : null,
@@ -28,6 +29,7 @@ var PenType = {
 			"fudepen" : [12,"#000000"],
 			"calligraphy" : [8,"#000000"],
 			"oilpaint" : [20,"#000000"],
+			"oilpaintv" : [20,"#000000"],
 			"eraser" : [20,"#000000"],
 			"fillpen" : [0, "#000000"],
 		},
@@ -141,6 +143,9 @@ var PenType = {
 		},
 		setOilPaintPen : function(context) {
 			this.current = ["oilpaint",20,this.parent.colorpicker.value,false];
+			if (arguments.length > 1)  { //指定ありの場合はそれを優先
+				this.current[0] = arguments[1]["name"];
+			}
 			context.globalCompositeOperation = "source-over";
 			
 			context.globalAlpha = 1;
@@ -153,13 +158,20 @@ var PenType = {
 			context.shadowBlur = 0.5;
 			context.lineCap = "round";
 			
-			this.updateInfo("油彩",context.lineWidth);
+			if (arguments.length > 1)  {
+				this.updateInfo("油彩(縦)",context.lineWidth);
+			}else{
+				this.updateInfo("油彩",context.lineWidth);
+			}
 			this.sizebar.value = this.current[1];
 			this.pentype = PenType.normal;
 		},
 		
 		setEraser : function(context) {
 			this.current = ["eraser",20,"#000000",false];
+			if (arguments.length > 1)  { //指定ありの場合はそれを優先
+				this.current[1] = arguments[1]["size"];
+			}
 			context.globalCompositeOperation = "destination-out";
 			context.strokeStyle = "#000000";
 			context.lineWidth = this.current[1];
@@ -200,7 +212,11 @@ var PenType = {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
-				if ((this.current[0] == "airbrush") || (this.current[0] == "fudepen") || (this.current[0] == "calligraphy") || (this.current[0] == "oilpaint")) {
+				if ((this.current[0] == "airbrush") || 
+					(this.current[0] == "fudepen") || 
+					(this.current[0] == "calligraphy") || 
+					(this.current[0] == "oilpaintv") || 
+					(this.current[0] == "oilpaint")) {
 					context.lineWidth = (this.sizebar.value * 0.5 * pres) * 2;
 				}else{
 					context.lineWidth = (this.sizebar.value * pres) * 2 + (pres * 0.5);
@@ -400,6 +416,85 @@ var PenType = {
 						}
 					}
 					if (keisubase == hairWidthCount/2) {
+						keisubase--;
+					}else{
+						keisubase++;
+					}
+				}
+				
+			}else if (this.current[0] == "oilpaintv"){
+				//油彩筆 - 縦向きの筆バージョン
+				//毛先1本あたりは1ピクセル近くする
+				hairWidth = 0.1; //context.lineWidth / (this.current[1] * 4.5);
+				context.lineWidth = hairWidth;
+				context.beginPath();
+				/*context.moveTo(startX, startY);
+				context.lineTo(offsetX, offsetY);
+				context.stroke();*/
+				/*メインの点は不要。完全に点の集合体とする。
+				---全体的な毛並みは縦＝本来の筆の太さ、横＝本来の太さ/2の楕円の範囲に
+				   毛先1本をランダムっぽく描画する
+				描画順： il|li
+					毛を縦の列単位で描画する。筆圧により描画する毛を上下から調整する
+					毛の横の太さは上記の通り。筆圧により描画する割合を調整する（列の集合に対して）
+					描画順は右から左（毛が流れる方向に対して）
+				毛の点の数
+					少→中→多→中→少
+					少=60～70%
+					中=75～85%
+					多=90～100%
+					ここからさらに筆圧によって増減させる。
+				
+				*/
+				var hairpressure = this.parent.lastpressure  ? this.parent.lastpressure : 1 ;
+				if (hairpressure == 0) {
+					hairpressure = 0.001;
+				}else if (hairpressure == undefined) {
+					hairpressure = 1;
+				}
+				var hairWidthOnPres = this.current[1] * 0.5 * hairpressure * 2;
+				var hairWidthCount = hairWidthOnPres * 1.1; //少しだけ多め
+				var hairHeightCount = hairWidthOnPres / 2;
+				var keisubase = hairWidthCount / 2;
+				
+				hairStY = startY - (hairWidthOnPres * 0.25); //開始Xは少し左
+				hairStX = startX - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
+				hairY = offsetY - (hairWidthOnPres * 0.25);
+				hairX = offsetX - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
+				
+				var hairDistX = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
+				var hairDistXhalf = [Math.round(hairDistX / 2), Math.ceil(hairDistX / 2)+hairDistX]
+					
+				hairDist = 1;
+				hair_outblur = context.shadowBlur;
+				for (var i = 0; i < hairHeightCount; i++) {
+					var keisu = Math.cos(keisubase / 10) * hairpressure;
+					hairStY = hairStY + 1;
+					hairY = hairY + 1;
+					
+					hairStX = startX - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairX = offsetX - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairDistX = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
+					hairDistXhalf = [Math.round(hairDistX / 2), Math.ceil(hairDistX / 2)+hairDistX]
+					var xdist = 0;
+					if ((i % 3) == 0) {
+						xdist = 2;
+					}else{
+						xdist = 1;
+					}
+					for (var j = 0; j < hairWidthCount; j++) {
+						hairStX = hairStX + xdist;
+						hairX = hairX + xdist;
+						
+						if ((j <= hairDistXhalf[0]) || (j >= hairDistXhalf[1])) {
+						}else{
+							context.lineWidth = hairWidth;
+							context.moveTo(hairStX,hairStY);
+							context.lineTo(hairX, hairY);
+							context.stroke();
+						}
+					}
+					if (keisubase == hairHeightCount/2) {
 						keisubase--;
 					}else{
 						keisubase++;
@@ -670,6 +765,7 @@ var PenType = {
 			this.fudepen = document.getElementById("fudepen");
 			this.calligraphy = document.getElementById("calligraphy");
 			this.oilpaint = document.getElementById("oilpaint");
+			this.oilpaintv = document.getElementById("oilpaintv");
 			this.eraser = document.getElementById("eraser");
 			this.fillpen = document.getElementById("fillpen");
 			
@@ -702,6 +798,10 @@ var PenType = {
 			}, false);
 			this.oilpaint.addEventListener("click", function(event) {
 				Draw.pen.setOilPaintPen(Draw.context); // change edit style to "oilpaint".
+				document.getElementById("btn_menu").click();
+			}, false);
+			this.oilpaintv.addEventListener("click", function(event) {
+				Draw.pen.setOilPaintPen(Draw.context,{"name":"oilpaintv"}); // change edit style to "oilpaint".
 				document.getElementById("btn_menu").click();
 			}, false);
 			this.eraser.addEventListener("click", function(event) {

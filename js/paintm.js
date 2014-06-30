@@ -17,9 +17,11 @@ function saveImage() {
 		c.fillStyle = "#FFFFFF";
 		c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
 		for (var obj in Draw.layer) {
-			c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
-			c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-			c.drawImage(Draw.layer[obj].canvas, 0, 0);
+			if (Draw.layer[obj].isvisible) {
+				c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
+				c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
+				c.drawImage(Draw.layer[obj].canvas, 0, 0);
+			}
 		}
 
 		var blob = dataURItoBlob(Draw.canvas.toDataURL("image/png"));
@@ -29,7 +31,7 @@ function saveImage() {
 			console.log("writableEntry=");
 			console.log(writableEntry);
 			writeFileEntry(writableEntry, blob, function(e) {
-				$.jGrowl("ã‚­ãƒ£ãƒ³ãƒã‚¹ã®ç”»åƒã‚’ä¿å­˜ã—ã¾ã—ãŸ");
+				$.jGrowl("ƒLƒƒƒ“ƒoƒX‚Ì‰æ‘œ‚ğ•Û‘¶‚µ‚Ü‚µ‚½");
 			});
 		});
 	}else{
@@ -70,7 +72,7 @@ function ElementTransform(element, value) {
 				}
 			}
 			var relkey = ["81","87"];
-			//---æ‰‹å‹•ç­†åœ§ã‚¤ãƒ™ãƒ³ãƒˆ
+			//---è“®•Mˆ³ƒCƒxƒ“ƒg
 			if (document.getElementById("chk_enable_handpres").checked) {
 				if ((event.keyCode == "81") || (event.keyCode == "87")) {
 					Draw.keyLikePres += virtual_pressure[event.keyCode];
@@ -92,11 +94,11 @@ function ElementTransform(element, value) {
 		Draw.initialize();
 		ColorPalette.initialize();
 		document.getElementById("btn_menu").addEventListener("click", function(event) {
-			if (event.target.innerHTML.charCodeAt() == "9660") { //é–‹ã
+			if (event.target.innerHTML.charCodeAt() == "9660") { //ŠJ‚­
 				document.getElementById("menupanel").style.display = "block";
 				event.target.innerHTML = "&#9650;";
 				event.target.style.backgroundColor = "#91d780";
-			}else{ //é–‰ã˜ã‚‹
+			}else{ //•Â‚¶‚é
 				document.getElementById("menupanel").style.display = "none";
 				event.target.innerHTML = "&#9660;";
 				event.target.style.backgroundColor = "#c4fab3";
@@ -107,7 +109,7 @@ function ElementTransform(element, value) {
 		document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
 		document.getElementById("canvas_height").max = Math.floor((window.innerHeight-70) / 100) * 100;
 		document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-		//---ã‚­ãƒ£ãƒ³ãƒã‚¹å¤–ã‹ã‚‰ã‚¿ãƒƒãƒã—ãŸã¾ã¾å…¥ã£ãŸã¨ãã®ãŸã‚ã®æç”»åˆ¶å¾¡
+		//---ƒLƒƒƒ“ƒoƒXŠO‚©‚çƒ^ƒbƒ`‚µ‚½‚Ü‚Ü“ü‚Á‚½‚Æ‚«‚Ì‚½‚ß‚Ì•`‰æ§Œä
 		var touchstart = 'touchstart';
 		var touchend = 'touchend';
 		if (window.PointerEvent){
@@ -118,7 +120,7 @@ function ElementTransform(element, value) {
 			touchend = 'MSPointerUp';
 		}
 		document.body.addEventListener(touchstart, function(event) {
-			Draw.drawing = true;
+			//Draw.drawing = true;
 		}, false);
 		document.body.addEventListener(touchend, function(event) {
 			Draw.drawing = false;
@@ -126,10 +128,15 @@ function ElementTransform(element, value) {
 		touchstart = 'mousedown';
 		touchend = 'mouseup';
 		document.body.addEventListener(touchstart, function(event) {
-			Draw.drawing = true;
+			//Draw.drawing = true;
 		}, false);
 		document.body.addEventListener(touchend, function(event) {
 			Draw.drawing = false;
+		}, false);
+		window.addEventListener("resize",function(event){
+			console.log("width=" + event.target.innerWidth);
+			console.log("height=" + event.target.innerHeight);
+			Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
 		}, false);
 		
 		console.log(window.innerWidth + "/" + window.innerHeight);
