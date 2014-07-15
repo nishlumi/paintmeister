@@ -9,7 +9,7 @@
 	border-collapse:collapse;
 }
 .infofont {
-	font-size : 12pt;
+	font-size : 10pt;
 }
 .explain_panel {
 	border:1px dashed black;
@@ -28,7 +28,7 @@
 #prespanel {
 	float : left;
 	width : 45px;
-	height : 40%;
+	height : 50%;
 	margin-top:6rem; 
 	display : none;
 	background-color : #999999;
@@ -57,12 +57,14 @@
 	/*border:2px solid #808080;
 	width:600px;
 	float : left;*/
-	width : 90%;
+	/*width : 95%;*/
 	height : 90%;
 	
 	position : relative;
 	top : 6rem;
 	overflow : auto;
+	display : none;
+	z-index : 1;
 };
 #canvaspanel {
 	width : 100%;
@@ -72,16 +74,17 @@
 	border:2px solid #808080;
 	position : relative;
 	/*top : 4rem;*/
-	transform : scale(1.0);
 	-webkit-transform : scale(1.0);
 	-ms-transform : scale(1.0);
+	transform : scale(1.0);
+	z-index : 1;
 
 }
 #canvaspanel .main-canvas{
 	-ms-touch-action:none;
-	touch-action:none;
 	-webkit-touch-action:none;
-	border:2px solid #808080;
+	touch-action:none;
+	/*border:2px solid #808080;*/
 	background-color: transparent;
 	position : absolute;
 	top : 0px;
@@ -94,9 +97,9 @@
 	background-repeat: repeat;*/
 	background-color: transparent;
 	-ms-touch-action:none;
-	touch-action:none;
 	-webkit-touch-action:none;
-	border:2px solid #808080;
+	touch-action:none;
+	/*border:2px solid #808080;*/
 	position : absolute;
 	top : 0;
 	left : 0;
@@ -107,4 +110,15 @@
 .dummy-canvas {
 	display : none;
 	position : absolute;
+}
+.operate-canvas {
+	background-color: transparent;
+	-ms-touch-action:none;
+	-webkit-touch-action:none;
+	touch-action:none;
+	position : absolute;
+	top : 0;
+	left : 0;
+	z-index : 998;
+
 }

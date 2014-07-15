@@ -70,8 +70,8 @@ function saveImage(data) {
     });
 }
 function ElementTransform(element, value) {
-    element.style.transform = value;
     element.style.msTransform = value;
+    element.style.transform = value;
 }
 
 (function () {
@@ -103,10 +103,22 @@ function ElementTransform(element, value) {
     };
     
     document.addEventListener("keydown", function (event) {
-        //console.log(event.keyCode);
-        if (event.keyCode == "32") { //SPACE
+        console.log(event.keyCode);
+        if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("btn_menu").click();
+
+                return event.preventDefault();
+            }
+        } else if ((event.keyCode == "50") || (event.keyCode == "98")) {
+            if (document.getElementById("initialsetup").style.display == "none") {
+                document.getElementById("info_layer").click();
+
+                return event.preventDefault();
+            }
+        } else if ((event.keyCode == "51") || (event.keyCode == "99")) {
+            if (document.getElementById("initialsetup").style.display == "none") {
+                document.getElementById("info_pen_mode").click();
 
                 return event.preventDefault();
             }
@@ -143,47 +155,81 @@ function ElementTransform(element, value) {
     }, false);
     Draw.initialize();
     ColorPalette.initialize();
+    $("#pickerpanel").hide();
+    $("#colorpicker").on("click", function (event) {
+        $("#pickerpanel").show();
+    });
     document.getElementById("btn_menu").addEventListener("click", function (event) {
-        if (event.target.innerHTML.charCodeAt() == "9660") { //開く
+        if (document.getElementById("menupanel").style.display == "none") { //開く
             document.getElementById("menupanel").style.display = "block";
-            event.target.innerHTML = "&#9650;";
+            document.getElementById("dlg_pen_mode").style.display = "none";
+            document.getElementById("dlg_layer").style.display = "none";
+            document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+            document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+            //event.target.innerHTML = "&#9650;";
             event.target.style.backgroundColor = "#91d780";
         } else { //閉じる
             document.getElementById("menupanel").style.display = "none";
-            event.target.innerHTML = "&#9660;";
+            document.getElementById("dlg_pen_mode").style.display = "none";
+            document.getElementById("dlg_layer").style.display = "none";
+            //event.target.innerHTML = "&#9660;";
             event.target.style.backgroundColor = "#c4fab3";
             document.body.focus();
         }
     }, false);
-    document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 50) / 100) * 100;
+    document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
     document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 80) / 100) * 100;
+    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 100) / 100) * 95;
     document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
     //---キャンバス外からタッチしたまま入ったときのための描画制御
     var touchstart = 'touchstart';
     var touchend = 'touchend';
+    var touchleave = 'touchleave';
     if (window.PointerEvent) {
         touchstart = "pointerdown";
         touchend = "pointerup";
+        touchleave = 'pointerleave';
     } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
         touchstart = 'MSPointerDown';
         touchend = 'MSPointerUp';
+        touchleave = 'MSPointerLeave';
     }
     document.body.addEventListener(touchstart, function (event) {
-        Draw.drawing = true;
+        //Draw.drawing = true;
+
     }, false);
     document.body.addEventListener(touchend, function (event) {
         Draw.drawing = false;
     }, false);
+    $("#colorpicker").on(touchstart, function (event) {
+        $("#pickerpanel").show();
+    });
+    $("#pickerpanel").on(touchleave, function (event) {
+        $("#pickerpanel").hide();
+        event.preventDefault();
+    });
+
     touchstart = 'mousedown';
     touchend = 'mouseup';
+    touchleave = 'mouseleave';
     document.body.addEventListener(touchstart, function (event) {
-        Draw.drawing = true;
+        //Draw.drawing = true;
     }, false);
     document.body.addEventListener(touchend, function (event) {
         Draw.drawing = false;
     }, false);
-
+    window.addEventListener("resize", function (event) {
+        console.log("width=" + event.target.innerWidth);
+        console.log("height=" + event.target.innerHeight);
+        Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
+    }, false);
+    $("#colorpicker").on(touchstart, function (event) {
+        $("#pickerpanel").show();
+    });
+    $("#pickerpanel").on(touchleave, function (event) {
+        $("#pickerpanel").hide();
+        event.preventDefault();
+    });
     console.log(window.innerWidth + "/" + window.innerHeight);
 
     app.start();

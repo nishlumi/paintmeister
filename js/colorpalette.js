@@ -8,10 +8,14 @@
 		startY : 0,
 		mode : "a",
 		offset : 0,
+		pickerUI : null,
 		initialize : function (){
 			var nm = "plt";
 			var elems = document.querySelectorAll("button.palette_button");
-			console.log(elems);
+			this.pickerUI = $("#pickerpanel").farbtastic("#colorpicker",function(color){
+				$("#pickerpanel").hide();
+			});
+
 			var touchstart = 'touchstart';
 			var touchmove = 'touchmove';
 			var touchend = 'touchend';
@@ -38,14 +42,16 @@
 				var elem = document.createElement("td");
 				elem.id = nm + obj;
 				elem.className = "palette_button";
+				elem.style.backgroundColor = "#FFFFFF";
 				elem.title = i;
 				//document.getElementById("colorpalette").appendChild(elem);
 				document.getElementById("palettepanel_line").appendChild(elem);
-				console.log(elem.innerHTML);
+				//console.log(elem.innerHTML);
 				elem.addEventListener("click",function(event){
 					var c = new RGBColor(event.target.style.backgroundColor);
 					document.getElementById("colorpicker").value = c.toHex();
 					document.getElementById("colorpicker").style.backgroundColor = event.target.style.backgroundColor;
+					$.farbtastic("#pickerpanel").setColor(c.toHex());
 				}, false);
 				elem.addEventListener(touchstart,function(event){
 					this.touching = true;

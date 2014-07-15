@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.5.13";
+var appversion = "1.0.11.17";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -81,6 +81,7 @@ function calculatePosition(eventtype,event,target,opt) {
 //#################################################################################
 	var Draw = {
 		canvas : null, 
+		opecan : null,
 		layer : [],
 		context : null, 
 		pen : null,
@@ -142,17 +143,17 @@ function calculatePosition(eventtype,event,target,opt) {
 			//---other control events setup
 			this.sizebar.addEventListener("change", function(event) {
 				document.getElementById("lab_pensize").innerHTML = event.target.value;
-				//Draw.currentpen[1] = event.target.value;
-				Draw.pen.current[1] = event.target.value;
+				//Draw.currentpen["size"] = event.target.value;
+				Draw.pen.current["size"] = event.target.value;
 				//document.getElementById("info_pen_size").innerHTML = event.target.value;
 			},false);
 			this.colorpicker.addEventListener("change", function(event) {
 				//document.getElementById("info_pen_color").innerHTML = event.target.value;
 				console.log(Draw.pen.current);
-				//Draw.currentpen[2] = event.target.value;
-				Draw.pen.current[2] = event.target.value;
+				//Draw.currentpen["color"] = event.target.value;
+				Draw.pen.current["color"] = event.target.value;
 				console.log(event.target.value);
-				//if (Draw.pen.current[2] != "eraser"){
+				//if (Draw.pen.current["color"] != "eraser"){
 					Draw.context.strokeStyle = event.target.value;
 					Draw.context.fillStyle = event.target.value;
 					Draw.context.shadowColor = event.target.value;
@@ -161,31 +162,16 @@ function calculatePosition(eventtype,event,target,opt) {
 			},false);
 			this.checkstat.addEventListener("click", function(event) {
 				//ダミーのキャンバスから統合した画像を作成
-				var c = Draw.canvas.getContext("2d");
-				c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-				c.fillStyle = "#FFFFFF";
-				c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-				for (var obj in Draw.layer) {
-					if (Draw.layer[obj].isvisible) {
-						c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
-						c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-						c.drawImage(Draw.layer[obj].canvas,0,0);
-					}
-				}
-				var d1 = Draw.layer[0].canvas.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+				Draw.prepareSaveImage();
+				/*var d1 = Draw.layer[0].canvas.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 				var strd1 = "";
 				for (var i = 0; i < d1.data.length; i++) {
 					strd1 += d1.data[i] + ",";
 				}
-				var imgdata = c.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+				var imgdata = c.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);*/
 				//console.log(imgdata);
 				//console.log(Draw.canvas.toDataURL("image/png"));
 				saveImage();
-				/*var w = window.open("","_blank");
-				w.document.open();
-				w.document.write("<img src='" + Draw.canvas.toDataURL("image/png") + "'>");
-				w.document.close();*/
-				//document.getElementById("previewer").src = Draw.canvas.toDataURL("image/png");
 			},false);
 			this.undobtn.addEventListener("click", function(event) {
 				console.log(Draw.undohist);
@@ -254,16 +240,19 @@ function calculatePosition(eventtype,event,target,opt) {
 					//document.getElementById("layoutcontrol").style.display = "block";
 					document.getElementById("prespanel").style.display = "block";
 					//Draw.generateCanvas(wi, he);
+					document.getElementById("canvaspanel").style.width = wi + "px";
+					document.getElementById("canvaspanel").style.height = (he) + "px";
+					document.getElementById("canvaspanel").style.border = "2px solid #808080";
 					var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,false);
 					lay.canvas.className = "mostbase-canvas";
 					Draw.layer.push(lay);
 					Draw.layer[0].select(Draw.context);
-					Draw.pen.setPencil(Draw.context);
 					Draw.canvassize = [wi, he];
 					Draw.defaults.canvas.size = [wi, he];
 					document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
 					//document.getElementById("btn_panel").style.visibility = "visible";
 					Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+					Draw.pen.pencil.click();
 					/*var winwid = window.innerWidth;
 					var sa = window.innerWidth - Draw.canvassize[0];
 					var say = window.innerHeight - Draw.canvassize[1];
@@ -282,6 +271,15 @@ function calculatePosition(eventtype,event,target,opt) {
 					Draw.canvas.height = he;
 					Draw.canvas.style.zIndex = 0;
 					document.body.appendChild(Draw.canvas);
+					//---操作用のキャンバスも作成
+					Draw.opecan = document.createElement("canvas");
+					Draw.opecan.id = "opecanvas";
+					Draw.opecan.className = "dummy-canvas";
+					Draw.opecan.width = wi;
+					Draw.opecan.height = he;
+					Draw.opecan.style.zIndex = 0;
+					document.body.appendChild(Draw.canvas);
+					document.getElementById("basepanel").style.display = "block";
 				}
 				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
 					createbody
@@ -310,8 +308,58 @@ function calculatePosition(eventtype,event,target,opt) {
 				);
 				document.getElementById("btn_menu").click();
 			},false);
-			
+			document.getElementById("layinfo_opacity").addEventListener("change", function(event) {
+				var val = event.target.value;
+				Draw.getSelectedLayer().opacity(val);
+			},false);
+			document.getElementById("info_pen_mode").addEventListener("click", function(event) {
+				if (document.getElementById("dlg_pen_mode").style.display == "none") {
+					document.getElementById("dlg_pen_mode").style.display = "block";
+					document.getElementById("dlg_layer").style.display = "none";
+					document.getElementById("menupanel").style.display = "none";
+					document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
+					event.target.style.backgroundColor = "#91d780";
+				}else{
+					document.getElementById("dlg_pen_mode").style.display = "none";
+					event.target.style.backgroundColor = "#c4fab3";
+				}
+			},false);
+			document.getElementById("info_layer").addEventListener("click", function(event) {
+				console.log(event.target.style.top + "," + event.target.style.left);
+				if (document.getElementById("dlg_layer").style.display == "none") {
+					document.getElementById("dlg_layer").style.display = "block";
+					document.getElementById("dlg_pen_mode").style.display = "none";
+					document.getElementById("menupanel").style.display = "none";
+					document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
+					event.target.style.backgroundColor = "#91d780";
+				}else{
+					document.getElementById("dlg_layer").style.display = "none";
+					event.target.style.backgroundColor = "#c4fab3";
+				}
+			},false);
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
+			
+			//---その他、初期化が必要な処理
+			document.getElementById("dlg_pen_mode").style.display = "none";
+			document.getElementById("dlg_layer").style.display = "none";
+			document.getElementById("menupanel").style.display = "none";
+			/*var pens = document.querySelectorAll("div#menu_right button");
+			console.log(pens);
+			var ul = document.querySelector("div#dlg_pen_mode ul li");
+			for (var i = 0; i < ul.length; i++) {
+				ul[i].onclick = pens[i].onclick;
+				ul[i].addEventListener("click",function(event){
+					var p = document.querySelectorAll("div#dlg_pen_mode ul li");
+					for (var j = 0; j < p.length; j++) {
+						p[j].style.listStyleType = "none";
+					}
+					event.target.style.listStyleType = "square";
+					console.log(event.target.id);
+					document.getElementById("dlg_pen_mode").style.display = "none";
+				},false);
+			}*/
 		},
 		clearBody : function (){
 			//参照コンテキストをメインのキャンバスに戻す
@@ -339,12 +387,21 @@ function calculatePosition(eventtype,event,target,opt) {
 			Draw.layer.splice(0,1);
 			
 			ElementTransform(document.getElementById("basepanel"),"translate(0,0)");
+			document.getElementById("basepanel").style.display = "none";
 			document.getElementById("initialsetup").style.display = "block";
 			document.getElementById("apptitle").style.display = "block";
 			document.getElementById("ctrlpanel").style.display = "none";
 			//document.getElementById("colorpalette").style.display = "none";
 			//document.getElementById("layoutcontrol").style.display = "none";
 			document.getElementById("prespanel").style.display = "none";
+		},
+		getSelectedLayer : function (){
+			var ls = this.layer;
+			for (var i = 0; i < ls.length; i++) {
+				if (ls[i].selected) {
+					return ls[i];
+				}
+			}
 		},
 		moveLayer : function (target,direction){
 			
@@ -368,12 +425,26 @@ function calculatePosition(eventtype,event,target,opt) {
 		resizeCanvasMargin : function (winwidth, winheight){
 			var sa = winwidth - this.canvassize[0];
 			var say = winheight - this.canvassize[1];
-			var space = Math.floor(sa / 2) - (sa * 0.075); //30;
-			var spacey = Math.floor(say / 2) - 80; //(say * 0.2);
+			var space = Math.floor(sa / 2) - (sa * 0.090); //30;
+			var spacey = Math.floor(say / 2) - 100; //(say * 0.2);
 			this.canvasspace = {"w" : space, "h" : spacey};
 			//document.getElementById("basepanel").style.left = (45 + space) + "px";
 			console.log("left="+space + "/" + spacey);
 			ElementTransform(document.getElementById("basepanel"),"translate("+space+"px," + spacey + "px)");
+		},
+		prepareSaveImage : function(){
+			//ダミーのキャンバスから統合した画像を作成
+			var c = Draw.canvas.getContext("2d");
+			c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+			c.fillStyle = "#FFFFFF";
+			c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
+			for (var obj in Draw.layer) {
+				if (Draw.layer[obj].isvisible) {
+					c.globalAlpha = Draw.layer[obj].Alpha / 100; //canvas.getContext("2d").globalAlpha;
+					c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
+					c.drawImage(Draw.layer[obj].canvas,0,0);
+				}
+			}
 		},
 		touchStart : function(event) {
 			this.drawing = true;
@@ -401,9 +472,9 @@ function calculatePosition(eventtype,event,target,opt) {
 			console.log(event);
 			this.keyLikePres = event.keyCode;
 			//色選択をここでも確定
-			this.pen.current[2] = this.colorpicker.value;
+			this.pen.current["color"] = this.colorpicker.value;
 			//console.log(this.colorpicker.value);
-			if (this.pen.current[2] != "eraser"){
+			if (this.pen.current["color"] != "eraser"){
 				this.context.strokeStyle = this.colorpicker.value;
 				this.context.fillStyle = this.colorpicker.value;
 				this.context.shadowColor = this.colorpicker.value;
@@ -447,22 +518,23 @@ function calculatePosition(eventtype,event,target,opt) {
 				var ju_saY = Math.abs(saY);
 				var pmX = (saX < 0 ? -1 : 1); //+-基準値
 				var pmY = (saY < 0 ? -1 : 1); //+-基準値
-				/*console.log("=====");
+				console.log("=====");
 				console.log("start=" + this.startX + "x" + this.startY);
 				console.log("offset=" + offsetX + "x" + offsetY);
 				console.log("sa=" + saX + "x" + saY);
-				console.log("pm=" + pmX + "x" + pmY);*/
+				console.log("pm=" + pmX + "x" + pmY);
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
-				if ((ju_saX > this.pen.current[1]/2) || (ju_saY > this.pen.current[1]/2)){
-					if (this.pen.current[3]) {
+				if ((ju_saX > this.pen.current["size"]*1) || (ju_saY > this.pen.current["size"]*1)){
+					if (this.pen.current["complete"]) {
 						//---補完算出開始
 						var completeCount = 0;
 						if (ju_saX > ju_saY) {
-							completeCount = Math.ceil(ju_saX / (this.pen.current[1]/4));
+							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*0.5));
 						}else{
-							completeCount = Math.ceil(ju_saY / (this.pen.current[1]/4));
+							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*0.5));
 						}
-						console.log("completeCount=" + completeCount);
+						//completeCount = 5;
+						console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
 						var cplarr = [];
 						var prevpos = {"x":this.startX,"y":this.startY};
 						for (var c = 0; c < completeCount; c++) {
@@ -474,14 +546,17 @@ function calculatePosition(eventtype,event,target,opt) {
 							var pos = {"x":0,"y":0};
 							var keisu = 0;
 							var movepoint = 0;
-							if (ju_saX > ju_saY) {
+							
+							pos.x = prevpos.x + (ju_saX / completeCount * pmX);
+							pos.y = prevpos.y + (ju_saY / completeCount * pmY);
+							/*if (ju_saX > ju_saY) {
 								bigsa = ju_saX;
 								littlesa = ju_saY;
 								bigpoint = prevpos.x;
 								littlepoint = prevpos.y;
 								isbigX = true;
 								
-								pos.x = prevpos.x + (this.pen.current[1]/4 * pmX);
+								pos.x = prevpos.x + (this.pen.current["size"]/4 * pmX);
 								keisu = pos.x / prevpos.x;
 								movepoint = ju_saY / completeCount; //littlesa - (littlesa * keisu);
 								pos.y = prevpos.y + (movepoint * pmY);
@@ -492,11 +567,11 @@ function calculatePosition(eventtype,event,target,opt) {
 								littlepoint = prevpos.y;
 								isbigX = false;
 								
-								pos.y = prevpos.y + (this.pen.current[1]/4 * pmY);
+								pos.y = prevpos.y + (this.pen.current["size"]/4 * pmY);
 								keisu = pos.y / prevpos.y;
 								movepoint = ju_saX / completeCount; //littlesa - (littlesa * keisu);
 								pos.x = prevpos.x + (movepoint * pmX);
-							}
+							}*/
 							/*console.log("prevpos=" + prevpos.x + "x" + prevpos.y);
 							console.log("<>pos=" + pos.x + "x" + pos.y);
 							console.log("keisu=" + keisu);*/
@@ -512,9 +587,9 @@ function calculatePosition(eventtype,event,target,opt) {
 								prevpos.x,prevpos.y,
 								pos.x,pos.y
 							);
-							document.getElementById("log").innerHTML = "no." + c + ":" + 
-								prevpos.x + "x" + prevpos.y + 
-								" -> " + pos.x + "x" + pos.y;
+							console.log("no." + c + ":" + 
+								Math.round(prevpos.x) + "x" + Math.round(prevpos.y) + 
+								" -> " + Math.round(pos.x) + "x" + Math.round(pos.y));
 							prevpos = pos;
 						}
 						//if ((prevpos.x != offsetX || prevpos.y != offsetY)) {
@@ -523,7 +598,7 @@ function calculatePosition(eventtype,event,target,opt) {
 								offsetX,offsetY
 							);
 						//}
-			}else{
+					}else{
 						this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 					}
 				}else{

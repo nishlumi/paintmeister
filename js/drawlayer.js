@@ -19,7 +19,7 @@
 		this.mode = "";
 		this.selected = false;
 		this.isvisible = true;
-		this.Alpha = 1.0;
+		this.Alpha = 100;
 		this.CompositeOperation = "source-over";
 		
 		this.select = function(oldcontext){
@@ -52,6 +52,7 @@
 				newcontext.lineJoin = oldcontext.lineJoin;
 			}
 			own.parent.context = newcontext;
+			document.getElementById("layinfo_opacity").value = own.Alpha;
 			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.id).replace("lay","");
 		}
 		this.deselect = function (){
@@ -80,6 +81,10 @@
 		}
 		this.toggleShow = function(){
 			own.show(!own.isvisible);
+		}
+		this.opacity = function (value){
+			own.Alpha = value;
+			own.canvas.style.opacity = value / 100;
 		}
 		this.generate_core = function (canvas,ctrl){
 			//---キャンバスの核となる設定

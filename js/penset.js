@@ -15,9 +15,12 @@ var PenType = {
 		calligraphy : null,
 		oilpaint : null,
 		oilpaintv : null,
+		waterpaint : null,
 		eraser : null, 
 			
+		//special pen
 		fillpen : null,
+		colorchangepen : null,
 		
 		sizebar : null,
 		colorpicker : null,
@@ -30,39 +33,51 @@ var PenType = {
 			"calligraphy" : [8,"#000000"],
 			"oilpaint" : [20,"#000000"],
 			"oilpaintv" : [20,"#000000"],
+			"waterpaint" : [15,"#000000"],
 			"eraser" : [20,"#000000"],
 			"fillpen" : [0, "#000000"],
+			"colorchangepen" : [15,"#000000"]
 		},
-		current : ["",-1,"#000000"], //0=mode, 1=size, 2=color, 3=complete?
+		current : {"mode":"","size":-1,"color":"#000000","complete":false}, //0=mode, 1=size, 2=color, 3=complete?
 		pentype : 0,
 
 		updateInfo : function(panname,pensize){
 			document.getElementById("info_pen_mode").textContent = panname;
 			//document.getElementById("info_pen_size").innerHTML = Math.ceil(pensize);
 			document.getElementById("lab_pensize").textContent = pensize;
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 		},
 		setSimplePen : function(context) {
-			this.current = ["simplepen",4,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"simplepen",
+				"size":4,
+				"color":this.parent.colorpicker.value,
+				"complete":false
+			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 1.0;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
-			context.shadowBlur = 1.2;
+			context.shadowBlur = 0.5;
 			context.lineCap = "round";
 			
 			this.updateInfo("ペン",context.lineWidth);
 			this.pentype = PenType.normal;
 		},
 		setPencil : function(context) {
-			this.current = ["pencil",4,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"pencil",
+				"size":4,
+				"color":this.parent.colorpicker.value,
+				"complete":true
+			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 0.9;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -73,11 +88,16 @@ var PenType = {
 			this.pentype = PenType.normal;
 		},
 		setAirbrush : function(context) {
-			this.current = ["airbrush",20,this.parent.colorpicker.value,true];
+			this.current = {
+				"mode":"airbrush",
+				"size":20,
+				"color":this.parent.colorpicker.value,
+				"complete":true
+			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 0.5;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -86,15 +106,20 @@ var PenType = {
 			//context.lineJoin = "miter";
 			
 			this.updateInfo("エアブラシ",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
 		setNeonpen : function(context) {
-			this.current = ["neonpen",8,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"neonpen",
+				"size":8,
+				"color":this.parent.colorpicker.value,
+				"complete":false
+			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 0.85;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1] * 0.7;
+			context.lineWidth = this.current["size"] * 0.7;
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -102,17 +127,22 @@ var PenType = {
 			context.lineCap = "round";
 			
 			this.updateInfo("ネオンペン",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
 		setFudePen : function(context) {
-			this.current = ["fudepen",12,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"fudepen",
+				"size":12,
+				"color":this.parent.colorpicker.value,
+				"complete":false
+			};
 			context.globalCompositeOperation = "source-over";
 			
 			context.globalAlpha = 1;
 			
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -120,17 +150,22 @@ var PenType = {
 			context.lineCap = "round";
 			
 			this.updateInfo("筆ペン",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
 		setcalligraphy : function(context) {
-			this.current = ["calligraphy",8,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"calligraphy",
+				"size":8,
+				"color":this.parent.colorpicker.value,
+				"complete":false
+			};
 			context.globalCompositeOperation = "source-over";
 			
 			context.globalAlpha = 1;
 			
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -138,20 +173,25 @@ var PenType = {
 			context.lineCap = "round";
 			
 			this.updateInfo("カリグラフィ",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
 		setOilPaintPen : function(context) {
-			this.current = ["oilpaint",20,this.parent.colorpicker.value,false];
+			this.current = {
+				"mode":"oilpaint",
+				"size":20,
+				"color":this.parent.colorpicker.value,
+				"complete":false
+			};
 			if (arguments.length > 1)  { //指定ありの場合はそれを優先
-				this.current[0] = arguments[1]["name"];
+				this.current["mode"] = arguments[1]["name"];
 			}
-			context.globalCompositeOperation = "source-over";
+			context.globalCompositeOperation = "lighter";
 			
 			context.globalAlpha = 1;
 			
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -163,41 +203,92 @@ var PenType = {
 			}else{
 				this.updateInfo("油彩",context.lineWidth);
 			}
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
-		
+		setWaterPaintPen : function(context) {
+			this.current = {
+				"mode":"waterpaint",
+				"size":15,
+				"color":this.parent.colorpicker.value,
+				"complete":true
+			};
+			context.globalCompositeOperation = "lighter";
+			context.globalAlpha = 1;
+			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
+			context.lineWidth = this.current["size"];
+			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 10;
+			context.lineCap = "round";
+			context.lineJoin = "round";
+			
+			this.updateInfo("水彩",context.lineWidth);
+			this.sizebar.value = this.current["size"];
+			this.pentype = PenType.normal;
+		},
 		setEraser : function(context) {
-			this.current = ["eraser",20,"#000000",false];
+			this.current = {
+				"mode":"eraser",
+				"size":20,
+				"color":"#000000",
+				"complete":false
+			};
 			if (arguments.length > 1)  { //指定ありの場合はそれを優先
-				this.current[1] = arguments[1]["size"];
+				this.current["size"] = arguments[1]["size"];
 			}
 			context.globalCompositeOperation = "destination-out";
 			context.strokeStyle = "#000000";
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
 			context.shadowBlur = 0;
 			context.lineCap = "round";
 			
 			this.updateInfo("消しゴム",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
 		setFillpen : function(context) {
-			this.current = ["fillpen",1,"#000000",false];
+			this.current = {
+				"mode":"fillpen",
+				"size":1,
+				"color":"#000000",
+				"complete":false
+			};
 			context.globalCompositeOperation = "destination-over";
 			context.strokeStyle = this.parent.colorpicker.value;
 			context.fillStyle = this.parent.colorpicker.value;
-			context.lineWidth = this.current[1];
+			context.lineWidth = this.current["size"];
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
 			context.shadowBlur = 0;
 			context.lineCap = "round";
 			
 			this.updateInfo("塗りつぶし",context.lineWidth);
-			this.sizebar.value = this.current[1];
+			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.fill;
+		},
+		setColorChangepen : function(context) {
+			this.current = {
+				"mode":"colorchangepen",
+				"size":15,
+				"color":"#000000",
+				"complete":false
+			};
+			context.globalCompositeOperation = "source-atop";
+			context.strokeStyle = this.parent.colorpicker.value;
+			context.fillStyle = this.parent.colorpicker.value;
+			context.lineWidth = this.current["size"];
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 0;
+			context.lineCap = "round";
+			
+			this.updateInfo("色替え",context.lineWidth);
+			this.sizebar.value = this.current["size"];
+			this.pentype = PenType.normal;
 		},
 		prepare : function (event, context, pressure2){
 			var pres = 0;
@@ -212,11 +303,11 @@ var PenType = {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
-				if ((this.current[0] == "airbrush") || 
-					(this.current[0] == "fudepen") || 
-					(this.current[0] == "calligraphy") || 
-					(this.current[0] == "oilpaintv") || 
-					(this.current[0] == "oilpaint")) {
+				if ((this.current["mode"] == "airbrush") || 
+					(this.current["mode"] == "fudepen") || 
+					(this.current["mode"] == "calligraphy") || 
+					(this.current["mode"] == "oilpaintv") || 
+					(this.current["mode"] == "oilpaint")) {
 					context.lineWidth = (this.sizebar.value * 0.5 * pres) * 2;
 				}else{
 					context.lineWidth = (this.sizebar.value * pres) * 2 + (pres * 0.5);
@@ -239,7 +330,7 @@ var PenType = {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
-				if ((this.current[0] == "airbrush") || (this.current[0] == "fudepen") || (this.current[0] == "calligraphy") || (this.current[0] == "oilpaint")) {
+				if ((this.current["mode"] == "airbrush") || (this.current["mode"] == "fudepen") || (this.current["mode"] == "calligraphy") || (this.current["mode"] == "oilpaint") || (this.current["mode"] == "oilpaintv")) {
 					context.lineWidth = (this.sizebar.value * 0.5 * pres) * 2;
 				}else{
 					context.lineWidth = (this.sizebar.value * pres) * 2 + (pres * 0.5);
@@ -257,7 +348,7 @@ var PenType = {
 			var hairWidth = 0;
 			var hairDist = 0;
 			var hair_outblur = 0;
-			if (this.current[0] == "fudepen") {
+			if (this.current["mode"] == "fudepen") {
 				context.beginPath();
 				context.moveTo(startX, startY);
 				context.lineTo(offsetX, offsetY);
@@ -298,8 +389,8 @@ var PenType = {
 					context.lineTo(hairX, hairY);
 					context.stroke();
 				}
-			}else if (this.current[0] == "calligraphy") {
-				var hairWidth = context.lineWidth / 12; //pen.current[1];
+			}else if (this.current["mode"] == "calligraphy") {
+				var hairWidth = context.lineWidth / 12; //pen.current["size"];
 				context.lineWidth = hairWidth;
 				context.beginPath();
 				context.moveTo(startX, startY);
@@ -331,7 +422,7 @@ var PenType = {
 				hairStY = startY;
 				hairX = offsetX;
 				hairY = offsetY;
-				//hairWidth = pen.current[1];
+				//hairWidth = pen.current["size"];
 				for (var i = 0; i < 5; i++) {
 					hairX = hairX - (hairWidth * 1);
 					hairY = hairY + (hairWidth * 1);
@@ -344,10 +435,11 @@ var PenType = {
 					context.lineTo(hairX, hairY);
 					context.stroke();
 				}
-			}else if (this.current[0] == "oilpaint"){
+			}else if (this.current["mode"] == "oilpaint"){
 				//毛先1本あたりは1ピクセル近くする
-				hairWidth = 0.1; //context.lineWidth / (this.current[1] * 4.5);
+				hairWidth = 0.1; //context.lineWidth / (this.current["size"] * 4.5);
 				context.lineWidth = hairWidth;
+				context.globalCompositeOperation = "source-over";
 				context.beginPath();
 				/*context.moveTo(startX, startY);
 				context.lineTo(offsetX, offsetY);
@@ -373,10 +465,12 @@ var PenType = {
 				}else if (hairpressure == undefined) {
 					hairpressure = 1;
 				}
-				var hairWidthOnPres = this.current[1] * 0.5 * hairpressure * 2;
+				var hairWidthOnPres = this.current["size"] * 0.5 * hairpressure * 2;
 				var hairWidthCount = hairWidthOnPres / 2;
 				var hairHeightCount = hairWidthOnPres * 1.1; //少しだけ多め
-				var keisubase = hairWidthCount / 2;
+				var keisubase = hairWidthCount / 1.6;
+				var svkeisu = keisubase;
+				var keisu_orikaesi = false;
 				
 				hairStX = startX - (hairWidthOnPres * 0.25); //開始Xは少し左
 				hairStY = startY - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
@@ -393,40 +487,54 @@ var PenType = {
 					hairStX = hairStX + 1;
 					hairX = hairX + 1;
 					
-					hairStY = startY - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
-					hairY = offsetY - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
-					hairDistY = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
-					hairDistYhalf = [Math.round(hairDistY / 2), Math.ceil(hairDistY / 2)+hairDistY]
 					var ydist = 0;
 					if ((i % 3) == 0) {
-						ydist = 2;
+						ydist = 3.5;
 					}else{
-						ydist = 1;
+						ydist = 3.5;
 					}
+					hairStY = startY - (hairHeightCount*ydist/1.8); //(hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairY = offsetY - (hairHeightCount*ydist/1.8); //(hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairDistY = Math.round(hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure));
+					var hairDistComp = hairHeightCount - hairDistY;
+					hairDistYhalf = [hairDistComp/2,hairDistY+hairDistComp/2];//[Math.round(hairDistY / 2), Math.ceil(hairDistY / 2)+hairDistY]
 					for (var j = 0; j < hairHeightCount; j++) {
 						hairStY = hairStY + ydist;
 						hairY = hairY + ydist;
 						
 						if ((j <= hairDistYhalf[0]) || (j >= hairDistYhalf[1])) {
 						}else{
+							if (j == hairDistYhalf[0]+1) {
+								context.globalAlpha = 0.5 * hairpressure * 2;
+							}else if (j == hairHeightCount-1) {
+								context.globalAlpha = 0.5 * hairpressure * 2;
+							}else{
+								context.globalAlpha = 0.7 * hairpressure * 2;
+							}
 							context.lineWidth = hairWidth;
 							context.moveTo(hairStX,hairStY);
 							context.lineTo(hairX, hairY);
 							context.stroke();
 						}
 					}
-					if (keisubase == hairWidthCount/2) {
-						keisubase--;
+					if (keisu_orikaesi) {
+						keisubase -= svkeisu;
 					}else{
-						keisubase++;
+						if (i > hairWidthCount/2) {
+							keisubase -= svkeisu;
+							keisu_orikaesi = true;
+						}else{
+							keisubase += svkeisu;
+						}
 					}
 				}
-				
-			}else if (this.current[0] == "oilpaintv"){
+				context.globalCompositeOperation = "lighter";
+			}else if (this.current["mode"] == "oilpaintv"){
 				//油彩筆 - 縦向きの筆バージョン
 				//毛先1本あたりは1ピクセル近くする
-				hairWidth = 0.1; //context.lineWidth / (this.current[1] * 4.5);
+				hairWidth = 0.1; //context.lineWidth / (this.current["size"] * 4.5);
 				context.lineWidth = hairWidth;
+				context.globalCompositeOperation = "source-over";
 				context.beginPath();
 				/*context.moveTo(startX, startY);
 				context.lineTo(offsetX, offsetY);
@@ -452,10 +560,12 @@ var PenType = {
 				}else if (hairpressure == undefined) {
 					hairpressure = 1;
 				}
-				var hairWidthOnPres = this.current[1] * 0.5 * hairpressure * 2;
+				var hairWidthOnPres = this.current["size"] * 0.5 * hairpressure * 2;
 				var hairWidthCount = hairWidthOnPres * 1.1; //少しだけ多め
 				var hairHeightCount = hairWidthOnPres / 2;
 				var keisubase = hairWidthCount / 2;
+				var svkeisu = keisubase;
+				var keisu_orikaesi = false;
 				
 				hairStY = startY - (hairWidthOnPres * 0.25); //開始Xは少し左
 				hairStX = startX - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
@@ -472,37 +582,50 @@ var PenType = {
 					hairStY = hairStY + 1;
 					hairY = hairY + 1;
 					
-					hairStX = startX - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
-					hairX = offsetX - (hairWidthOnPres);// * keisu * hairpressure)*0.2;
-					hairDistX = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
-					hairDistXhalf = [Math.round(hairDistX / 2), Math.ceil(hairDistX / 2)+hairDistX]
 					var xdist = 0;
 					if ((i % 3) == 0) {
-						xdist = 2;
+						xdist = 3.5;
 					}else{
-						xdist = 1;
+						xdist = 3.5;
 					}
+					hairStX = startX - (hairWidthCount*xdist/1.8); //(hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairX = offsetX - (hairWidthCount*xdist/1.8); //(hairWidthOnPres);// * keisu * hairpressure)*0.2;
+					hairDistX = Math.round(hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure));
+					var hairDistComp = hairWidthCount - hairDistX;
+					hairDistXhalf = [hairDistComp/2,hairDistX+hairDistComp/2];//[Math.round(hairDistX / 2), Math.ceil(hairDistX / 2)+hairDistX]
 					for (var j = 0; j < hairWidthCount; j++) {
 						hairStX = hairStX + xdist;
 						hairX = hairX + xdist;
 						
 						if ((j <= hairDistXhalf[0]) || (j >= hairDistXhalf[1])) {
 						}else{
+							if (j == hairDistXhalf[0]+1) {
+								context.globalAlpha = 0.5 * hairpressure * 2;
+							}else if (j == hairWidthCount-1) {
+								context.globalAlpha = 0.5 * hairpressure * 2;
+							}else{
+								context.globalAlpha = 0.7 * hairpressure * 2;
+							}
 							context.lineWidth = hairWidth;
 							context.moveTo(hairStX,hairStY);
 							context.lineTo(hairX, hairY);
 							context.stroke();
 						}
 					}
-					if (keisubase == hairHeightCount/2) {
-						keisubase--;
+					if (keisu_orikaesi) {
+						keisubase -= svkeisu;
 					}else{
-						keisubase++;
+						if (keisubase >= hairHeightCount/2) {
+							keisubase -= svkeisu;
+							keisu_orikaesi = true;
+						}else{
+							keisubase += svkeisu;
+						}
 					}
 				}
-				
-			}else if (this.current[0] == "airbrush"){
-				context.lineWidth = this.current[1];
+				context.globalCompositeOperation = "lighter";
+			}else if (this.current["mode"] == "airbrush"){
+				context.lineWidth = this.current["size"];
 				var hairpressure = this.parent.lastpressure  ? this.parent.lastpressure : 1 ;
 				if (hairpressure == 0) {
 					hairpressure = 0.001;
@@ -536,128 +659,330 @@ var PenType = {
 				StYarr.push(startY);
 				Xarr.push(offsetX);
 				Yarr.push(offsetY);
-				alparr.push(0.3 * hairpressure * 2);
-				widarr.push(this.current[1]);
-				shadowarr.push(15);
+				alparr.push(0.01 * hairpressure * 2);
+				widarr.push(this.current["size"]*0.2);
+				shadowarr.push(50);
 				caparr.push("round");
-				//2点目：上
+				//1点目：中心（再度1）
 				compoarr.push("source-over");
 				StXarr.push(startX);
-				StYarr.push(startY - (this.current[1] * 0.55));
+				StYarr.push(startY);
 				Xarr.push(offsetX);
-				Yarr.push(offsetY - (this.current[1] * 0.55));
+				Yarr.push(offsetY);
+				alparr.push(0.05 * hairpressure * 2);
+				widarr.push(this.current["size"]*0.4);
+				shadowarr.push(25);
+				caparr.push("round");
+				//1点目：中心（再度2）
+				compoarr.push("destination-over");
+				StXarr.push(startX);
+				StYarr.push(startY);
+				Xarr.push(offsetX);
+				Yarr.push(offsetY);
+				alparr.push(0.03 * hairpressure * 2);
+				widarr.push(this.current["size"]*1);
+				shadowarr.push(10);
+				caparr.push("round");
+				//1点目：中心（再度3）
+				compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY);
+				Xarr.push(offsetX);
+				Yarr.push(offsetY);
+				alparr.push(0.04 * hairpressure * 2);
+				widarr.push(this.current["size"]*1.2);
+				shadowarr.push(15);
+				caparr.push("butt");
+				//2点目：上
+				/*compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY - (this.current["size"] * 0.55));
+				Xarr.push(offsetX);
+				Yarr.push(offsetY - (this.current["size"] * 0.55));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("butt");
 				//2点目：上,左
-				/*compoarr.push("source-over");
-				StXarr.push(startX - (this.current[1] * 0.45));
-				StYarr.push(startY - (this.current[1] * 0.45));
-				Xarr.push(offsetX - (this.current[1] * 0.45));
-				Yarr.push(offsetY - (this.current[1] * 0.45));
+				compoarr.push("source-over");
+				StXarr.push(startX - (this.current["size"] * 0.45));
+				StYarr.push(startY - (this.current["size"] * 0.45));
+				Xarr.push(offsetX - (this.current["size"] * 0.45));
+				Yarr.push(offsetY - (this.current["size"] * 0.45));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
-				shadowarr.push(10);*/
-				caparr.push("round");
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
 					//2点目：上,左2
-					compoarr.push("source-over");
-					StXarr.push(startX - (this.current[1] * 0.25));
-					StYarr.push(startY - (this.current[1] * 0.25));
-					Xarr.push(offsetX - (this.current[1] * 0.25));
-					Yarr.push(offsetY - (this.current[1] * 0.25));
+				/*	compoarr.push("source-over");
+					StXarr.push(startX - (this.current["size"] * 0.25));
+					StYarr.push(startY - (this.current["size"] * 0.25));
+					Xarr.push(offsetX - (this.current["size"] * 0.25));
+					Yarr.push(offsetY - (this.current["size"] * 0.25));
 					alparr.push(0.01 * hairpressure * 2);
-					widarr.push(this.current[1] * 0.5);
+					widarr.push(this.current["size"] * 0.5);
 					shadowarr.push(2);
 					caparr.push("round");
 				//2点目：上,右
-				/*compoarr.push("source-over");
-				StXarr.push(startX + (this.current[1] * 0.45));
-				StYarr.push(startY - (this.current[1] * 0.45));
-				Xarr.push(offsetX + (this.current[1] * 0.45));
-				Yarr.push(offsetY - (this.current[1] * 0.45));
+				compoarr.push("source-over");
+				StXarr.push(startX + (this.current["size"] * 0.45));
+				StYarr.push(startY - (this.current["size"] * 0.45));
+				Xarr.push(offsetX + (this.current["size"] * 0.45));
+				Yarr.push(offsetY - (this.current["size"] * 0.45));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("round");*/
 					//2点目：上,右2
-					compoarr.push("source-over");
-					StXarr.push(startX + (this.current[1] * 0.25));
-					StYarr.push(startY - (this.current[1] * 0.25));
-					Xarr.push(offsetX + (this.current[1] * 0.25));
-					Yarr.push(offsetY - (this.current[1] * 0.25));
+				/*	compoarr.push("source-over");
+					StXarr.push(startX + (this.current["size"] * 0.25));
+					StYarr.push(startY - (this.current["size"] * 0.25));
+					Xarr.push(offsetX + (this.current["size"] * 0.25));
+					Yarr.push(offsetY - (this.current["size"] * 0.25));
 					alparr.push(0.01 * hairpressure * 2);
-					widarr.push(this.current[1] * 0.5);
+					widarr.push(this.current["size"] * 0.5);
 					shadowarr.push(2);
 					caparr.push("round");
 				//3点目：下
 				compoarr.push("source-over");
 				StXarr.push(startX);
-				StYarr.push(startY + (this.current[1] * 0.55));
+				StYarr.push(startY + (this.current["size"] * 0.55));
 				Xarr.push(offsetX);
-				Yarr.push(offsetY + (this.current[1] * 0.55));
+				Yarr.push(offsetY + (this.current["size"] * 0.55));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(5);
-				caparr.push("butt");
+				caparr.push("butt");*/
 				//3点目：下,左
 				/*compoarr.push("source-over");
-				StXarr.push(startX - (this.current[1] * 0.45));
-				StYarr.push(startY + (this.current[1] * 0.45));
-				Xarr.push(offsetX - (this.current[1] * 0.45));
-				Yarr.push(offsetY + (this.current[1] * 0.45));
+				StXarr.push(startX - (this.current["size"] * 0.45));
+				StYarr.push(startY + (this.current["size"] * 0.45));
+				Xarr.push(offsetX - (this.current["size"] * 0.45));
+				Yarr.push(offsetY + (this.current["size"] * 0.45));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("round");*/
 					//3点目：下,左2
-					compoarr.push("source-over");
-					StXarr.push(startX - (this.current[1] * 0.25));
-					StYarr.push(startY + (this.current[1] * 0.25));
-					Xarr.push(offsetX - (this.current[1] * 0.25));
-					Yarr.push(offsetY + (this.current[1] * 0.25));
+				/*	compoarr.push("source-over");
+					StXarr.push(startX - (this.current["size"] * 0.25));
+					StYarr.push(startY + (this.current["size"] * 0.25));
+					Xarr.push(offsetX - (this.current["size"] * 0.25));
+					Yarr.push(offsetY + (this.current["size"] * 0.25));
 					alparr.push(0.01 * hairpressure * 2);
-					widarr.push(this.current[1] * 0.5);
+					widarr.push(this.current["size"] * 0.5);
 					shadowarr.push(2);
-					caparr.push("round");
+					caparr.push("round");*/
 				//3点目：下,右
 				/*compoarr.push("source-over");
-				StXarr.push(startX + (this.current[1] * 0.45));
-				StYarr.push(startY + (this.current[1] * 0.45));
-				Xarr.push(offsetX + (this.current[1] * 0.45));
-				Yarr.push(offsetY + (this.current[1] * 0.45));
+				StXarr.push(startX + (this.current["size"] * 0.45));
+				StYarr.push(startY + (this.current["size"] * 0.45));
+				Xarr.push(offsetX + (this.current["size"] * 0.45));
+				Yarr.push(offsetY + (this.current["size"] * 0.45));
 				alparr.push(0.02 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("round");*/
 					//3点目：下,右2
-					compoarr.push("source-over");
-					StXarr.push(startX + (this.current[1] * 0.25));
-					StYarr.push(startY + (this.current[1] * 0.25));
-					Xarr.push(offsetX + (this.current[1] * 0.25));
-					Yarr.push(offsetY + (this.current[1] * 0.25));
+				/*	compoarr.push("source-over");
+					StXarr.push(startX + (this.current["size"] * 0.25));
+					StYarr.push(startY + (this.current["size"] * 0.25));
+					Xarr.push(offsetX + (this.current["size"] * 0.25));
+					Yarr.push(offsetY + (this.current["size"] * 0.25));
 					alparr.push(0.01 * hairpressure * 2);
-					widarr.push(this.current[1] * 0.5);
+					widarr.push(this.current["size"] * 0.5);
 					shadowarr.push(2);
 					caparr.push("round");
 				//3点目：左
 				compoarr.push("source-over");
-				StXarr.push(startX - (this.current[1] * 0.45));
+				StXarr.push(startX - (this.current["size"] * 0.45));
 				StYarr.push(startY);
-				Xarr.push(offsetX - (this.current[1] * 0.25));
+				Xarr.push(offsetX - (this.current["size"] * 0.25));
 				Yarr.push(offsetY);
 				alparr.push(0.05 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("round");
 				//4点目：右
 				compoarr.push("source-over");
-				StXarr.push(startX + (this.current[1] * 0.45));
+				StXarr.push(startX + (this.current["size"] * 0.45));
 				StYarr.push(startY);
-				Xarr.push(offsetX + (this.current[1] * 0.25));
+				Xarr.push(offsetX + (this.current["size"] * 0.25));
 				Yarr.push(offsetY);
 				alparr.push(0.05 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.5);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+				for (var i = 0; i < StXarr.length; i++) {
+					context.globalCompositeOperation = compoarr[i];
+					context.globalAlpha = alparr[i];
+					context.lineCap = caparr[i];
+					context.lineWidth = widarr[i];
+					context.shadowBlur = shadowarr[i];
+					context.beginPath();
+					context.moveTo(StXarr[i], StYarr[i]);
+					context.lineTo(Xarr[i], Yarr[i]);
+					context.stroke();
+				}
+				context.globalAlpha = bakalp;
+			}else if (this.current["mode"] == "waterpaint"){
+				context.lineWidth = this.current["size"];
+				var hairpressure = this.parent.lastpressure  ? this.parent.lastpressure : 1 ;
+				if (hairpressure == 0) {
+					hairpressure = 0.001;
+				}else if (hairpressure == undefined) {
+					hairpressure = 1;
+				}
+				document.getElementById("log3").innerHTML = hairpressure;
+				var bakalp = context.globalAlpha;
+				/*var alp = context.globalAlpha * hairpressure * 2;
+				context.globalAlpha = alp;
+				context.beginPath();
+				context.moveTo(startX, startY);
+				context.lineTo(offsetX, offsetY);
+				context.stroke();
+				context.globalAlpha = bakalp;*/
+
+
+				var StXarr = [];
+				var StYarr = [];
+				var Xarr = [];
+				var Yarr = [];
+				var alparr = [];
+				var widarr = [];
+				var shadowarr = [];
+				var compoarr = [];
+				var caparr = [];
+				//---テスト的にエアブラシの毛先は5点+全体を覆う1点とする
+				
+				//1点目：中心
+				compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY);
+				Xarr.push(offsetX);
+				Yarr.push(offsetY);
+				alparr.push(0.1 * hairpressure * 2);
+				widarr.push(this.current["size"]);
+				shadowarr.push(15);
+				caparr.push("round");
+				//2点目：上
+				compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY - (this.current["size"] * 0.55));
+				Xarr.push(offsetX);
+				Yarr.push(offsetY - (this.current["size"] * 0.55));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("butt");
+				//2点目：上,左
+				/*compoarr.push("source-over");
+				StXarr.push(startX - (this.current["size"] * 0.45));
+				StYarr.push(startY - (this.current["size"] * 0.45));
+				Xarr.push(offsetX - (this.current["size"] * 0.45));
+				Yarr.push(offsetY - (this.current["size"] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//2点目：上,左2
+					compoarr.push("source-over");
+					StXarr.push(startX - (this.current["size"] * 0.25));
+					StYarr.push(startY - (this.current["size"] * 0.25));
+					Xarr.push(offsetX - (this.current["size"] * 0.25));
+					Yarr.push(offsetY - (this.current["size"] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current["size"] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//2点目：上,右
+				/*compoarr.push("source-over");
+				StXarr.push(startX + (this.current["size"] * 0.45));
+				StYarr.push(startY - (this.current["size"] * 0.45));
+				Xarr.push(offsetX + (this.current["size"] * 0.45));
+				Yarr.push(offsetY - (this.current["size"] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//2点目：上,右2
+					compoarr.push("source-over");
+					StXarr.push(startX + (this.current["size"] * 0.25));
+					StYarr.push(startY - (this.current["size"] * 0.25));
+					Xarr.push(offsetX + (this.current["size"] * 0.25));
+					Yarr.push(offsetY - (this.current["size"] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current["size"] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//3点目：下
+				compoarr.push("source-over");
+				StXarr.push(startX);
+				StYarr.push(startY + (this.current["size"] * 0.55));
+				Xarr.push(offsetX);
+				Yarr.push(offsetY + (this.current["size"] * 0.55));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(5);
+				caparr.push("butt");
+				//3点目：下,左
+				/*compoarr.push("source-over");
+				StXarr.push(startX - (this.current["size"] * 0.45));
+				StYarr.push(startY + (this.current["size"] * 0.45));
+				Xarr.push(offsetX - (this.current["size"] * 0.45));
+				Yarr.push(offsetY + (this.current["size"] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//3点目：下,左2
+					compoarr.push("source-over");
+					StXarr.push(startX - (this.current["size"] * 0.25));
+					StYarr.push(startY + (this.current["size"] * 0.25));
+					Xarr.push(offsetX - (this.current["size"] * 0.25));
+					Yarr.push(offsetY + (this.current["size"] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current["size"] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//3点目：下,右
+				/*compoarr.push("source-over");
+				StXarr.push(startX + (this.current["size"] * 0.45));
+				StYarr.push(startY + (this.current["size"] * 0.45));
+				Xarr.push(offsetX + (this.current["size"] * 0.45));
+				Yarr.push(offsetY + (this.current["size"] * 0.45));
+				alparr.push(0.02 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");*/
+					//3点目：下,右2
+					compoarr.push("source-over");
+					StXarr.push(startX + (this.current["size"] * 0.25));
+					StYarr.push(startY + (this.current["size"] * 0.25));
+					Xarr.push(offsetX + (this.current["size"] * 0.25));
+					Yarr.push(offsetY + (this.current["size"] * 0.25));
+					alparr.push(0.01 * hairpressure * 2);
+					widarr.push(this.current["size"] * 0.5);
+					shadowarr.push(2);
+					caparr.push("round");
+				//3点目：左
+				compoarr.push("source-over");
+				StXarr.push(startX - (this.current["size"] * 0.45));
+				StYarr.push(startY);
+				Xarr.push(offsetX - (this.current["size"] * 0.25));
+				Yarr.push(offsetY);
+				alparr.push(0.05 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
+				shadowarr.push(10);
+				caparr.push("round");
+				//4点目：右
+				compoarr.push("xor");
+				StXarr.push(startX + (this.current["size"] * 0.45));
+				StYarr.push(startY);
+				Xarr.push(offsetX + (this.current["size"] * 0.25));
+				Yarr.push(offsetY);
+				alparr.push(0.05 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.5);
 				shadowarr.push(10);
 				caparr.push("round");
 				//5点目：中心（再度）
@@ -666,8 +991,8 @@ var PenType = {
 				StYarr.push(startY);
 				Xarr.push(offsetX);
 				Yarr.push(offsetY);
-				alparr.push(0.09 * hairpressure * 2);
-				widarr.push(this.current[1]);
+				alparr.push(0.2 * hairpressure * 2);
+				widarr.push(this.current["size"]);
 				shadowarr.push(5);
 				caparr.push("round");
 				for (var i = 0; i < StXarr.length; i++) {
@@ -683,8 +1008,8 @@ var PenType = {
 				}
 				context.globalAlpha = bakalp;
 
-			}else if (this.current[0] == "pencil"){
-				context.lineWidth = this.current[1];
+			}else if (this.current["mode"] == "pencil"){
+				context.lineWidth = this.current["size"];
 				var hairpressure = this.parent.lastpressure  ? this.parent.lastpressure : 1 ;
 				if (hairpressure == 0) {
 					hairpressure = 0.001;
@@ -703,37 +1028,57 @@ var PenType = {
 				var compoarr = [];
 				var caparr = [];
 				
+				//5点目：中心（再度）ベースの線
+				compoarr.push("source-over");
+				StXarr.push(startX + (this.current["size"] * 0.05));
+				StYarr.push(startY - (this.current["size"] * 0.09));
+				Xarr.push(offsetX + (this.current["size"] * 0.05));
+				Yarr.push(offsetY - (this.current["size"] * 0.09));
+				if (hairpressure > 0.3) {
+					alparr.push(1 * hairpressure * 1);
+					widarr.push(this.current["size"]*0.9);
+					shadowarr.push(2);
+					caparr.push("round");
+				}else{
+					alparr.push(0.5 * hairpressure * 1);
+					widarr.push(this.current["size"] * 0.9);
+					shadowarr.push(1);
+					caparr.push("round");
+				}
+				//6点目：中心（再々度）
+				compoarr.push("source-over");
+				StXarr.push(startX - (this.current["size"] * 0.06));
+				StYarr.push(startY + (this.current["size"] * 0.085));
+				Xarr.push(offsetX - (this.current["size"] * 0.06));
+				Yarr.push(offsetY + (this.current["size"] * 0.085));
+				if (hairpressure > 0.3) {
+					alparr.push(1 * hairpressure * 1);
+					widarr.push(this.current["size"]*0.9);
+					shadowarr.push(2);
+					caparr.push("round");
+				}else{
+					alparr.push(0.5 * hairpressure * 1);
+					widarr.push(this.current["size"] * 0.9);
+					shadowarr.push(1);
+					caparr.push("round");
+				}
 				//1点目：中心
 				compoarr.push("source-over");
 				StXarr.push(startX);
 				StYarr.push(startY);
 				Xarr.push(offsetX);
 				Yarr.push(offsetY);
-				alparr.push(0.5 * hairpressure * 2);
-				widarr.push(this.current[1] * 0.90);
+				alparr.push(1 * hairpressure * 2);
+				widarr.push(this.current["size"] * 0.90);
 				shadowarr.push(1);
 				caparr.push("butt");
-				//5点目：中心（再度）ベースの線
-				compoarr.push("source-over");
-				StXarr.push(startX + (this.current[1] * 0.05));
-				StYarr.push(startY - (this.current[1] * 0.09));
-				Xarr.push(offsetX + (this.current[1] * 0.05));
-				Yarr.push(offsetY - (this.current[1] * 0.09));
-				alparr.push(1 * hairpressure * 2);
-				widarr.push(this.current[1]*0.6);
-				shadowarr.push(2);
-				caparr.push("round");
-				//6点目：中心（再々度）
-				compoarr.push("source-over");
-				StXarr.push(startX - (this.current[1] * 0.06));
-				StYarr.push(startY + (this.current[1] * 0.085));
-				Xarr.push(offsetX - (this.current[1] * 0.06));
-				Yarr.push(offsetY + (this.current[1] * 0.085));
-				alparr.push(1 * hairpressure * 2);
-				widarr.push(this.current[1]*0.6);
-				shadowarr.push(2);
-				caparr.push("round");
-				for (var i = 0; i < StXarr.length; i++) {
+				//var cl = new RGBColor(this.parent.colorpicker.value);
+				for (var i = 1; i < StXarr.length; i++) {
+				//var grad = context.createLinearGradient(StXarr[i], StYarr[i],Xarr[i], Yarr[i]);
+				//grad.addColorStop(0.0, "rgb(" + Math.floor(cl.r*10) + "," + Math.floor(cl.g*10) + "," + Math.floor(cl.b*10) + ")");
+				//grad.addColorStop(0.5, "rgb(" + Math.floor(cl.r/2) + "," + Math.floor(cl.g/2) + "," + Math.floor(cl.b/2) + ")");
+				//grad.addColorStop(1.0, cl.toRGB());
+				//context.strokeStyle = grad;
 					context.globalCompositeOperation = compoarr[i];
 					context.globalAlpha = alparr[i];
 					context.lineCap = caparr[i];
@@ -755,7 +1100,22 @@ var PenType = {
 			}
 			context.closePath();
 		},
-		
+		hiddenMenu : function (evt){
+			document.getElementById("menupanel").style.display = "none";
+			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
+			
+			var p = document.querySelectorAll("li.item1st");
+			console.log(p);
+			for (var j = 0; j < p.length; j++) {
+				//p[j].style.listStyleType = "none";
+				if (String(p[j].innerHTML).substr(0,1).charCodeAt() == "10004")
+					p[j].innerText = String(p[j].innerHTML).substr(1,String(p[j].innerHTML).length);
+			}
+			//evt.target.style.listStyleType = "square";
+			evt.target.innerHTML = "&#10004;" + evt.target.innerText;
+			console.log(event.target.id);
+			document.getElementById("dlg_pen_mode").style.display = "none";
+		},
 		initialize : function(drawobject) {
 			this.parent = drawobject;
 			this.simplepen = document.getElementById("simplepen");
@@ -768,49 +1128,72 @@ var PenType = {
 			this.oilpaintv = document.getElementById("oilpaintv");
 			this.eraser = document.getElementById("eraser");
 			this.fillpen = document.getElementById("fillpen");
+			this.waterpaint = document.getElementById("waterpaint");
+			this.colorchangepen = document.getElementById("colorchangepen");
 			
 			this.sizebar = document.getElementById("pensize");
 			this.colorpicker = document.getElementById("colorpicker");
 			
-			this.simplepen.addEventListener("click", function(event) {
+			/*var ul = document.querySelector("div#dlg_pen_mode ul li");
+			for (var i = 0; i < ul.length; i++) {
+				//ul[i].onclick = pens[i].onclick;
+				ul[i].addEventListener("click",function(event){
+					var p = document.querySelectorAll("div#dlg_pen_mode ul li");
+					for (var j = 0; j < p.length; j++) {
+						p[j].style.listStyleType = "none";
+					}
+					event.target.style.listStyleType = "square";
+					console.log(event.target.id);
+					document.getElementById("dlg_pen_mode").style.display = "none";
+				},false);
+			}*/
+			this.simplepen.addEventListener("click",function(event) {
 				Draw.pen.setSimplePen(Draw.context);
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.pencil.addEventListener("click", function(event) {
+			this.pencil.addEventListener("click",function(event) {
 				Draw.pen.setPencil(Draw.context);
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.airbrush.addEventListener("click", function(event) {
+			this.airbrush.addEventListener("click",function(event) {
 				Draw.pen.setAirbrush(Draw.context); // change edit style to "airbrush".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.neonpen.addEventListener("click", function(event) {
+			this.neonpen.addEventListener("click",function(event) {
 				Draw.pen.setNeonpen(Draw.context); // change edit style to "neonpen".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.fudepen.addEventListener("click", function(event) {
+			this.fudepen.addEventListener("click",function(event) {
 				Draw.pen.setFudePen(Draw.context); // change edit style to "fudepen".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.calligraphy.addEventListener("click", function(event) {
+			this.calligraphy.addEventListener("click",function(event) {
 				Draw.pen.setcalligraphy(Draw.context); // change edit style to "calligraphy".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.oilpaint.addEventListener("click", function(event) {
+			this.oilpaint.addEventListener("click",function(event) {
 				Draw.pen.setOilPaintPen(Draw.context); // change edit style to "oilpaint".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.oilpaintv.addEventListener("click", function(event) {
+			this.oilpaintv.addEventListener("click",function(event) {
 				Draw.pen.setOilPaintPen(Draw.context,{"name":"oilpaintv"}); // change edit style to "oilpaint".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.eraser.addEventListener("click", function(event) {
+			this.eraser.addEventListener("click",function(event) {
 				Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
 			}, false);
-			this.fillpen.addEventListener("click", function(event) {
+			this.fillpen.addEventListener("click",function(event) {
 				Draw.pen.setFillpen(Draw.context); // change edit style to "eraser".
-				document.getElementById("btn_menu").click();
+				PenSet.hiddenMenu(event);
+			}, false);
+			this.waterpaint.addEventListener("click",function(event) {
+				Draw.pen.setWaterPaintPen(Draw.context); // change edit style to "waterpaint".
+				PenSet.hiddenMenu(event);
+			}, false);
+			this.colorchangepen.addEventListener("click",function(event) {
+				Draw.pen.setColorChangepen(Draw.context); // change edit style to "colorchange".
+				PenSet.hiddenMenu(event);
 			}, false);
 			
 		}

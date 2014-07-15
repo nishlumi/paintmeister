@@ -11,19 +11,6 @@ function confirm(message,callback) {
 function saveImage() {
 	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
 		//---for ChromeApps
-		//---function start
-		var c = Draw.canvas.getContext("2d");
-		c.clearRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-		c.fillStyle = "#FFFFFF";
-		c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-		for (var obj in Draw.layer) {
-			if (Draw.layer[obj].isvisible) {
-				c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
-				c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-				c.drawImage(Draw.layer[obj].canvas, 0, 0);
-			}
-		}
-
 		var blob = dataURItoBlob(Draw.canvas.toDataURL("image/png"));
 
 		var config = {type: 'saveFile', suggestedName: "New Image.png"};
@@ -31,7 +18,7 @@ function saveImage() {
 			console.log("writableEntry=");
 			console.log(writableEntry);
 			writeFileEntry(writableEntry, blob, function(e) {
-				$.jGrowl("ƒLƒƒƒ“ƒoƒX‚Ì‰æ‘œ‚ğ•Û‘¶‚µ‚Ü‚µ‚½");
+				$.jGrowl("ã‚­ãƒ£ãƒ³ãƒã‚¹ã®ç”»åƒã‚’ä¿å­˜ã—ã¾ã—ãŸ");
 			});
 		});
 	}else{
@@ -43,20 +30,32 @@ function saveImage() {
 	}
 }
 function ElementTransform(element, value) {
-	element.style.transform = value;
 	element.style.msTransform = value;
 	element.style.webkitTransform = value;
 	element.style.mozTransform = value;
+	element.style.transform = value;
 }
 //#################################################################################
 //#################################################################################
 (function(){
 	window.addEventListener("load",function(){
 		document.addEventListener("keydown", function(event) {
-			//console.log(event.keyCode);
-			if (event.keyCode == "32"){ //SPACE
+			console.log(event.keyCode);
+			if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")){ //SPACE or 1
 				if (document.getElementById("initialsetup").style.display == "none") {
 					document.getElementById("btn_menu").click();
+					
+					return event.preventDefault();
+				}
+			}else if ((event.keyCode == "50") || (event.keyCode == "98")) {
+				if (document.getElementById("initialsetup").style.display == "none") {
+					document.getElementById("info_layer").click();
+					
+					return event.preventDefault();
+				}
+			}else if ((event.keyCode == "51") || (event.keyCode == "99")) {
+				if (document.getElementById("initialsetup").style.display == "none") {
+					document.getElementById("info_pen_mode").click();
 					
 					return event.preventDefault();
 				}
@@ -72,7 +71,7 @@ function ElementTransform(element, value) {
 				}
 			}
 			var relkey = ["81","87"];
-			//---è“®•Mˆ³ƒCƒxƒ“ƒg
+			//---æ‰‹å‹•ç­†åœ§ã‚¤ãƒ™ãƒ³ãƒˆ
 			if (document.getElementById("chk_enable_handpres").checked) {
 				if ((event.keyCode == "81") || (event.keyCode == "87")) {
 					Draw.keyLikePres += virtual_pressure[event.keyCode];
@@ -93,40 +92,63 @@ function ElementTransform(element, value) {
 		}, false);
 		Draw.initialize();
 		ColorPalette.initialize();
+		$("#pickerpanel").hide();
+		$("#colorpicker").on("click", function(event) {
+			$("#pickerpanel").show();
+		});
 		document.getElementById("btn_menu").addEventListener("click", function(event) {
-			if (event.target.innerHTML.charCodeAt() == "9660") { //ŠJ‚­
+			if (document.getElementById("menupanel").style.display == "none") { //é–‹ã
 				document.getElementById("menupanel").style.display = "block";
-				event.target.innerHTML = "&#9650;";
+				document.getElementById("dlg_pen_mode").style.display = "none";
+				document.getElementById("dlg_layer").style.display = "none";
+				document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+				document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+				//event.target.innerHTML = "&#9650;";
 				event.target.style.backgroundColor = "#91d780";
-			}else{ //•Â‚¶‚é
+			}else{ //é–‰ã˜ã‚‹
 				document.getElementById("menupanel").style.display = "none";
-				event.target.innerHTML = "&#9660;";
+				document.getElementById("dlg_pen_mode").style.display = "none";
+				document.getElementById("dlg_layer").style.display = "none";
+				//event.target.innerHTML = "&#9660;";
 				event.target.style.backgroundColor = "#c4fab3";
 				document.body.focus();
 			}
 		}, false);
-		document.getElementById("canvas_width").max = Math.floor((window.innerWidth-50) / 100) * 100;
+		document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
 		document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-		document.getElementById("canvas_height").max = Math.floor((window.innerHeight-70) / 100) * 100;
+		document.getElementById("canvas_height").max = Math.floor((window.innerHeight-100) / 100) * 95;
 		document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-		//---ƒLƒƒƒ“ƒoƒXŠO‚©‚çƒ^ƒbƒ`‚µ‚½‚Ü‚Ü“ü‚Á‚½‚Æ‚«‚Ì‚½‚ß‚Ì•`‰æ§Œä
+		//---ã‚­ãƒ£ãƒ³ãƒã‚¹å¤–ã‹ã‚‰ã‚¿ãƒƒãƒã—ãŸã¾ã¾å…¥ã£ãŸã¨ãã®ãŸã‚ã®æç”»åˆ¶å¾¡
 		var touchstart = 'touchstart';
 		var touchend = 'touchend';
+		var touchleave = 'touchleave';
 		if (window.PointerEvent){
 			touchstart = "pointerdown";
 			touchend = "pointerup";
+			touchleave = 'pointerleave';
 		}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
 			touchstart = 'MSPointerDown';
 			touchend = 'MSPointerUp';
+			touchleave = 'MSPointerLeave';
 		}
 		document.body.addEventListener(touchstart, function(event) {
 			//Draw.drawing = true;
+
 		}, false);
 		document.body.addEventListener(touchend, function(event) {
 			Draw.drawing = false;
 		}, false);
+		$("#colorpicker").on(touchstart, function(event) {
+			$("#pickerpanel").show();
+		});
+		$("#pickerpanel").on(touchleave, function(event) {
+			$("#pickerpanel").hide();
+	    	event.preventDefault();
+		});
+		
 		touchstart = 'mousedown';
 		touchend = 'mouseup';
+		touchleave = 'mouseleave';
 		document.body.addEventListener(touchstart, function(event) {
 			//Draw.drawing = true;
 		}, false);
@@ -138,7 +160,13 @@ function ElementTransform(element, value) {
 			console.log("height=" + event.target.innerHeight);
 			Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
 		}, false);
-		
+		$("#colorpicker").on(touchstart, function(event) {
+			$("#pickerpanel").show();
+		});
+		$("#pickerpanel").on(touchleave, function(event) {
+			$("#pickerpanel").hide();
+	    	event.preventDefault();
+		});
 		console.log(window.innerWidth + "/" + window.innerHeight);
 	},false);
 })();
