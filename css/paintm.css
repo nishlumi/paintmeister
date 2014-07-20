@@ -114,7 +114,7 @@ touch-action:none;
 	top : 80px;
 	left : 0;
 	background-color : #B6BBE4;
-	padding : 2px;
+	padding: 0.5rem 0.5rem;
 	z-index : 10;
 	opacity : 0.85;
 	-moz-border-radius : 3px;
@@ -183,6 +183,7 @@ touch-action:none;
 }
 .layer_button_hidden {
 	border : 3px double #808080;
+	text-decoration : line-through;
 }
 .layer_button_selected {
 	width : 32px;
@@ -192,7 +193,18 @@ touch-action:none;
 	
 }
 #layinfo_opacity {
+	margin-left : 1rem;
 	width : 20%;
+}
+.laycontrol_button {
+	width : 5rem;
+}
+#lay_preview {
+	width : calc(32px*4);
+	height : calc(32px*4);
+	overflow : hidden;
+	float : left;
+	background-color : #D8DDF6
 }
 
 #info_panel .info_opebutton {
@@ -200,6 +212,7 @@ touch-action:none;
 	background-color : #c4fab3;
 	border :1px solid #999999;
 	padding : 0 0 0 0;
+	font-size : 120%;
 }
 #dlg_pen_mode {
 	display : none;
@@ -257,11 +270,12 @@ li.itemfolder_normal {
 	position : absolute;
 	top : 2.5rem;
 	left : calc(20%);
+	padding: 0.5rem 0.5rem;
 	background-color : #B6BBE4;
 	-moz-border-radius : 3px;
 	-webkit-border-radius : 3px;
 	border-radius : 3px;
-	opacity : 0.85;
+	opacity : 0.9;
 	z-index : 12;
 }
 #pickerpanel{

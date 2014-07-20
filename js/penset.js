@@ -195,7 +195,7 @@ var PenType = {
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
-			context.shadowBlur = 0.5;
+			context.shadowBlur = 1;
 			context.lineCap = "round";
 			
 			if (arguments.length > 1)  {
@@ -437,9 +437,9 @@ var PenType = {
 				}
 			}else if (this.current["mode"] == "oilpaint"){
 				//毛先1本あたりは1ピクセル近くする
-				hairWidth = 0.1; //context.lineWidth / (this.current["size"] * 4.5);
+				hairWidth = 0.3; //context.lineWidth / (this.current["size"] * 4.5);
 				context.lineWidth = hairWidth;
-				context.globalCompositeOperation = "source-over";
+				context.globalCompositeOperation = "lighter";
 				context.beginPath();
 				/*context.moveTo(startX, startY);
 				context.lineTo(offsetX, offsetY);
@@ -476,7 +476,22 @@ var PenType = {
 				hairStY = startY - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
 				hairX = offsetX - (hairWidthOnPres * 0.25);
 				hairY = offsetY - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
-				
+				context.lineWidth = hairWidthOnPres;
+				context.globalAlpha = 0.07;
+				context.lineCap = "butt";
+				var bgHeightCount = Math.round(hairHeightCount / 6);
+				var sy = startY;
+				var oy = offsetY;
+				for (var i = 0; i < bgHeightCount; i++) {
+					context.moveTo(startX+(hairWidthCount/2), sy);
+					context.lineTo(offsetX+(hairWidthCount/2), oy);
+					context.stroke();
+					sy += (hairWidthOnPres/1.2);
+					oy += (hairWidthOnPres/1.2);
+				}
+				context.globalCompositeOperation = "source-over";
+				context.lineWidth = hairWidth;
+				context.lineCap = "round";
 				var hairDistY = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
 				var hairDistYhalf = [Math.round(hairDistY / 2), Math.ceil(hairDistY / 2)+hairDistY]
 					
@@ -532,9 +547,9 @@ var PenType = {
 			}else if (this.current["mode"] == "oilpaintv"){
 				//油彩筆 - 縦向きの筆バージョン
 				//毛先1本あたりは1ピクセル近くする
-				hairWidth = 0.1; //context.lineWidth / (this.current["size"] * 4.5);
+				hairWidth = 0.3; //context.lineWidth / (this.current["size"] * 4.5);
 				context.lineWidth = hairWidth;
-				context.globalCompositeOperation = "source-over";
+				context.globalCompositeOperation = "lighter";
 				context.beginPath();
 				/*context.moveTo(startX, startY);
 				context.lineTo(offsetX, offsetY);
@@ -571,6 +586,22 @@ var PenType = {
 				hairStX = startX - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
 				hairY = offsetY - (hairWidthOnPres * 0.25);
 				hairX = offsetX - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure) * 0.45;
+				context.lineWidth = hairWidthOnPres;
+				context.globalAlpha = 0.07;
+				context.lineCap = "butt";
+				var bgWidthCount = Math.round(hairWidthCount / 6);
+				var sx = startX;
+				var ox = offsetX;
+				for (var i = 0; i < bgWidthCount; i++) {
+					context.moveTo(sx, startY+(hairHeightCount/2));
+					context.lineTo(ox, offsetY+(hairHeightCount/2));
+					context.stroke();
+					sx += (hairWidthOnPres/1.2);
+					ox += (hairWidthOnPres/1.2);
+				}
+				context.globalCompositeOperation = "source-over";
+				context.lineWidth = hairWidth;
+				context.lineCap = "round";
 				
 				var hairDistX = hairWidthOnPres - (hairWidthOnPres * Math.cos(keisubase/10) * hairpressure);
 				var hairDistXhalf = [Math.round(hairDistX / 2), Math.ceil(hairDistX / 2)+hairDistX]
@@ -1148,52 +1179,101 @@ var PenType = {
 				},false);
 			}*/
 			this.simplepen.addEventListener("click",function(event) {
-				Draw.pen.setSimplePen(Draw.context);
+				PenSet.setSimplePen(Draw.context);
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "simplepen",
+					"func" : PenSet.simplepen
+				};
 			}, false);
 			this.pencil.addEventListener("click",function(event) {
-				Draw.pen.setPencil(Draw.context);
+				PenSet.setPencil(Draw.context);
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "pencil",
+					"func" : PenSet.pencil
+				};
 			}, false);
 			this.airbrush.addEventListener("click",function(event) {
 				Draw.pen.setAirbrush(Draw.context); // change edit style to "airbrush".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "airbrush",
+					"func" : PenSet.airbrush
+				};
 			}, false);
 			this.neonpen.addEventListener("click",function(event) {
 				Draw.pen.setNeonpen(Draw.context); // change edit style to "neonpen".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "neonpen",
+					"func" : PenSet.neonpen
+				};
 			}, false);
 			this.fudepen.addEventListener("click",function(event) {
 				Draw.pen.setFudePen(Draw.context); // change edit style to "fudepen".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "fudepen",
+					"func" : PenSet.fudepen
+				};
 			}, false);
 			this.calligraphy.addEventListener("click",function(event) {
 				Draw.pen.setcalligraphy(Draw.context); // change edit style to "calligraphy".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "calligraphy",
+					"func" : PenSet.calligraphy
+				};
 			}, false);
 			this.oilpaint.addEventListener("click",function(event) {
 				Draw.pen.setOilPaintPen(Draw.context); // change edit style to "oilpaint".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "oilpaint",
+					"func" : PenSet.oilpaint
+				};
 			}, false);
 			this.oilpaintv.addEventListener("click",function(event) {
 				Draw.pen.setOilPaintPen(Draw.context,{"name":"oilpaintv"}); // change edit style to "oilpaint".
 				PenSet.hiddenMenu(event);
-			}, false);
-			this.eraser.addEventListener("click",function(event) {
-				Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
-				PenSet.hiddenMenu(event);
-			}, false);
-			this.fillpen.addEventListener("click",function(event) {
-				Draw.pen.setFillpen(Draw.context); // change edit style to "eraser".
-				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "oilpaintv",
+					"func" : PenSet.oilpaintv
+				};
 			}, false);
 			this.waterpaint.addEventListener("click",function(event) {
 				Draw.pen.setWaterPaintPen(Draw.context); // change edit style to "waterpaint".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "waterpaint",
+					"func" : PenSet.waterpaint
+				};
+			}, false);
+			
+			this.eraser.addEventListener("click",function(event) {
+				Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
+				PenSet.hiddenMenu(event);
+				PenSet.parent.last.eraser = {
+					"name" : "eraser",
+					"func" : PenSet.eraser
+				};
+			}, false);
+			this.fillpen.addEventListener("click",function(event) {
+				Draw.pen.setFillpen(Draw.context); // change edit style to "eraser".
+				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "fillpen",
+					"func" : PenSet.fillpen
+				};
 			}, false);
 			this.colorchangepen.addEventListener("click",function(event) {
 				Draw.pen.setColorChangepen(Draw.context); // change edit style to "colorchange".
 				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "colorchangepen",
+					"func" : PenSet.colorchangepen
+				};
 			}, false);
 			
 		}

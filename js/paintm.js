@@ -45,19 +45,19 @@ function ElementTransform(element, value) {
 				if (document.getElementById("initialsetup").style.display == "none") {
 					document.getElementById("btn_menu").click();
 					
-					return event.preventDefault();
+					//return event.preventDefault();
 				}
 			}else if ((event.keyCode == "50") || (event.keyCode == "98")) {
 				if (document.getElementById("initialsetup").style.display == "none") {
 					document.getElementById("info_layer").click();
 					
-					return event.preventDefault();
+					//return event.preventDefault();
 				}
 			}else if ((event.keyCode == "51") || (event.keyCode == "99")) {
 				if (document.getElementById("initialsetup").style.display == "none") {
 					document.getElementById("info_pen_mode").click();
 					
-					return event.preventDefault();
+					//return event.preventDefault();
 				}
 			}else if (event.keyCode == "90" && event.ctrlKey) { //Ctrl + Z
 				if (document.getElementById("initialsetup").style.display == "none") {

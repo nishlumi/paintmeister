@@ -1,12 +1,10 @@
-
-
 <html lang="ja">
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-
 	<title>PaintMeister - canvas draw tool for Windows8.1 with Pressure</title>
 
+	<link rel="shortcut icon" href="images/paintm-16.ico"/>
 	<link rel="stylesheet" href="plugin/css/jquery.jgrowl.min.css">
 	<link rel="stylesheet" href="plugin/css/easyui/bootstrap/easyui.css">
 	<link rel="stylesheet" href="plugin/css/easyui/icon.css">
@@ -89,10 +87,16 @@
 </div>
 <div id="dlg_layer">
 	<span class="explain_panel" title="各ボタン：押す＝レイヤー選択、下にドラッグ（フリック）＝表示・非表示切り替え">レイヤー操作</span>
-	<button id="lay_add" title="レイヤーを追加">+</button>
+	<button id="lay_add" class="laycontrol_button" title="レイヤーを追加">+</button>
+	<button id="lay_del" class="laycontrol_button" title="レイヤーを削除">-</button>
 	<div id="lay_btns">
 	</div>
+	<div id="lay_preview">
+		<img src="" id="prev_img" alt="preview" width="126" title="プレビュー"/>
+	</div>
 	<div id="lay_info">
+		<label>名前:<input type="text" id="layinfo_name" size="15"/></label>
+		<label><input type="checkbox" id="layinfo_toggle" checked>表示</label>
 		<label><input type="range" id="layinfo_opacity" min="0" max="100" value="100">不透明度</label>
 	</div>
 </div>

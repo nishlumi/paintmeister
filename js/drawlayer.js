@@ -24,6 +24,7 @@
 		
 		this.select = function(oldcontext){
 			var ls = own.parent.layer;
+			console.log(ls);
 			for (var i = 0; i < ls.length; i++) {
 				if (ls[i].selected) {
 					ls[i].deselect()
@@ -53,11 +54,14 @@
 			}
 			own.parent.context = newcontext;
 			document.getElementById("layinfo_opacity").value = own.Alpha;
-			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.id).replace("lay","");
+			document.getElementById("layinfo_toggle").checked = own.isvisible;
+			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.style.zIndex);
+			document.getElementById("layinfo_name").value = own.name;
+			document.getElementById("prev_img").src = own.canvas.toDataURL();
 		}
 		this.deselect = function (){
 			own.parent.context = null;
-			if (this.isvisible) {
+			if (own.isvisible) {
 				own.control.className = "layer_button layer_button_show";
 			}else{
 				own.control.className = "layer_button layer_button_hidden";
@@ -230,6 +234,7 @@
 					console.log(own.mode);
 					if (own.mode == "v"){ //表示・非表示切り替え
 						own.toggleShow();
+						document.getElementById("layinfo_toggle").checked = own.isvisible;
 					}else if (own.mode == "h"){ //優先度アップ
 					}else if (own.mode == "l") { //優先度ダウン
 						
@@ -242,12 +247,14 @@
 		};
 		this.generateLayer = function (newname){
 			var laylength = own.parent.layer.length;
-			if (laylength > 0) {
+			/*if (laylength > 0) {
 				var lastid = own.parent.layer[laylength-1].originID;
 				own.originID  = lastid + 1;
 			}else{
 				own.originID = laylength;
-			}
+			}*/
+			var now = new Date();
+			own.originID = now.getHours().toString() + now.getMinutes().toString() + now.getSeconds().toString() + now.getMilliseconds().toString();
 			own.canvas = document.createElement("canvas");
 			own.canvas.id = "lay" + own.originID;
 			own.name = own.canvas.id;
@@ -268,8 +275,8 @@
 			own.control.id = "lay_btn" + own.originID;
 			own.ctrlname = own.control.id;
 			own.control.className = "layer_button layer_button_show";
-			own.control.title = "レイヤーNo." + own.originID;
-			own.control.innerHTML = own.originID;
+			own.control.title = "レイヤーNo." + own.canvas.style.zIndex;
+			own.control.innerHTML = own.canvas.style.zIndex;
 			
 			document.getElementById("lay_btns").appendChild(own.control);
 			own.generate_core(own.canvas,own.control);
