@@ -149,6 +149,9 @@ function ElementTransform(element, value) {
 		touchstart = 'mousedown';
 		touchend = 'mouseup';
 		touchleave = 'mouseleave';
+		document.body.oncontextmenu = function(event) {
+			return false;
+		}
 		document.body.addEventListener(touchstart, function(event) {
 			//Draw.drawing = true;
 		}, false);

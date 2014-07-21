@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.16.22";
+var appversion = "1.0.16.24";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -546,7 +546,9 @@ function calculatePosition(eventtype,event,target,opt) {
 				this.pen.setEraser(this.context,{"size":svv});
 			}else{
 				//再びペンの先などでタッチされたら、前のペンを再採用する
-				this.last.pen["func"].click();
+				if (this.last.pen.name != this.pen.current.mode) {
+					this.last.pen["func"].click();
+				}
 			}
 			//---Undoに保管
 			//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
