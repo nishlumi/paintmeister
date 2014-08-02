@@ -26,7 +26,7 @@ var PenType = {
 		colorpicker : null,
 		defaults : {
 			"simplepen" : [4,"#000000"],
-			"pencil" : [4,"#000000"],
+			"pencil" : [3,"#000000"],
 			"airbrush" : [10,"#000000"],
 			"neonpen" : [8,"#000000"],
 			"fudepen" : [12,"#000000"],
@@ -70,7 +70,7 @@ var PenType = {
 		setPencil : function(context) {
 			this.current = {
 				"mode":"pencil",
-				"size":4,
+				"size":3,
 				"color":this.parent.colorpicker.value,
 				"complete":true
 			};
@@ -299,7 +299,7 @@ var PenType = {
 				/*if ((pressure2 != null) && (pressure2 > 0)) { //手動筆圧があれば使用
 					pres = pressure2;
 				}*/
-				if (document.getElementById("chk_enable_handpres").checked) {
+				if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
@@ -326,7 +326,7 @@ var PenType = {
 				/*if ((pressure2 != null) && (pressure2 > 0)) { //手動筆圧があれば使用
 					pres = pressure2;
 				}*/
-				if (document.getElementById("chk_enable_handpres").checked) {
+				if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}

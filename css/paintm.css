@@ -1,13 +1,14 @@
 body,html{
 	padding:0;
+	height : 100%;
 	overflow : hidden;
 -moz-user-select: none; /* Firefox */
 -webkit-user-select: none; /* SafariAChrome‚È‚Ç */
 -ms-user-select: none; /* IE10‚©‚ç‚ç‚µ‚¢ */
 user-select: none; /* CSS3 */
--ms-touch-action:none;
--webkit-touch-action:none;
-touch-action:none;
+-webkit-touch-action: none;
+-ms-touch-action: none;
+touch-action: none;
 }
 /*===============================================================
   UI parts and button area
@@ -29,7 +30,7 @@ touch-action:none;
 }
 
 .statbutton2 {
-	width : 80%;
+	width : 6rem; /*80%;*/
 	height : 60px;
 	background-color : #c4fab3;
 	border : 0;
@@ -71,6 +72,23 @@ touch-action:none;
 }
 .brush-special:hover {
 	background-color : #C2883B;
+}
+.switchbutton_off {
+	border : 3px outset #AFAFAF;
+	background-color : #848484;
+	cursor : default;
+}
+.switchbutton_on {
+	border : 3px inset #DADADA;
+	background-color : #84c0e1;
+	cursor : default;
+}
+#btn_freescroll {
+	font-size : 120%;
+	height : 32px;
+	width : 39px;
+	padding-top : 0.5rem;
+	text-align : center;
 }
 #btn_makecanvas {
 	width : 100%;
@@ -122,17 +140,17 @@ touch-action:none;
 	border-radius : 3px;
 }
 #menu_left {
-	width : 100%;
+	width : 40%;
 	height : 100%;
 	float : left;
 	opacity : 1;
-	/*border : 4px inset #ADADAD;*/
+	/*border-right : 4px inset #ADADAD;*/
 }
 #menu_left button {
 	height : 20%;
 }
 #menu_right {
-	width : 75%;
+	width : 60%;
 	height : 50%;
 	margin-left : 2em;
 	opacity : 1;
@@ -192,8 +210,10 @@ touch-action:none;
 	color : #FFFFFF;
 	
 }
-#layinfo_opacity {
+.layinfo_ui {
 	margin-left : 1rem;
+}
+#layinfo_opacity {
 	width : 20%;
 }
 .laycontrol_button {
@@ -260,6 +280,47 @@ li.itemfolder_normal {
 }
 #dlg_pen_mode ul > li.item1st-special:hover {
 	background-color : #C2883B;
+}
+#dlg_canvasinfo {
+	display : none;
+	width : 32%;
+	height : 30%;
+	overflow : hidden;
+	position : absolute;
+	top : 2.5rem;
+	left : 2%;
+	padding: 0.5rem 0.5rem;
+	background-color : #B6BBE4;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+	opacity : 0.9;
+	z-index : 11;
+}
+#tbl_magni {
+	width : 40%;
+}
+td.magni_element {
+	background-color : #F0EEC6;
+	cursor : default;
+	text-align : center;
+}
+td.magni_element:hover {
+	background-color : #D8CCA4;
+}
+td.magni_element:active {
+	background-color : #B6AA92;
+}
+td.magni_strong {
+	background-color : #E6E05B;
+	cursor : default;
+	text-align : center;
+}
+td.magni_strong:hover {
+	background-color : #C4B839;
+}
+td.magni_strong:active {
+	background-color : #A29617;
 }
 
 #dlg_layer {

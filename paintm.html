@@ -24,11 +24,11 @@
 		<tbody>
 		<tr>
 		<!--<td class="infofont" style="width:70px;">キャンバス</td>-->
-		<td class="infofont" style="width:7%;"><strong id="info_canvassize" title="キャンバスサイズ"></strong></td>
-		<td class="infofont" style="width:10%;"><strong id="info_currentpos" title="現在のカーソル位置"></strong></td>
-		<td class="infofont" style="width:23%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(2キー)"></button></td>
+		<td class="infofont" style="width:13%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
+		<td class="infofont" style="width:7%;" title="現在のカーソル位置"><span id="info_currentpos" ></span></td>
+		<td class="infofont" style="width:20%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
 		<!--<td class="infofont" style="width:100px;">現在のモード</td>-->
-		<td class="infofont" style="width:50%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(3キー)"></button></td>
+		<td class="infofont" style="width:50%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
 		<!--<td class="infofont" style="text-align:right;"><strong id="info_pen_size"></strong></td>-->
 		</tr>
 		</tbody>
@@ -58,9 +58,12 @@
 <br/>-->
 <br/>
 <div id="prespanel">
-	<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>
-	<span id="presval">50</span>
+	<div id="btn_freescroll" class="switchbutton_off" title="スクロール有効にする">&#10021;</div>
+	<div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br/>
+	<!--<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>-->
+	<label id="pres_label" class="pres_vallabel"><span id="presval">50</span>
 	<input type="range" id="pres_curline" min="0" max="100" step="" value="50" title="筆圧の度合い" disabled/>
+	</label>
 </div>
 <div id="initialsetup"><fieldset><legend>キャンバスのサイズ</legend>
 幅　：<input type="range" id="canvas_width" min="100" max="1200" step="50" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
@@ -78,12 +81,26 @@
 		<button id="btn_clear" class="statbutton2" title="キャンバスを全削除します">Clear</button><br/>
 		<button id="btn_new" class="statbutton2 stat_new" title="キャンバスをリセットして最初からやり直す">New</button><br/>
 		<button id="checkstat" class="statbutton2 stat_save" title="現在のキャンバス内容を画像として出力します。(Ctrl + S)">Save</button><br/>
+		<a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" class="statbutton2" target="_blank" title="機能早見表" style="padding-top:5px;">
+		<strong style="color:#575858;">使い方ヘルプ</strong></a>
 	</div>
 	<div id="menu_right">
 		<br />
 	</div>
 	<div id="menu_bottom">
 	</div>
+</div>
+<div id="dlg_canvasinfo">
+	<span>拡大率</span><br/>
+	<table id="tbl_magni">
+	<tbody>
+	<tr><td class="magni_element" id="magni_25">25%</td><td class="magni_element" id="magni_50">50%</td></tr>
+	<tr><td colspan="2" class="magni_strong" id="magni_100">100%</td></tr>
+	<tr><td class="magni_element" id="magni_150">150%</td><td class="magni_element" id="magni_200">200%</td></tr>
+	<tr><td colspan="2" class="magni_strong" id="magni_400">400%</td></tr>
+	</tbody>
+	</table>
+	
 </div>
 <div id="dlg_layer">
 	<span class="explain_panel" title="各ボタン：押す＝レイヤー選択、下にドラッグ（フリック）＝表示・非表示切り替え">レイヤー操作</span>
@@ -96,8 +113,8 @@
 	</div>
 	<div id="lay_info">
 		<label>名前:<input type="text" id="layinfo_name" size="15"/></label>
-		<label><input type="checkbox" id="layinfo_toggle" checked>表示</label>
-		<label><input type="range" id="layinfo_opacity" min="0" max="100" value="100">不透明度</label>
+		<label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked>表示</label>
+		<label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100">不透明度</label>
 	</div>
 </div>
 <div id="dlg_pen_mode">
@@ -140,7 +157,7 @@
 <script src="plugin/js/jquery.jgrowl.min.js"></script>
 <script src="plugin/js/rgbcolor.js"></script>
 <script src="plugin/js/farbtastic/farbtastic.js"></script>
-<!--<script src="plugin/js/hand.minified.js"></script>-->
+<script src="plugin/js/hand.js"></script>
 
 <script src="js/drawlayer.js"></script>
 <script src="js/colorpalette.js"></script>

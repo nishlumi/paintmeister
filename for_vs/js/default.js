@@ -103,24 +103,30 @@ function ElementTransform(element, value) {
     };
     
     document.addEventListener("keydown", function (event) {
-        console.log(event.keyCode);
+        //console.log(event.keyCode);
         if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("btn_menu").click();
 
-                return event.preventDefault();
+                //return event.preventDefault();
             }
-        } else if ((event.keyCode == "50") || (event.keyCode == "98")) {
+        } else if ((event.keyCode == "50") || (event.keyCode == "98")) { // 2
+            if (document.getElementById("initialsetup").style.display == "none") {
+                document.getElementById("info_btn_canvassize").click();
+
+                //return event.preventDefault();
+            }
+        } else if ((event.keyCode == "51") || (event.keyCode == "99")) { // 3
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("info_layer").click();
 
-                return event.preventDefault();
+                //return event.preventDefault();
             }
-        } else if ((event.keyCode == "51") || (event.keyCode == "99")) {
+        } else if ((event.keyCode == "52") || (event.keyCode == "100")) { // 4
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("info_pen_mode").click();
 
-                return event.preventDefault();
+                //return event.preventDefault();
             }
         } else if (event.keyCode == "90" && event.ctrlKey) { //Ctrl + Z
             if (document.getElementById("initialsetup").style.display == "none") {
@@ -132,10 +138,21 @@ function ElementTransform(element, value) {
                 Draw.checkstat.click();
                 return;
             }
+        } else if (event.keyCode == "48" && event.altKey) { // 0 + ctrl
+            document.getElementById("canvaspanel").style.transform = "scale(1.0)";
+            document.getElementById("info_magni").innerText = "1.0";
+            Draw.canvassize[0] = Draw.defaults.canvas.size[0];
+            Draw.canvassize[1] = Draw.defaults.canvas.size[0];
+            Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+            Draw.init_scale = 1.0;
+        } else if (event.keyCode == "38") { // Up key
+            Draw.scaleUp();
+        } else if (event.keyCode == "40") { // Down key
+            Draw.scaleDown();
         }
         var relkey = ["81", "87"];
         //---手動筆圧イベント
-        if (document.getElementById("chk_enable_handpres").checked) {
+        if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
             if ((event.keyCode == "81") || (event.keyCode == "87")) {
                 Draw.keyLikePres += virtual_pressure[event.keyCode];
                 document.getElementById("pres_curline").value =
@@ -144,7 +161,7 @@ function ElementTransform(element, value) {
                 Draw.keyLikePres = virtual_pressure[event.keyCode];
                 document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
             }
-            document.getElementById("presval").innerHTML = document.getElementById("pres_curline").value;
+            document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
             Draw.pressedKey = event.keyCode;
         }
         document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
@@ -159,24 +176,6 @@ function ElementTransform(element, value) {
     $("#colorpicker").on("click", function (event) {
         $("#pickerpanel").show();
     });
-    document.getElementById("btn_menu").addEventListener("click", function (event) {
-        if (document.getElementById("menupanel").style.display == "none") { //開く
-            document.getElementById("menupanel").style.display = "block";
-            document.getElementById("dlg_pen_mode").style.display = "none";
-            document.getElementById("dlg_layer").style.display = "none";
-            document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
-            document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
-            //event.target.innerHTML = "&#9650;";
-            event.target.style.backgroundColor = "#91d780";
-        } else { //閉じる
-            document.getElementById("menupanel").style.display = "none";
-            document.getElementById("dlg_pen_mode").style.display = "none";
-            document.getElementById("dlg_layer").style.display = "none";
-            //event.target.innerHTML = "&#9660;";
-            event.target.style.backgroundColor = "#c4fab3";
-            document.body.focus();
-        }
-    }, false);
     document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
     document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
     document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 100) / 100) * 95;
@@ -212,6 +211,9 @@ function ElementTransform(element, value) {
     touchstart = 'mousedown';
     touchend = 'mouseup';
     touchleave = 'mouseleave';
+    document.body.oncontextmenu = function (event) {
+        return false;
+    }
     document.body.addEventListener(touchstart, function (event) {
         //Draw.drawing = true;
     }, false);

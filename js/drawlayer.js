@@ -91,55 +91,82 @@
 			own.canvas.style.opacity = value / 100;
 		}
 		this.generate_core = function (canvas,ctrl){
+			function configEvent(touch) {
+				canvas.addEventListener(touch.start, function(event) {
+					Draw.touchStart(event); // start drawing.
+				}, false);
+				
+				canvas.addEventListener(touch.move, function(event) {
+					Draw.touchMove(event); // continue drawing while dragging the pointer.
+					event.preventDefault();
+				}, false);
+				
+				canvas.addEventListener(touch.end, function(event) {
+					Draw.touchEnd(event); // finish drawing.
+				}, false);
+				canvas.addEventListener(touch.leave, function(event) {
+					Draw.touchLeave(event); // finish drawing.
+				}, false);
+				canvas.addEventListener(touch.enter, function(event) {
+					Draw.touchEnter(event); // finish drawing.
+				}, false);
+			}
 			//---キャンバスの核となる設定
+			var touch = {
+				start : "touchstart", move : "touchmove", end : "touchend",
+				leave : "touchleave", enter : "touchenter"
+			}
 			var touchstart = 'touchstart';
 			var touchmove = 'touchmove';
 			var touchend = 'touchend';
 			var touchleave = 'touchleave';
 			var touchenter = 'touchenter';
 			if (window.PointerEvent){
-				touchstart = "pointerdown";
-				touchmove = "pointermove";
-				touchend = "pointerup";
-				touchleave = 'pointerleave';
-				touchenter = 'pointerenter';
+				touch.start = "pointerdown";
+				touch.move = "pointermove";
+				touch.end = "pointerup";
+				touch.leave = 'pointerleave';
+				touch.enter = 'pointerenter';
+				console.log("browser:IE11 or Browser with PointerEvent");
 			}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
-				touchstart = 'MSPointerDown';
-				touchmove = 'MSPointerMove';
-				touchend = 'MSPointerUp';
-				touchleave = 'MSPointerLeave';
-				touchenter = 'MSPointerEnter';
+				touch.start = 'MSPointerDown';
+				touch.move = 'MSPointerMove';
+				touch.end = 'MSPointerUp';
+				touch.leave = 'MSPointerLeave';
+				touch.enter = 'MSPointerEnter';
+				console.log("browser:Windows8 + IE10");
 			} else if (document.ontouchstart === undefined) { // for other PC browsers
-				touchstart = 'mousedown';
-				touchmove = 'mousemove';
-				touchend = 'mouseup';
-				touchleave = 'mouseleave';
-				touchenter = 'mouseenter';
+				//---toucheventあるはずなのでまずはセット
+				configEvent(touch);
+				//---次に最低限のmouseeventをセット開始
+				touch.start = 'mousedown';
+				touch.move = 'mousemove';
+				touch.end = 'mouseup';
+				touch.leave = 'mouseleave';
+				touch.enter = 'mouseenter';
+				console.log("browser:other PC browsers");
+			}else{
+				//---toucheventあるはずなのでまずはセット
+				//configEvent(touch);
+				touch.start = 'mousedown';
+				touch.move = 'mousemove';
+				touch.end = 'mouseup';
+				touch.leave = 'mouseleave';
+				touch.enter = 'mouseenter';
+				console.log("browser:other PC browsers with touch");
 			}
-			canvas.addEventListener(touchstart, function(event) {
-				Draw.touchStart(event); // start drawing.
-			}, false);
-			
-			canvas.addEventListener(touchmove, function(event) {
-				Draw.touchMove(event); // continue drawing while dragging the pointer.
-				event.preventDefault();
-			}, false);
-			
-			canvas.addEventListener(touchend, function(event) {
-				Draw.touchEnd(event); // finish drawing.
-			}, false);
-			canvas.addEventListener(touchleave, function(event) {
-				Draw.touchLeave(event); // finish drawing.
-			}, false);
-			canvas.addEventListener(touchenter, function(event) {
-				Draw.touchEnter(event); // finish drawing.
-			}, false);
+			touch.start = "pointerdown";
+			touch.move = "pointermove";
+			touch.end = "pointerup";
+			touch.leave = 'pointerleave';
+			touch.enter = 'pointerenter';
+			configEvent(touch);
 			
 			//---ボタンコントロールもイベント設定
 			ctrl.addEventListener("click", function(event) {
 				own.select(own.parent.context);
 			}, false);
-			ctrl.addEventListener(touchstart,function(event){
+			/*ctrl.addEventListener(touchstart,function(event){
 				own.btntouching = true;
 				if (event.offsetX === undefined) {
 					if (event.type == 'touchstart') {
@@ -222,12 +249,6 @@
 			ctrl.addEventListener(touchend,function(event){
 				own.btntouching = false;
 				console.log(own.mode);
-				/*if (own.mode == "v"){ //表示・非表示切り替え
-					own.toggleShow();
-				}else if (own.mode == "h"){ //優先度アップ
-				}else if (own.mode == "l") { //優先度ダウン
-					
-				}*/
 			},false);
 			ctrl.addEventListener(touchleave,function(event){
 				if (own.btntouching) {
@@ -241,7 +262,7 @@
 					}
 				}
 				own.btntouching = false;
-			},false);
+			},false);*/
 
 			//return canvas;
 		};

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.16.24";
+var appversion = "1.0.21.32";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -125,6 +125,18 @@ function calculatePosition(eventtype,event,target,opt) {
 		keyLikePres : null,
 		pressedKey : 0,
 		canvasspace : 0,
+		is_scaling : false,
+		scale_pos : {
+			"begin" : null,
+			"end" : null
+		},
+		init_scale : 1.0,
+		during_scale : 1.0,
+		during_distance : 0,
+		touchpoints : {
+		},
+		is_scrolling : false,
+		vCtrl_for_scroll : false,
 		
 		initialize : function() {
 			this.pen = PenSet;
@@ -246,9 +258,17 @@ function calculatePosition(eventtype,event,target,opt) {
 					//document.getElementById("layoutcontrol").style.display = "block";
 					document.getElementById("prespanel").style.display = "block";
 					//Draw.generateCanvas(wi, he);
+					document.getElementById("basepanel")
 					document.getElementById("canvaspanel").style.width = wi + "px";
 					document.getElementById("canvaspanel").style.height = (he) + "px";
 					document.getElementById("canvaspanel").style.border = "2px solid #808080";
+					document.getElementById("canvaspanel").style.marginLeft = "auto";
+					document.getElementById("canvaspanel").style.marginRight = "auto";
+					document.getElementById("canvaspanel").style.marginTop = "auto";
+					document.getElementById("canvaspanel").style.marginBottom = "auto";
+					document.getElementById("canvaspanel").className = "canvaspanel";
+					document.getElementById("canvaspanel").style.transformOrigin = "left top";
+					document.getElementById("canvaspanel").style.transform = "scale(1.0)";
 					var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,false);
 					lay.canvas.className = "mostbase-canvas";
 					Draw.layer.push(lay);
@@ -256,6 +276,7 @@ function calculatePosition(eventtype,event,target,opt) {
 					Draw.canvassize = [wi, he];
 					Draw.defaults.canvas.size = [wi, he];
 					document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
+					document.getElementById("info_magni").innerText = "1.0";
 					//document.getElementById("btn_panel").style.visibility = "visible";
 					Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
 					if (wi > he) {
@@ -314,9 +335,33 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.pres_curline.addEventListener("change", function(event) {
 				document.getElementById("presval").innerHTML = event.target.value;
 			},false);
+			//---スクロールボタン
+			document.getElementById("btn_freescroll").addEventListener("click", function(event) {
+				if (event.target.className == "switchbutton_off") {
+					event.target.className = "switchbutton_on";
+					event.target.title = "スクロール無効にする";
+					Draw.vCtrl_for_scroll = true;
+				}else{
+					event.target.className = "switchbutton_off";
+					event.target.title = "スクロール有効にする"
+						Draw.vCtrl_for_scroll = false;
+				}
+			},false);
+			//---手動筆圧切り替えボタン
 			document.getElementById("chk_enable_handpres").addEventListener("click", function(event) {
-				Draw.pres_curline.disabled = !event.target.checked;
-				Draw.pres_curline.value = 50;
+				
+				if (event.target.className == "switchbutton_off") {
+					event.target.className = "switchbutton_on";
+					document.getElementById("pres_label").style.display = "inline";
+					Draw.pres_curline.disabled = false;
+					Draw.pres_curline.value = 50;
+					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
+				}else{
+					event.target.className = "switchbutton_off";
+					document.getElementById("pres_label").style.display = "none";
+					Draw.pres_curline.disabled = true;
+					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
+				}
 			},false);
 			this.newbtn.addEventListener("click", function(event) {
 				var msg = "キャンバスの設定をリセットし、最初の画面へ戻ります。よろしいですか？";
@@ -325,6 +370,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				);
 				document.getElementById("btn_menu").click();
 			},false);
+			//---レイヤーパネル関係
 			document.getElementById("layinfo_opacity").addEventListener("change", function(event) {
 				var val = event.target.value;
 				Draw.getSelectedLayer().opacity(val);
@@ -340,38 +386,85 @@ function calculatePosition(eventtype,event,target,opt) {
 			document.getElementById("layinfo_name").addEventListener("keydown", function(event) {
 				event.stopPropagation();
 			},false);
+			var magarr = ["25","50","100","150","200","400"];
+			for (var m in magarr) {
+				var nm = "magni_" + magarr[m];
+				//console.log(nm);
+				document.getElementById(nm).addEventListener("click", function(event) {
+					var name = String(event.target.id).replace("magni_","");
+					Draw.scale(Number(name));
+				}, false);
+			}
+			//---情報パネル関係
+			document.getElementById("btn_menu").addEventListener("click", function(event) {
+				if (document.getElementById("menupanel").style.display == "none") { //開く
+					Draw.turnMenuPanel("menupanel","btn_menu",true);
+					/*document.getElementById("menupanel").style.display = "block";
+					document.getElementById("dlg_pen_mode").style.display = "none";
+					document.getElementById("dlg_layer").style.display = "none";
+					document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+					document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+					//event.target.innerHTML = "&#9650;";
+					event.target.style.backgroundColor = "#91d780";*/
+				}else{ //閉じる
+					Draw.turnMenuPanel("menupanel","btn_menu",false);
+					/*document.getElementById("menupanel").style.display = "none";
+					document.getElementById("dlg_pen_mode").style.display = "none";
+					document.getElementById("dlg_layer").style.display = "none";
+					//event.target.innerHTML = "&#9660;";
+					event.target.style.backgroundColor = "#c4fab3";*/
+					document.body.focus();
+				}
+			}, false);
+			document.getElementById("info_btn_canvassize").addEventListener("click", function(event) {
+				if (document.getElementById("dlg_canvasinfo").style.display == "none") {
+					Draw.turnMenuPanel("dlg_canvasinfo","info_btn_canvassize",true);
+				}else{
+					Draw.turnMenuPanel("dlg_canvasinfo","info_btn_canvassize",false);
+				}
+				event.preventDefault();
+			},false);
 			document.getElementById("info_pen_mode").addEventListener("click", function(event) {
 				if (document.getElementById("dlg_pen_mode").style.display == "none") {
-					document.getElementById("dlg_pen_mode").style.display = "block";
+					Draw.turnMenuPanel("dlg_pen_mode","info_pen_mode",true);
+					/*document.getElementById("dlg_pen_mode").style.display = "block";
 					document.getElementById("dlg_layer").style.display = "none";
 					document.getElementById("menupanel").style.display = "none";
+					document.getElementById("dlg_canvasinfo").style.display = "none";
 					document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
 					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
-					event.target.style.backgroundColor = "#91d780";
+					event.target.style.backgroundColor = "#91d780";*/
 				}else{
-					document.getElementById("dlg_pen_mode").style.display = "none";
-					event.target.style.backgroundColor = "#c4fab3";
+					Draw.turnMenuPanel("dlg_pen_mode","info_pen_mode",false);
+					//document.getElementById("dlg_pen_mode").style.display = "none";
+					//event.target.style.backgroundColor = "#c4fab3";
 				}
 			},false);
 			document.getElementById("info_layer").addEventListener("click", function(event) {
 				console.log(event.target.style.top + "," + event.target.style.left);
 				if (document.getElementById("dlg_layer").style.display == "none") {
-					document.getElementById("dlg_layer").style.display = "block";
+					Draw.turnMenuPanel("dlg_layer","info_layer",true);
+					/*document.getElementById("dlg_layer").style.display = "block";
 					document.getElementById("dlg_pen_mode").style.display = "none";
 					document.getElementById("menupanel").style.display = "none";
+					document.getElementById("dlg_canvasinfo").style.display = "none";
 					document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
 					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
-					event.target.style.backgroundColor = "#91d780";
+					event.target.style.backgroundColor = "#91d780";*/
 					//プレビューを更新
 					document.getElementById("prev_img").src = Draw.getSelectedLayer().canvas.toDataURL();
 				}else{
-					document.getElementById("dlg_layer").style.display = "none";
-					event.target.style.backgroundColor = "#c4fab3";
+					Draw.turnMenuPanel("dlg_layer","info_layer",false);
+					//document.getElementById("dlg_layer").style.display = "none";
+					//event.target.style.backgroundColor = "#c4fab3";
 				}
 			},false);
+			
+			//---アプリバージョンの設定
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
 			
 			//---その他、初期化が必要な処理
+			document.getElementById("dlg_canvasinfo").style.display = "none";
 			document.getElementById("dlg_pen_mode").style.display = "none";
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("menupanel").style.display = "none";
@@ -395,6 +488,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			//参照コンテキストをメインのキャンバスに戻す
 			console.log(this.layer);
 			Draw.layer[0].select(null);
+			Draw.layer[0].Alpha = 100;
 			Draw.context = Draw.layer[0].canvas.getContext("2d");
 			Draw.removeLayerAll();
 			//---メインのキャンバスだけは直接クリアのみ
@@ -407,6 +501,15 @@ function calculatePosition(eventtype,event,target,opt) {
 			Draw.undohist = [];
 			Draw.redohist = [];
 			//document.getElementById("previewer").src = null;
+			Draw.init_scale = 1.0;
+			Draw.during_scale = 1.0;
+			Draw.during_distance = 0;
+			Draw.touchpoints = {};
+			Draw.is_scaling = false;
+			Draw.is_scrolling = false;
+			document.getElementById("layinfo_toggle").checked = true;
+			document.getElementById("layinfo_opacity").value = "100";
+			Draw.layer[0].opacity("100");
 		},
 		returnTopMenu : function (){
 			Draw.clearBody();
@@ -424,6 +527,22 @@ function calculatePosition(eventtype,event,target,opt) {
 			//document.getElementById("colorpalette").style.display = "none";
 			//document.getElementById("layoutcontrol").style.display = "none";
 			document.getElementById("prespanel").style.display = "none";
+		},
+		turnMenuPanel : function(target,firebutton,flag) {
+			var valdisplay = (flag ? "block" : "none");
+			var valbgcolor = (flag ? "#91d780" : "#c4fab3");
+			document.getElementById("menupanel").style.display = "none";
+			document.getElementById("dlg_canvasinfo").style.display = "none";
+			document.getElementById("dlg_layer").style.display = "none";
+			document.getElementById("dlg_pen_mode").style.display = "none";
+			document.getElementById(target).style.display = valdisplay;
+			
+			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_btn_canvassize").style.backgroundColor = "#c4fab3";
+			document.getElementById(firebutton).style.backgroundColor = valbgcolor;
+			
 		},
 		getSelectedLayerIndex : function (){
 			var ls = this.layer;
@@ -486,7 +605,8 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.canvasspace = {"w" : space, "h" : spacey};
 			//document.getElementById("basepanel").style.left = (45 + space) + "px";
 			console.log("left="+space + "/" + spacey);
-			ElementTransform(document.getElementById("basepanel"),"translate("+space+"px," + spacey + "px)");
+			//ElementTransform(document.getElementById("canvaspanel"),"scale(" + this.during_scale + ") "+ "translateX("+space+"px," + spacey + "px)");
+			//ElementTransform(document.getElementById("canvaspanel"),"scale(1.5) translateY(" + spacey + "px)");
 		},
 		prepareSaveImage : function(){
 			//ダミーのキャンバスから統合した画像を作成
@@ -520,6 +640,38 @@ function calculatePosition(eventtype,event,target,opt) {
 			if (isNaN(alllen)) return false;
 			
 		},
+		scale : function (val) {
+			var fnlbi = val / 100;
+			if (fnlbi > 4.0) {
+				fnlbi = 4.0;
+			}
+			if (fnlbi < 0.25) {
+				fnlbi = 0.25;
+			}
+			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			this.during_scale = fnlbi;
+		},
+		scaleUp : function (){
+			var fnlbi = 1.0;
+			fnlbi = this.during_scale + 0.05;
+			if (fnlbi > 4.0) {
+				fnlbi = 4.0;
+			}
+			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			this.during_scale = fnlbi;
+		},
+		scaleDown : function() {
+			var fnlbi = 1.0;
+			fnlbi = this.during_scale - 0.05;
+			if (fnlbi < 0.25) {
+				fnlbi = 0.25;
+			}
+			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			this.during_scale = fnlbi;
+		},
 		touchStart : function(event) {
 			this.drawing = true;
 			
@@ -529,7 +681,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			});
 			this.startX = pos.x;
 			this.startY = pos.y;
-			document.getElementById("info_currentpos").textContent = this.startX + "x" + this.startY;
+			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
 			//---右クリック、スタイラスペンの反対側は消しゴムに設定
 			if ((event.button == 2) || (event.button == 5)) {
@@ -550,18 +702,67 @@ function calculatePosition(eventtype,event,target,opt) {
 					this.last.pen["func"].click();
 				}
 			}
-			//---Undoに保管
-			//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
-			this.undohist.push(new UndoBuffer(Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-			if (this.undohist.length > this.defaults.undo.max) {
-				var o = this.undohist.shift();
-				delete o;
-			}
-			//console.log(this.undohist);
 			//document.getElementById("log3").innerHTML = event.keyCode;
 			//console.log("start, event.button=");
-			//console.log(event);
+			console.log(event);
 			this.keyLikePres = event.keyCode;
+			var isundo = true;
+			//---タッチ用拡大縮小
+			if (event.isPrimary && event.pointerType == "touch") {
+				this.touchpoints["1"] = {
+					"id" : event.pointerId,
+					"pos" : pos
+				};
+			}else if (event.pointerType == "touch"){
+				if ((this.touchpoints["1"]) && (event.pointerId != this.touchpoints["1"]["id"])) {
+					this.touchpoints["2"] = {
+						"id" : event.pointerId,
+						"pos" : pos
+					};
+				}
+				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
+					this.is_scaling = true;
+					this.drawing = false;
+					console.log(this.touchpoints);
+					this.scale_pos["begin"] = this.touchpoints["1"].pos;
+					//console.log(document.getElementById("canvaspanel").style.transform);
+					this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+					//console.log(parseInt(this.init_scale));
+					this.init_scale = parseInt(this.init_scale);
+					isundo = false;
+				}
+			}
+			//---非タッチ用拡大縮小
+			if (event.altKey) {
+				this.is_scaling = true;
+				this.scale_pos["begin"] = pos;
+				//console.log(document.getElementById("canvaspanel").style.transform);
+				this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+				//console.log(parseInt(this.init_scale));
+				this.init_scale = parseInt(this.init_scale);
+				isundo = false;
+			}
+			//スクロール
+			if ((event.ctrlKey) || (this.vCtrl_for_scroll)) {
+				var cp = document.getElementById("basepanel");
+				this.scale_pos["begin"] = pos;
+				console.log("scrollTop="+cp.scrollTop);
+				console.log("scrollLeft="+cp.scrollLeft);
+				console.log("scrollWidth="+cp.scrollWidth);
+				console.log("scrollHeight="+cp.scrollHeight);
+				this.is_scrolling = true;
+				isundo = false;
+			}
+			//---Undoに保管
+			if (isundo) {
+				//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
+				this.undohist.push(new UndoBuffer(Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
+				if (this.undohist.length > this.defaults.undo.max) {
+					var o = this.undohist.shift();
+					delete o;
+				}
+			}
+			//console.log(this.undohist);
 			//色選択をここでも確定
 			this.pen.current["color"] = this.colorpicker.value;
 			//console.log(this.colorpicker.value);
@@ -590,9 +791,85 @@ function calculatePosition(eventtype,event,target,opt) {
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
 			});
+			if (event.isPrimary && event.pointerType == "touch") {
+				if (this.touchpoints["1"] && (this.touchpoints["1"].id == event.pointerId)) {
+					this.touchpoints["11"] = {
+						"id" : event.pointerId,
+						"pos" : pos
+					};
+				}
+			}else if (event.pointerType == "touch"){
+				if (this.touchpoints["1"] && this.touchpoints["2"].id == event.pointerId) {
+					this.touchpoints["12"] = {
+						"id" : event.pointerId,
+						"pos" : pos
+					};
+				}
+			}
+
 			offsetX = pos.x;
 			offsetY = pos.y;
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
+			if (this.is_scaling) { //拡大縮小モード
+				var distance = 0;
+				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["11"] && this.touchpoints["12"]) {
+					var scalebegin =  this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y;
+					var scaleend = this.touchpoints["12"].pos.y - this.touchpoints["11"].pos.y;
+					if (scalebegin < 0) scalebegin = scalebegin * -1;
+					if (scaleend < 0) scaleend = scaleend * -1;
+					if (scaleend > scalebegin) {
+						this.scaleUp();
+					}else if (scaleend < scalebegin) {
+						this.scaleDown();
+					}
+					this.during_distance = scaleend;
+				}else{
+					this.scale_pos["end"] = (this.touchpoints["2"] ? this.touchpoints["2"].pos : pos);
+					var db = this.scale_pos["begin"].y; //(this.scale_pos["begin"].x + this.scale_pos["begin"].y) / 2;
+					var de = this.scale_pos["end"].y; //(this.scale_pos["end"].x + this.scale_pos["end"].y) / 2;
+					distance = de - db;
+					//console.log("pos=");
+					//console.log(pos);
+					if ((!event.altKey) && (this.scale_pos["end"].y == pos.y)) {
+						distance = 0;
+					}
+					//var distance = Math.sqrt(powsum);
+					//console.log(this.scale_pos["begin"]);
+					//console.log(this.scale_pos["end"]);
+					//console.log("distance="+distance + "(" + de + " - " + db + ")");
+					var bi = (distance) / 100;
+					var fnlbi = 1.0;
+					if (distance > 0.0) {
+						this.scaleUp();
+					}else if (distance < 0.0) {
+						this.scaleDown();
+					}
+					this.during_distance = distance;
+				}
+				return;
+			}
+			if (this.is_scrolling) {
+				this.scale_pos["end"] = pos;
+				var db = {
+					"x": this.scale_pos["begin"].x,
+					"y" : this.scale_pos["begin"].y
+				};
+				var de = {
+					"x" : this.scale_pos["end"].x,
+					"y" : this.scale_pos["end"].y
+				};
+				var distance = {
+					"x" : (de.x - db.x) * -1,
+					"y" : (de.y - db.y) * -1
+				};
+				//console.log("distance.x=" + distance.x);
+				//console.log("distance.y=" + distance.y);
+				var cp = document.getElementById("basepanel");
+				cp.scrollTop = cp.scrollTop + (distance.y * 0.1);
+				cp.scrollLeft = cp.scrollLeft + (distance.x * 0.1);
+				return;
+			}
+			//通常描画モード
 			if (this.drawing) {
 			//console.log("move, event.button=");
 			//console.log(event);
@@ -697,9 +974,9 @@ function calculatePosition(eventtype,event,target,opt) {
 					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 				}
 				
-				this.startX = offsetX;
-				this.startY = offsetY;
 			}
+			this.startX = offsetX;
+			this.startY = offsetY;
 			event.preventDefault();
 		},
 		touchEnd : function(event) {
@@ -708,6 +985,10 @@ function calculatePosition(eventtype,event,target,opt) {
 			//document.getElementById("log3").innerHTML = event.tiltX;
 			//console.log("end, event.button=");
 			//console.log(event);
+			this.is_scaling = false;
+			this.init_scale = this.during_scale;
+			this.touchpoints = {};
+			this.is_scrolling = false;
 		},
 		touchLeave : function(event){
 			//console.log("leave, event.button=");
