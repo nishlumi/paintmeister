@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.21.32";
+var appversion = "1.0.23.41";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -103,7 +103,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				"size" : [600,400]   //0=w, 1=h
 			},
 			"layer" : {
-				"max" : 10
+				"max" : 15
 			},
 			"undo" : {
 				"max" : 99,
@@ -118,6 +118,7 @@ function calculatePosition(eventtype,event,target,opt) {
 		canvassize : [600,400],
 		startX : 0,
 		startY : 0,
+		startPressure : 0,
 		offset : 1,
 		undohist : [],
 		redohist : [],
@@ -312,6 +313,7 @@ function calculatePosition(eventtype,event,target,opt) {
 					Draw.opecan.style.zIndex = 0;
 					document.body.appendChild(Draw.canvas);
 					document.getElementById("basepanel").style.display = "block";
+					return true;
 				}
 				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
 					createbody
@@ -329,7 +331,10 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.layer_del.addEventListener("click", function(event) {
 				var msg = document.getElementById("info_layer").innerText + "を削除します。よろしいですか？";
 				confirm(msg,
-					Draw.removeLayerController
+					Draw.removeLayerController,
+					function () {
+				    	alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
+					}
 				);
 			},false);
 			this.pres_curline.addEventListener("change", function(event) {
@@ -462,12 +467,14 @@ function calculatePosition(eventtype,event,target,opt) {
 			
 			//---アプリバージョンの設定
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
-			
+			this.loadSetting();
 			//---その他、初期化が必要な処理
 			document.getElementById("dlg_canvasinfo").style.display = "none";
 			document.getElementById("dlg_pen_mode").style.display = "none";
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("menupanel").style.display = "none";
+			
+			
 			/*var pens = document.querySelectorAll("div#menu_right button");
 			console.log(pens);
 			var ul = document.querySelector("div#dlg_pen_mode ul li");
@@ -510,6 +517,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			document.getElementById("layinfo_toggle").checked = true;
 			document.getElementById("layinfo_opacity").value = "100";
 			Draw.layer[0].opacity("100");
+			return true;
 		},
 		returnTopMenu : function (){
 			Draw.clearBody();
@@ -527,6 +535,8 @@ function calculatePosition(eventtype,event,target,opt) {
 			//document.getElementById("colorpalette").style.display = "none";
 			//document.getElementById("layoutcontrol").style.display = "none";
 			document.getElementById("prespanel").style.display = "none";
+			Draw.saveSetting();
+			return true;
 		},
 		turnMenuPanel : function(target,firebutton,flag) {
 			var valdisplay = (flag ? "block" : "none");
@@ -543,6 +553,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			document.getElementById("info_btn_canvassize").style.backgroundColor = "#c4fab3";
 			document.getElementById(firebutton).style.backgroundColor = valbgcolor;
 			
+			this.saveSetting();
 		},
 		getSelectedLayerIndex : function (){
 			var ls = this.layer;
@@ -568,9 +579,9 @@ function calculatePosition(eventtype,event,target,opt) {
 			if (this.layer[i].destroy()) {
 				if (isremoveArray) {
 					this.layer.splice(i,1);
+					return true;
 				}
 			}else{
-				alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
 				return false;
 			}
 		},
@@ -582,20 +593,24 @@ function calculatePosition(eventtype,event,target,opt) {
 		},
 		removeLayerController : function (){
 			var layindex = Draw.getSelectedLayerIndex();
-			Draw.removeLayer(layindex,true);
-			//---後始末：選択レイヤーの変更
-			Draw.layer[layindex-1].control.click();
-			//---後始末：レイヤーの優先度の再生成
-			console.log("Draw.layer=");
-			console.log(Draw.layer);
-			for (var i = 0; i < Draw.layer.length; i++) {
-				var lay = Draw.layer[i];
-				lay.parent = Draw;
-				lay.canvas.style.zIndex = i+1;
-				lay.control.title = lay.canvas.style.zIndex;
-				lay.control.innerHTML = lay.canvas.style.zIndex;
+			if (Draw.removeLayer(layindex,true)) {
+				//---後始末：選択レイヤーの変更
+				Draw.layer[layindex-1].control.click();
+				//---後始末：レイヤーの優先度の再生成
+				console.log("Draw.layer=");
+				console.log(Draw.layer);
+				for (var i = 0; i < Draw.layer.length; i++) {
+					var lay = Draw.layer[i];
+					lay.parent = Draw;
+					lay.canvas.style.zIndex = i+1;
+					lay.control.title = lay.canvas.style.zIndex;
+					lay.control.innerHTML = lay.canvas.style.zIndex;
+				}
+				return true;
+			}else{
+				//alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
+				return false;
 			}
-			
 		},
 		resizeCanvasMargin : function (winwidth, winheight){
 			var sa = winwidth - this.canvassize[0];
@@ -672,6 +687,21 @@ function calculatePosition(eventtype,event,target,opt) {
 			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
 			this.during_scale = fnlbi;
 		},
+		loadSetting : function (){
+			if (AppStorage.isEnable()) {
+				var chk = AppStorage.get("chk_sv_colorpalette","0");
+				chk = (chk == "1" ? true : false);
+				document.getElementById("chk_sv_colorpalette").checked = chk;
+			}
+		},
+		saveSetting : function (){
+			if (AppStorage.isEnable()) {
+				var chk = document.getElementById("chk_sv_colorpalette").checked;
+				chk = (chk == true ? "1" : "0");
+				AppStorage.set("chk_sv_colorpalette",chk);
+				if (chk == "0") AppStorage.remove("sv_colorpalette0");
+			}
+		},
 		touchStart : function(event) {
 			this.drawing = true;
 			
@@ -681,6 +711,8 @@ function calculatePosition(eventtype,event,target,opt) {
 			});
 			this.startX = pos.x;
 			this.startY = pos.y;
+			this.startPressure = event.pressure;
+			console.log("startPressure=" + this.startPressure);
 			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
 			//---右クリック、スタイラスペンの反対側は消しゴムに設定
@@ -704,7 +736,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 			//document.getElementById("log3").innerHTML = event.keyCode;
 			//console.log("start, event.button=");
-			console.log(event);
+			//console.log(event);
 			this.keyLikePres = event.keyCode;
 			var isundo = true;
 			//---タッチ用拡大縮小
@@ -778,7 +810,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				*/
 				//console.log(event.changedTouches);
 			}
-			if (this.pen.pentype == "fill") {
+			if (this.pen.pentype == PenType.fill) {
 				this.pen.drawMain(this.context,this.startX,this.startY,1,1);
 				this.drawing = false;
 			}
@@ -787,6 +819,7 @@ function calculatePosition(eventtype,event,target,opt) {
 		touchMove : function(event) {
 			var offsetX = 0;
 			var offsetY = 0;
+			var offsetPressure = 0;
 			var pos  = calculatePosition("touchmove",event,this.context.canvas,{
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
@@ -809,6 +842,7 @@ function calculatePosition(eventtype,event,target,opt) {
 
 			offsetX = pos.x;
 			offsetY = pos.y;
+			offsetPressure = event.pressure;
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
@@ -871,10 +905,9 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 			//通常描画モード
 			if (this.drawing) {
+				console.log("offsetPressure=" + offsetPressure);
 			//console.log("move, event.button=");
 			//console.log(event);
-				//pen pressure calc
-				this.pen.prepare(event,this.context,this.keyLikePres);
 				//document.getElementById("info_pen_size").innerHTML = this.context.lineWidth;
 				//document.getElementById("log3").innerHTML = event.tiltX;
 				//---筆ごとの描画開始
@@ -882,29 +915,34 @@ function calculatePosition(eventtype,event,target,opt) {
 				//---補完判定・処理開始
 				var saX = offsetX - this.startX;
 				var saY = offsetY - this.startY;
+				var saPres = offsetPressure - this.startPressure;
 				var ju_saX = Math.abs(saX);
 				var ju_saY = Math.abs(saY);
+				var ju_saPres = saPres;
 				var pmX = (saX < 0 ? -1 : 1); //+-基準値
 				var pmY = (saY < 0 ? -1 : 1); //+-基準値
+				var pmPres = (saPres < 0 ? -1 : 1); //+-基準値
 				/*console.log("=====");
 				console.log("start=" + this.startX + "x" + this.startY);
 				console.log("offset=" + offsetX + "x" + offsetY);
 				console.log("sa=" + saX + "x" + saY);
 				console.log("pm=" + pmX + "x" + pmY);*/
+				console.log("saPres=" + saPres);
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
 				if ((ju_saX > this.pen.current["size"]*1) || (ju_saY > this.pen.current["size"]*1)){
 					if (this.pen.current["complete"]) {
 						//---補完算出開始
 						var completeCount = 0;
 						if (ju_saX > ju_saY) {
-							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*0.5));
+							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*1));
 						}else{
-							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*0.5));
+							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*1));
 						}
 						//completeCount = 5;
 						//console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
 						var cplarr = [];
 						var prevpos = {"x":this.startX,"y":this.startY};
+						var prevpres = this.startPressure;
 						for (var c = 0; c < completeCount; c++) {
 							var bigsa;
 							var littlesa;
@@ -914,9 +952,11 @@ function calculatePosition(eventtype,event,target,opt) {
 							var pos = {"x":0,"y":0};
 							var keisu = 0;
 							var movepoint = 0;
+							var tempPressure = 0;
 							
 							pos.x = prevpos.x + (ju_saX / completeCount * pmX);
 							pos.y = prevpos.y + (ju_saY / completeCount * pmY);
+							tempPressure = prevpres - (ju_saPres / (completeCount*2) * pmPres);
 							/*if (ju_saX > ju_saY) {
 								bigsa = ju_saX;
 								littlesa = ju_saY;
@@ -951,6 +991,9 @@ function calculatePosition(eventtype,event,target,opt) {
 							//}
 							//cplarr.push(pos);
 							
+							//pen pressure calc
+							console.log("tempPressure=" + tempPressure);
+							this.pen.prepare(event,this.context,tempPressure);
 							this.pen.drawMain(this.context,
 								prevpos.x,prevpos.y,
 								pos.x,pos.y
@@ -960,26 +1003,45 @@ function calculatePosition(eventtype,event,target,opt) {
 								" -> " + Math.round(pos.x) + "x" + Math.round(pos.y));
 								*/
 							prevpos = pos;
+							prevpres = tempPressure;
 						}
 						//if ((prevpos.x != offsetX || prevpos.y != offsetY)) {
-							this.pen.drawMain(this.context,
+						/*	this.pen.drawMain(this.context,
 								prevpos.x,prevpos.y,
 								offsetX,offsetY
-							);
+							);*/
 						//}
 					}else{
+						//pen pressure calc
+						this.pen.prepare(event,this.context,null);
 						this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 					}
 				}else{
+					//pen pressure calc
+					this.pen.prepare(event,this.context,null);
 					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 				}
 				
 			}
 			this.startX = offsetX;
 			this.startY = offsetY;
+			this.startPressure = offsetPressure;
 			event.preventDefault();
 		},
 		touchEnd : function(event) {
+			if (this.drawing)  {
+				var pos  = calculatePosition("touchmove",event,this.context.canvas,{
+					"offset" : this.offset,
+					"canvasspace":this.canvasspace
+				});
+				offsetX = pos.x;
+				offsetY = pos.y;
+				console.log("event.pressure=" + event.pressure);
+				offsetPressure = event.pressure * 0.001;
+				console.log("offsetPressure=" + offsetPressure);
+				this.pen.prepare(event,this.context,offsetPressure);
+				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
+			}
 			this.drawing = false;
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 			//document.getElementById("log3").innerHTML = event.tiltX;
@@ -1000,6 +1062,8 @@ function calculatePosition(eventtype,event,target,opt) {
 				});
 				offsetX = pos.x;
 				offsetY = pos.y;
+				offsetPressure = event.pressure * 0.001;
+				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 			}
 			//this.drawing = false;
@@ -1014,7 +1078,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				});
 				this.startX = pos.x;
 				this.startY = pos.y;
-				
+				this.startPressure = offsetPressure;
 				
 			}
 		}

@@ -17,8 +17,8 @@ PaintMeister (1.0.23.41)
 
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/08/09 16:00:00
-ChromeApps		- 
-ストアアプリ		- 
+ChromeApps		- 2014/08/10 17:00:00
+ストアアプリ		- 2014/08/10 17:00:00
 
 
 PaintMeister (1.0.21.32)

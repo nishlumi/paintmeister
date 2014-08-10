@@ -7,19 +7,32 @@ function alert(message) {
 
     msg.commands.append(new Windows.UI.Popups.UICommand("閉じる", null, 1));
     msg.defaultCommandIndex = 1;
-    msg.showAsync();//.then(callback);
+    try {
+        
+        msg.showAsync();
+    } catch (e) {
+        console.log(e);
+    }
 
 }
-function confirm(message,callback) {
+function confirm(message,callback,callthen) {
     var msg = new Windows.UI.Popups.MessageDialog(message);
 
 
 
-    msg.commands.append(new Windows.UI.Popups.UICommand("はい", callback, 1));
+    msg.commands.append(new Windows.UI.Popups.UICommand("はい", null, 1));
     msg.commands.append(new Windows.UI.Popups.UICommand("キャンセル", null, 2));
     msg.defaultCommandIndex = 2;
     msg.cancelCommandIndex = 2;
-    msg.showAsync();//.then(callback);
+    var ret = msg.showAsync();//.then(callback);
+    ret.then(function (data) {
+        console.log(data);
+        if (data.id == 1) {
+            if (!callback()) {
+                if (callthen) callthen();
+            }
+        }
+    });
     
 }
 function saveImage(data) {
@@ -73,6 +86,34 @@ function ElementTransform(element, value) {
     element.style.msTransform = value;
     element.style.transform = value;
 }
+var AppStorage = {
+    apptype : "",
+    isEnable: function () {
+        if (Windows.Storage.ApplicationData.current.localSettings) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    get: function (key, defaults) {
+        var a = Windows.Storage.ApplicationData.current.localSettings.values[key];
+        if (!a) a = defaults;
+        return a;
+    },
+    set: function (key, value) {
+        Windows.Storage.ApplicationData.current.localSettings.values[key] = value;
+    },
+    remove: function (key) {
+        Windows.Storage.ApplicationData.current.localSettings.values.remove(key);
+    },
+    initialize: function (callback) {
+        this.apptype = "storeapp"
+        callback();
+    },
+    save : function(){
+
+    }
+};
 
 (function () {
     "use strict";
@@ -101,7 +142,7 @@ function ElementTransform(element, value) {
         // 非同期操作を完了する必要がある場合は、
         // args.setPromise() を呼び出してください。
     };
-    
+    //---ここから共通処理貼り付け
     document.addEventListener("keydown", function (event) {
         //console.log(event.keyCode);
         if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
@@ -170,67 +211,69 @@ function ElementTransform(element, value) {
         Draw.keyLikePres = null;
         Draw.pressedKey = 0;
     }, false);
-    Draw.initialize();
-    ColorPalette.initialize();
-    $("#pickerpanel").hide();
-    $("#colorpicker").on("click", function (event) {
-        $("#pickerpanel").show();
-    });
-    document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
-    document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-    document.getElementById("canvas_height").max = Math.floor((window.innerHeight - 100) / 100) * 95;
-    document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-    //---キャンバス外からタッチしたまま入ったときのための描画制御
-    var touchstart = 'touchstart';
-    var touchend = 'touchend';
-    var touchleave = 'touchleave';
-    if (window.PointerEvent) {
-        touchstart = "pointerdown";
-        touchend = "pointerup";
-        touchleave = 'pointerleave';
-    } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
-        touchstart = 'MSPointerDown';
-        touchend = 'MSPointerUp';
-        touchleave = 'MSPointerLeave';
-    }
-    document.body.addEventListener(touchstart, function (event) {
-        //Draw.drawing = true;
-
-    }, false);
-    document.body.addEventListener(touchend, function (event) {
-        Draw.drawing = false;
-    }, false);
-    $("#colorpicker").on(touchstart, function (event) {
-        $("#pickerpanel").show();
-    });
-    $("#pickerpanel").on(touchleave, function (event) {
+    AppStorage.initialize(function () {
+        Draw.initialize();
+        ColorPalette.initialize();
         $("#pickerpanel").hide();
-        event.preventDefault();
-    });
+        $("#colorpicker").on("click", function (event) {
+            $("#pickerpanel").show();
+        });
+        document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+        document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+        document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+        document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+        //---キャンバス外からタッチしたまま入ったときのための描画制御
+        var touchstart = 'touchstart';
+        var touchend = 'touchend';
+        var touchleave = 'touchleave';
+        if (window.PointerEvent) {
+            touchstart = "pointerdown";
+            touchend = "pointerup";
+            touchleave = 'pointerleave';
+        } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
+            touchstart = 'MSPointerDown';
+            touchend = 'MSPointerUp';
+            touchleave = 'MSPointerLeave';
+        }
+        document.body.addEventListener(touchstart, function (event) {
+            //Draw.drawing = true;
 
-    touchstart = 'mousedown';
-    touchend = 'mouseup';
-    touchleave = 'mouseleave';
-    document.body.oncontextmenu = function (event) {
-        return false;
-    }
-    document.body.addEventListener(touchstart, function (event) {
-        //Draw.drawing = true;
-    }, false);
-    document.body.addEventListener(touchend, function (event) {
-        Draw.drawing = false;
-    }, false);
-    window.addEventListener("resize", function (event) {
-        console.log("width=" + event.target.innerWidth);
-        console.log("height=" + event.target.innerHeight);
-        Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
-    }, false);
-    $("#colorpicker").on(touchstart, function (event) {
-        $("#pickerpanel").show();
-    });
-    $("#pickerpanel").on(touchleave, function (event) {
-        $("#pickerpanel").hide();
-        event.preventDefault();
+        }, false);
+        document.body.addEventListener(touchend, function (event) {
+            Draw.drawing = false;
+        }, false);
+        $("#colorpicker").on(touchstart, function (event) {
+            $("#pickerpanel").show();
+        });
+        $("#pickerpanel").on(touchleave, function (event) {
+            $("#pickerpanel").hide();
+            event.preventDefault();
+        });
+
+        touchstart = 'mousedown';
+        touchend = 'mouseup';
+        touchleave = 'mouseleave';
+        document.body.oncontextmenu = function (event) {
+            return false;
+        }
+        document.body.addEventListener(touchstart, function (event) {
+            //Draw.drawing = true;
+        }, false);
+        document.body.addEventListener(touchend, function (event) {
+            Draw.drawing = false;
+        }, false);
+        window.addEventListener("resize", function (event) {
+            console.log("width=" + event.target.innerWidth);
+            console.log("height=" + event.target.innerHeight);
+            Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
+        }, false);
+        $("#colorpicker").on(touchstart, function (event) {
+            $("#pickerpanel").show();
+        });
+        $("#pickerpanel").on(touchleave, function (event) {
+            $("#pickerpanel").hide();
+            event.preventDefault();
+        });
     });
     console.log(window.innerWidth + "/" + window.innerHeight);
 

@@ -17,6 +17,7 @@ var PenType = {
 		oilpaintv : null,
 		waterpaint : null,
 		eraser : null, 
+		directpaint : null,
 			
 		//special pen
 		fillpen : null,
@@ -28,12 +29,13 @@ var PenType = {
 			"simplepen" : [4,"#000000"],
 			"pencil" : [3,"#000000"],
 			"airbrush" : [10,"#000000"],
-			"neonpen" : [8,"#000000"],
+			"neonpen" : [5,"#000000"],
 			"fudepen" : [12,"#000000"],
 			"calligraphy" : [8,"#000000"],
 			"oilpaint" : [20,"#000000"],
 			"oilpaintv" : [20,"#000000"],
 			"waterpaint" : [15,"#000000"],
+			"directpaint" : [14,"#000000"],
 			"eraser" : [20,"#000000"],
 			"fillpen" : [0, "#000000"],
 			"colorchangepen" : [15,"#000000"]
@@ -52,7 +54,8 @@ var PenType = {
 				"mode":"simplepen",
 				"size":4,
 				"color":this.parent.colorpicker.value,
-				"complete":false
+				"pressure":true,
+				"complete":true
 			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 1.0;
@@ -61,7 +64,7 @@ var PenType = {
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
-			context.shadowBlur = 0.5;
+			context.shadowBlur = 2;
 			context.lineCap = "round";
 			
 			this.updateInfo("ペン",context.lineWidth);
@@ -72,6 +75,7 @@ var PenType = {
 				"mode":"pencil",
 				"size":3,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":true
 			};
 			context.globalCompositeOperation = "source-over";
@@ -92,6 +96,7 @@ var PenType = {
 				"mode":"airbrush",
 				"size":20,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":true
 			};
 			context.globalCompositeOperation = "source-over";
@@ -112,14 +117,15 @@ var PenType = {
 		setNeonpen : function(context) {
 			this.current = {
 				"mode":"neonpen",
-				"size":8,
+				"size":5,
 				"color":this.parent.colorpicker.value,
-				"complete":false
+				"pressure":true,
+				"complete":true
 			};
 			context.globalCompositeOperation = "source-over";
 			context.globalAlpha = 0.85;
 			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
-			context.lineWidth = this.current["size"] * 0.7;
+			context.lineWidth = this.current["size"];
 			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
 			context.shadowOffsetX = 0;
 			context.shadowOffsetY = 0;
@@ -135,6 +141,7 @@ var PenType = {
 				"mode":"fudepen",
 				"size":12,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":false
 			};
 			context.globalCompositeOperation = "source-over";
@@ -158,6 +165,7 @@ var PenType = {
 				"mode":"calligraphy",
 				"size":8,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":false
 			};
 			context.globalCompositeOperation = "source-over";
@@ -181,6 +189,7 @@ var PenType = {
 				"mode":"oilpaint",
 				"size":20,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":false
 			};
 			if (arguments.length > 1)  { //指定ありの場合はそれを優先
@@ -211,6 +220,7 @@ var PenType = {
 				"mode":"waterpaint",
 				"size":15,
 				"color":this.parent.colorpicker.value,
+				"pressure":true,
 				"complete":true
 			};
 			context.globalCompositeOperation = "lighter";
@@ -233,6 +243,7 @@ var PenType = {
 				"mode":"eraser",
 				"size":20,
 				"color":"#000000",
+				"pressure":true,
 				"complete":false
 			};
 			if (arguments.length > 1)  { //指定ありの場合はそれを優先
@@ -255,6 +266,7 @@ var PenType = {
 				"mode":"fillpen",
 				"size":1,
 				"color":"#000000",
+				"pressure":false,
 				"complete":false
 			};
 			context.globalCompositeOperation = "destination-over";
@@ -275,6 +287,7 @@ var PenType = {
 				"mode":"colorchangepen",
 				"size":15,
 				"color":"#000000",
+				"pressure":false,
 				"complete":false
 			};
 			context.globalCompositeOperation = "source-atop";
@@ -290,19 +303,47 @@ var PenType = {
 			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
+		setDirectPaintPen : function(context) {
+			this.current = {
+				"mode":"directpaint",
+				"size":14,
+				"color":this.parent.colorpicker.value,
+				"pressure":false,
+				"complete":false
+			};
+			context.globalCompositeOperation = "source-over";
+			context.globalAlpha = 1.0;
+			context.strokeStyle = this.parent.colorpicker.value; //"#ff0000";
+			context.lineWidth = this.current["size"];
+			context.shadowColor = this.parent.colorpicker.value; //"#ff0000";
+			context.shadowOffsetX = 0;
+			context.shadowOffsetY = 0;
+			context.shadowBlur = 0;
+			context.lineCap = "round";
+			
+			this.updateInfo("ベタ塗り",context.lineWidth);
+			this.pentype = PenType.normal;
+		},
+
+		/*
+			event - Each pointer event
+			context - current canvas's context
+			pressure2 - sub pressure
+		*/
 		prepare : function (event, context, pressure2){
 			var pres = 0;
 			if ((event.pressure) || (event.mozPressure)) {
 				pres = event.pressure;
 				if (event.mozPressure) pres = event.mozPressure;
 				if (event.pressure == 0) pres = 0.001;
-				/*if ((pressure2 != null) && (pressure2 > 0)) { //手動筆圧があれば使用
+				if ((pressure2 != null) && (pressure2 > 0)) { //サブの筆圧があれば使用
 					pres = pressure2;
-				}*/
+				}
 				if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
+				if (!this.current["pressure"]) pres = 0.5;
 				if ((this.current["mode"] == "airbrush") || 
 					(this.current["mode"] == "fudepen") || 
 					(this.current["mode"] == "calligraphy") || 
@@ -323,9 +364,9 @@ var PenType = {
 				}else{
 					pres = 0.5;
 				}
-				/*if ((pressure2 != null) && (pressure2 > 0)) { //手動筆圧があれば使用
+				if ((pressure2 != null) && (pressure2 > 0)) { //サブ筆圧があれば使用
 					pres = pressure2;
-				}*/
+				}
 				if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
@@ -1121,7 +1162,7 @@ var PenType = {
 					context.stroke();
 				}
 				context.globalAlpha = bakalp;
-			}else if (this.current[0] == "fillpen" && this.pentype == PenType.fill){
+			}else if (this.current["mode"] == "fillpen" && this.pentype == PenType.fill){
 				context.fillRect(0,0,this.parent.canvassize[0],this.parent.canvassize[1]);
 			}else{
 				context.beginPath();
@@ -1161,6 +1202,7 @@ var PenType = {
 			this.fillpen = document.getElementById("fillpen");
 			this.waterpaint = document.getElementById("waterpaint");
 			this.colorchangepen = document.getElementById("colorchangepen");
+			this.directpaint = document.getElementById("directpaint");
 			
 			this.sizebar = document.getElementById("pensize");
 			this.colorpicker = document.getElementById("colorpicker");
@@ -1248,6 +1290,14 @@ var PenType = {
 				PenSet.parent.last.pen = {
 					"name" : "waterpaint",
 					"func" : PenSet.waterpaint
+				};
+			}, false);
+			this.directpaint.addEventListener("click",function(event) {
+				Draw.pen.setDirectPaintPen(Draw.context); // change edit style to "directpaint".
+				PenSet.hiddenMenu(event);
+				PenSet.parent.last.pen = {
+					"name" : "directpaint",
+					"func" : PenSet.directpaint
 				};
 			}, false);
 			

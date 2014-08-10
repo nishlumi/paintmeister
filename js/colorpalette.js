@@ -37,7 +37,7 @@
 				touchleave = 'mouseleave';
 			}
 
-			for (var i = 1; i < 11; i++){
+			for (var i = 1; i < 16; i++){
 				var obj = i;
 				var elem = document.createElement("td");
 				elem.id = nm + obj;
@@ -158,6 +158,12 @@
 				},false);
 				elem.addEventListener(touchleave,function(event){
 					if (this.touching) {
+						//---ID取得・変換
+						var id = event.target.id;
+						console.log(id);
+						id = parseInt(id.replace("plt",""));
+						if (isNaN(id)) id = 1;
+						//---通常処理
 						if (this.mode == "a"){
 							event.target.style.backgroundColor = document.getElementById("colorpicker").value;
 						}else if (this.mode == "d"){
@@ -165,9 +171,43 @@
 						}/*else if (this.mode == "c") {
 							event.target.click();
 						}*/
+						//---保存有効時、カラーパレットの各場所の色を保存
+						if (document.getElementById("chk_sv_colorpalette").checked) {
+							var c = new RGBColor(event.target.style.backgroundColor);
+							if (AppStorage.isEnable()) {
+								var val = AppStorage.get("sv_colorpalette0");
+								console.log(val);
+								console.log(c.toHex());
+								var arr;
+								if (val) {
+									arr = val.split(",");
+								}else{
+									arr = [];
+									for (var i = 0; i < 15; i++) arr.push("#FFFFFF");
+								}
+								console.log(id);
+								arr[id-1] = c.toHex();
+								console.log(arr);
+								AppStorage.set("sv_colorpalette0",arr.join(","));
+							}
+						}
 					}
 					this.touching = false;
 				},false);
 			}
+			if (AppStorage.isEnable()) {
+				if (document.getElementById("chk_sv_colorpalette").checked) {
+					var val = AppStorage.get("sv_colorpalette0",null);
+					if (val) {
+						var arr = val.split(",");
+						for (var i = 0; i < arr.length; i++) {
+							var nm = "plt" + (i+1);
+							document.getElementById(nm).style.backgroundColor = arr[i];
+						}
+					}
+				
+				}
+			}
+
 		}
 	};

@@ -126,7 +126,7 @@ touch-action: none;
 }
 #menupanel {
 	display : none;
-	width : 35%;
+	width : 40%;
 	height : 40%;
 	position : absolute;
 	top : 80px;
@@ -140,7 +140,7 @@ touch-action: none;
 	border-radius : 3px;
 }
 #menu_left {
-	width : 40%;
+	width : 25%;
 	height : 100%;
 	float : left;
 	opacity : 1;
@@ -150,11 +150,11 @@ touch-action: none;
 	height : 20%;
 }
 #menu_right {
-	width : 60%;
+	width : 75%;
 	height : 50%;
 	margin-left : 2em;
 	opacity : 1;
-	display : none;
+	display : block;
 }
 #menu_bottom {
 	clear : both;
@@ -165,7 +165,7 @@ touch-action: none;
 
 #colorpicker {
 	height : 32px;
-	/*width : 7em;*/
+	width : 6rem;
 	float:left;
 }
 #colorpalette {
@@ -182,7 +182,7 @@ touch-action: none;
 	border-collapse:collapse;
 }
 .palette_button {
-	width : 10%;
+	width : 5%;
 	height : 32px;
 	border : 1px solid #808080;
 	background-color : #FFFFFF;

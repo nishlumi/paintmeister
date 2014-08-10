@@ -309,8 +309,9 @@
 				if (own.ismain) {
 					flag = false;
 				}else{
-					console.log(own.canvas.id);
-					console.log(own.control.id);
+					//console.log("canvasid="+own.canvas.id);
+					//console.log("controlid=");
+					//console.log(own.control.id);
 					//own.canvas.remove();
 					document.getElementById("canvaspanel").removeChild(document.getElementById(own.canvas.id));
 					//own.control.remove();
