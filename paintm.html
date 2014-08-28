@@ -66,28 +66,37 @@
 	<input type="range" id="pres_curline" min="0" max="100" step="" value="50" title="筆圧の度合い" disabled/>
 	</label>
 </div>
-<div id="initialsetup"><fieldset><legend>キャンバスのサイズ</legend>
+<div id="initialsetup"><fieldset><legend>新規作成</legend>
+<strong>キャンバスのサイズ</strong><br/>
 幅　：<input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
 高さ：<input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
 <button id="btn_makecanvas" class="button">作成</button>
-</fieldset></div>
+</fieldset>
+<br/>
+<fieldset><legend>プロジェクトファイルを開く</legend>
+ファイルの場所：<input type="file" id="fl_projpath" size="150" />
+<button id="btn_openfile" class="button">開く</button>
+</fieldset>
+</div>
 <div id="basepanel" class="base-panel">
 		<!-- disables scrolling by "-ms-touch-action:none" -->
 		<div id="canvaspanel"></div>
 </div>
 <div id="menupanel">
-	<strong id="appNameAndVer"></strong><br/>
+	<strong id="appNameAndVer"></strong><span id="openedProjName"></span><br/>
 	<div id="menu_left">
 		<br/>
 		<button id="btn_clear" class="statbutton2" title="キャンバスを全削除します">Clear</button><br/>
 		<button id="btn_new" class="statbutton2 stat_new" title="キャンバスをリセットして最初からやり直す">New</button><br/>
 		<button id="checkstat" class="statbutton2 stat_save" title="現在のキャンバス内容を画像として出力します。(Ctrl + S)">Save</button><br/>
+		<button id="btn_saveproj" class="statbutton2 stat_saveas" title="現在の編集状態をプロジェクトファイルに保存します">Save as Project</button><br/>
 		<a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" class="statbutton2" target="_blank" title="機能早見表" style="padding-top:5px;">
 		<strong style="color:#575858;">使い方ヘルプ</strong></a>
 	</div>
 	<div id="menu_right">
 		<br />
 		<label  title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette">カラーパレットを保存する</label><br/>
+		
 	</div>
 	<div id="menu_bottom">
 	</div>
@@ -150,6 +159,11 @@
 </ul>
 </div>
 <div id="pickerpanel"></div>
+<div id="progresspanel">
+<span>読み込んでいます...</span><br/>
+<div id="progressicon"></div>
+<!--<progress max="100" id="progressbar">読み込んでいます...</progress>-->
+</div>
 
 <div id="log" class="debugmsg"></div>
 <div id="log2" class="debugmsg"></div>

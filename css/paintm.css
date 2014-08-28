@@ -14,9 +14,14 @@ touch-action: none;
   UI parts and button area
 */
 .button {
-	width : 70px;
-	height : 30px;
+	width : 100%;
+	height : 3em;
 	overflow : hidden;
+	background-color : #c4fab3;
+	border : 0;
+}
+.button:active {
+	background-color : #91d780;
 }
 .statbutton {
 	width : 45%; /*60px;*/
@@ -52,6 +57,13 @@ touch-action: none;
 .stat_save:active {
 	background-color:#90ACDD;
 }
+.stat_saveas {
+	background-color:#C2CEAF;
+}
+.stat_saveas:active {
+	background-color:#90ACAD;
+}
+
 .brushbutton {
 	width : 10%;
 	height : 1.4rem;
@@ -90,15 +102,14 @@ touch-action: none;
 	padding-top : 0.5rem;
 	text-align : center;
 }
-#btn_makecanvas {
-	width : 100%;
-	height : 3em;
+/*#btn_makecanvas {
 	background-color : #c4fab3;
 	border : 0;
 }
 #btn_makecanvas:active {
 	background-color : #91d780;
-}
+}*/
+
 
 #ctrlpanel {
 	display : none;
@@ -351,4 +362,46 @@ td.magni_strong:active {
 	border-radius : 3px;
 	opacity : 0.85;
 	z-index : 999;
+}
+#progresspanel {
+	position:absolute;
+	top:0;
+	left:0;
+	width:300px;
+	height:100px;
+	background-color : #B6BBE4;;
+	display : none;
+	z-index : 999;
+}
+#progressicon {
+	margin-left : auto;
+	margin-right : auto;
+	width : 50px;
+	height : 50px;
+	border-radius:40px 40px 40px 40px;
+	border : dashed 2px black;
+}
+@-webkit-keyframes waitprogress {
+	0% { transform:rotate(0deg); }
+	25% { transform:rotate(45deg); }
+	50% { transform:rotate(90deg); }
+	75% { transform:rotate(180deg);}
+	100% {  transform:otate(360deg); }
+}
+@keyframes waitprogress {
+	0% { transform:rotate(0deg); }
+	25% { transform:rotate(45deg); }
+	50% { transform:rotate(90deg); }
+	75% { transform:rotate(180deg);}
+	100% {  transform:otate(360deg); }
+}
+.get-animestart {
+-webkit-animation-duration: 4s;
+-webkit-animation-name : waitprogress;
+-moz-animation-duration: 4s;
+-moz-animation-name : waitprogress;
+animation-duration: 4s;
+animation-name : waitprogress;
+animation-fill-mode : forwards;
+animation-iteration-count : infinite;
 }

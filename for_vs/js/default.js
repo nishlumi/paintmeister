@@ -35,6 +35,9 @@ function confirm(message,callback,callthen) {
     });
     
 }
+function prompt(message, callthen) {
+}
+
 function saveImage(data) {
     var curstate = Windows.UI.ViewManagement.ApplicationView.value;
     if (curstate === Windows.UI.ViewManagement.ApplicationViewState.snapped &&
@@ -79,6 +82,73 @@ function saveImage(data) {
             });
         } else {
 
+        }
+    });
+}
+function loadProjectFile(files) {
+    var curstate = Windows.UI.ViewManagement.ApplicationView.value;
+    if (curstate === Windows.UI.ViewManagement.ApplicationViewState.snapped &&
+        !Windows.UI.ViewManagement.ApplicationView.tryUnsnap()) {
+        return;
+    }
+    var openpick = new Windows.Storage.Pickers.FileOpenPicker();
+    openpick.viewMode = Windows.Storage.Pickers.PickerViewMode.list;
+    openpick.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.documentsLibrary;
+    openpick.fileTypeFilter.replaceAll([".pmpf"]);
+    openpick.pickSingleFileAsync().then(function (file) {
+        console.log(file);
+        if (file) {
+            console.log(file);
+            var reader = new FileReader();
+            reader.onloadstart = function (e) {
+                document.getElementById("progressicon").className = "get-animestart";
+                Draw.progresspanel.style.display = "block";
+            }
+            reader.onload = function (e) {
+                if (Draw.loadProject(reader.result)) {
+                    document.getElementById("basepanel").style.display = "block";
+                    document.getElementById("openedProjName").innerText = " - " + file.name;
+                    Draw.progresspanel.style.display = "none";
+                    document.getElementById("progressicon").className = "";
+                } else {
+                    alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                }
+            }
+            reader.onerror = function (e) {
+                alert("有効なPaintMeisterプロジェクトファイルではありません！");
+            }
+            reader.readAsText(file);
+
+        } else {
+            Draw.progresspanel.style.display = "none";
+            document.getElementById("progressicon").className = "";
+        }
+    }, function (file) {
+        Draw.progresspanel.style.display = "none";
+        document.getElementById("progressicon").className = "";
+    })
+
+}
+function saveProject(data) {
+    var curstate = Windows.UI.ViewManagement.ApplicationView.value;
+    if (curstate === Windows.UI.ViewManagement.ApplicationViewState.snapped &&
+        !Windows.UI.ViewManagement.ApplicationView.tryUnsnap()) {
+        return;
+    }
+    var svpick = new Windows.Storage.Pickers.FileSavePicker();
+    svpick.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.picturesLibrary;
+    svpick.fileTypeChoices.insert("PaintMeister Project file", [".pmpf"]);
+    svpick.suggestedFileName = "New Project";
+
+    svpick.pickSaveFileAsync().then(function (file) {
+        if (file) {
+            document.getElementById("openedProjName").innerText = " - " + file.name;
+            Windows.Storage.FileIO.writeTextAsync(file, data);
+            Draw.progresspanel.style.display = "none";
+            document.getElementById("progressicon").className = "";
+        } else {
+            Draw.progresspanel.style.display = "none";
+            document.getElementById("progressicon").className = "";
         }
     });
 }
@@ -222,6 +292,9 @@ var AppStorage = {
         document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
         document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
         document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+        //---プログレスパネルの準備
+        document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth - 300) / 100) * 50) + "px";
+        document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";
         //---キャンバス外からタッチしたまま入ったときのための描画制御
         var touchstart = 'touchstart';
         var touchend = 'touchend';

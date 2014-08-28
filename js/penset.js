@@ -376,7 +376,7 @@ var PenType = {
 				}else{
 					context.lineWidth = (this.sizebar.value * pres) * 2 + (pres * 0.5);
 				}
-				console.log(context.lineWidth);
+				//console.log(context.lineWidth);
 				this.parent.lastpressure = pres;
 				//document.getElementById("log").innerHTML = "pressure off:" + this.parent.lastpressure;
 			}
@@ -936,7 +936,7 @@ var PenType = {
 				alparr.push(0.1 * hairpressure * 2);
 				widarr.push(this.current["size"]);
 				shadowarr.push(15);
-				caparr.push("round");
+				caparr.push("butt");
 				//2点目：上
 				compoarr.push("source-over");
 				StXarr.push(startX);
@@ -1048,7 +1048,7 @@ var PenType = {
 				shadowarr.push(10);
 				caparr.push("round");
 				//4点目：右
-				compoarr.push("xor");
+				compoarr.push("lighter");
 				StXarr.push(startX + (this.current["size"] * 0.45));
 				StYarr.push(startY);
 				Xarr.push(offsetX + (this.current["size"] * 0.25));
@@ -1066,7 +1066,7 @@ var PenType = {
 				alparr.push(0.2 * hairpressure * 2);
 				widarr.push(this.current["size"]);
 				shadowarr.push(5);
-				caparr.push("round");
+				caparr.push("butt");
 				for (var i = 0; i < StXarr.length; i++) {
 					context.globalCompositeOperation = compoarr[i];
 					context.globalAlpha = alparr[i];

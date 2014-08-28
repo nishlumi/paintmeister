@@ -56,7 +56,7 @@
 			document.getElementById("layinfo_opacity").value = own.Alpha;
 			document.getElementById("layinfo_toggle").checked = own.isvisible;
 			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.style.zIndex);
-			document.getElementById("layinfo_name").value = own.name;
+			document.getElementById("layinfo_name").value = own.title;
 			document.getElementById("prev_img").src = own.canvas.toDataURL();
 		}
 		this.deselect = function (){
@@ -284,6 +284,7 @@
 			own.canvas.height = own.canvassize.h;
 			own.canvas.style.zIndex = laylength+1;
 			document.getElementById("canvaspanel").appendChild(own.canvas);
+			own.title = "レイヤーNo." + own.canvas.style.zIndex;
 			/*var winwid = window.innerWidth;
 			var sa = winwid - own.canvassize.w;
 			var say = window.innerHeight - own.canvassize.h;
@@ -302,6 +303,34 @@
 			document.getElementById("lay_btns").appendChild(own.control);
 			own.generate_core(own.canvas,own.control);
 			
+		};
+		this.load = function(titlename,visible,opacity,datalength,data) {
+			own.title = titlename;
+			own.show(visible);
+			own.opacity(opacity);
+			var con = own.canvas.getContext("2d");
+			var imgd = con.createImageData(this.canvassize.w,this.canvassize.h); //getImageData(0,0,this.canvassize.w,this.canvassize.h);
+			var imgdcnt = 0;
+			console.log("data length="+data.length);
+			console.log("layer data="+imgd.data.length);
+			console.log(data[0] + " - " + data[0].indexOf("0#"));
+			for (var i = 0; i < data.length; i++) {
+				if (data[i].indexOf("0#") > -1) {
+					var zerocnt = parseInt(data[i].replace("0#",""));
+					if (i == 0) console.log("zerocnt="+zerocnt);
+					//---圧縮した0を復元
+					for (var j = 0; j < zerocnt; j++) {
+						imgd.data[imgdcnt] = 0;
+						imgdcnt++;
+					}
+				}else{
+					imgd.data[imgdcnt] = parseInt(data[i],16);
+					imgdcnt++;
+				}
+				
+			}
+			console.log("imgdcnt="+imgdcnt);
+			con.putImageData(imgd,0,0);
 		};
 		this.destroy = function (){
 			var flag;

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.23.41";
+var appversion = "1.0.26.44";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -71,6 +71,12 @@ function calculatePosition(eventtype,event,target,opt) {
 	}
 	return pos;
 }
+function download(url,filename) {
+	var elem = document.getElementById("dl_a");
+	elem.download = filename;
+	elem.href = url;
+	elem.click();
+}
 //#################################################################################
 //#################################################################################
 	var UndoBuffer = function (targetlayer,imagedata) {
@@ -97,6 +103,7 @@ function calculatePosition(eventtype,event,target,opt) {
 		layer_add : null,
 		layer_del : null,
 		pres_curline : null,
+		progresspanel : null,
 		//currentpen : ["",-1,"#000000"], //0=mode, 1=size, 2=color
 		defaults : {
 			"canvas" : {
@@ -157,7 +164,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.layer_del = document.getElementById("lay_del");
 			this.pres_curline  = document.getElementById("pres_curline");
 			this.newbtn  = document.getElementById("btn_new");
-			
+			this.progresspanel = document.getElementById("progresspanel");
 			
 			//---other control events setup
 			this.sizebar.addEventListener("change", function(event) {
@@ -251,72 +258,11 @@ function calculatePosition(eventtype,event,target,opt) {
 				var wi = document.getElementById("canvas_width").value;
 				var he = document.getElementById("canvas_height").value;
 				console.log("wi=" + wi + ", he=" + he);
-				function createbody(){
-					document.getElementById("initialsetup").style.display = "none";
-					document.getElementById("apptitle").style.display = "none";
-					document.getElementById("ctrlpanel").style.display = "block";
-					//document.getElementById("colorpalette").style.display = "block";
-					//document.getElementById("layoutcontrol").style.display = "block";
-					document.getElementById("prespanel").style.display = "block";
-					//Draw.generateCanvas(wi, he);
-					document.getElementById("basepanel")
-					document.getElementById("canvaspanel").style.width = wi + "px";
-					document.getElementById("canvaspanel").style.height = (he) + "px";
-					document.getElementById("canvaspanel").style.border = "2px solid #808080";
-					document.getElementById("canvaspanel").style.marginLeft = "auto";
-					document.getElementById("canvaspanel").style.marginRight = "auto";
-					document.getElementById("canvaspanel").style.marginTop = "auto";
-					document.getElementById("canvaspanel").style.marginBottom = "auto";
-					document.getElementById("canvaspanel").className = "canvaspanel";
-					document.getElementById("canvaspanel").style.transformOrigin = "left top";
-					document.getElementById("canvaspanel").style.transform = "scale(1.0)";
-					var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,false);
-					lay.canvas.className = "mostbase-canvas";
-					Draw.layer.push(lay);
-					Draw.layer[0].select(Draw.context);
-					Draw.canvassize = [wi, he];
-					Draw.defaults.canvas.size = [wi, he];
-					document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
-					document.getElementById("info_magni").innerText = "1.0";
-					//document.getElementById("btn_panel").style.visibility = "visible";
-					Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
-					if (wi > he) {
-						document.getElementById("prev_img").width = "126";
-					}else{
-						document.getElementById("prev_img").height = "126";
-					}
-					Draw.pen.pencil.click();
-					/*var winwid = window.innerWidth;
-					var sa = window.innerWidth - Draw.canvassize[0];
-					var say = window.innerHeight - Draw.canvassize[1];
-					var space = Math.floor(sa / 2) - 30;
-					var spacey = Math.floor(say / 2) - (say * 0.2);
-					Draw.canvasspace = {"w" : space, "h" : spacey};
-					//document.getElementById("basepanel").style.left = (45 + space) + "px";
-					console.log("left="+space + "/" + spacey);
-					ElementTransform(document.getElementById("basepanel"),"translate("+space+"px," + spacey + "px)");
-					*/
-					//---ダミーのキャンバスも作成
-					Draw.canvas = document.createElement("canvas");
-					Draw.canvas.id = "dumcanvas";
-					Draw.canvas.className = "dummy-canvas";
-					Draw.canvas.width = wi;
-					Draw.canvas.height = he;
-					Draw.canvas.style.zIndex = 0;
-					document.body.appendChild(Draw.canvas);
-					//---操作用のキャンバスも作成
-					Draw.opecan = document.createElement("canvas");
-					Draw.opecan.id = "opecanvas";
-					Draw.opecan.className = "dummy-canvas";
-					Draw.opecan.width = wi;
-					Draw.opecan.height = he;
-					Draw.opecan.style.zIndex = 0;
-					document.body.appendChild(Draw.canvas);
-					document.getElementById("basepanel").style.display = "block";
-					return true;
+				function call_createbody(){
+					Draw.createbody(wi,he,true);
 				}
 				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
-					createbody
+					call_createbody
 				);
 			},false);
 			this.layer_add.addEventListener("click", function(event) {
@@ -386,7 +332,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			},false);
 			document.getElementById("layinfo_name").addEventListener("change", function(event) {
 				var val = event.target.value;
-				Draw.getSelectedLayer().name = val;
+				Draw.getSelectedLayer().title = val;
 			},false);
 			document.getElementById("layinfo_name").addEventListener("keydown", function(event) {
 				event.stopPropagation();
@@ -464,7 +410,52 @@ function calculatePosition(eventtype,event,target,opt) {
 					//event.target.style.backgroundColor = "#c4fab3";
 				}
 			},false);
-			
+			document.getElementById("btn_saveproj").addEventListener("click", function(event) {
+				document.getElementById("progressicon").className = "get-animestart";
+				Draw.progresspanel.style.display = "block";
+				
+				//Draw.prepareSaveProject()
+				var wkr = new Worker("js/wkr_drawmain.js");
+				wkr.addEventListener("message",function(evt){
+					saveProject(evt.data);
+				},false);
+				wkr.addEventListener("error",function(evt){
+					alert("プロジェクトファイルの保存中にエラーが発生しました<br/>"+
+						evt.message + "<br/>" +
+						evt.filename + " , line number=" + evt.lineno + "<br/>"
+					);
+				},false);
+				//=======
+				var pstdata = {};
+				pstdata["appversion"] = appversion;
+				pstdata["canvassize"] = Draw.canvassize;
+				pstdata["imagedata"] = {"length":Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length};
+				pstdata["layer"] = [];
+				for (var obj in Draw.layer) {
+					var lay = {"title": "", "isvisible":true, "Alpha":0, "data":""};
+					var con = Draw.layer[obj].canvas.getContext("2d");
+					var imgd = con.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+					lay.title = Draw.layer[obj].title;
+					lay.isvisible = Draw.layer[obj].isvisible;
+					lay.Alpha = Draw.layer[obj].Alpha;
+					lay.data = imgd.data;
+					pstdata["layer"].push(lay);
+				}
+				//=======
+				wkr.postMessage(pstdata);
+				//saveProject(Draw.prepareSaveProject);
+				
+				return;
+				//var bb = new Blob([data],{type:"text/txt"});
+				//download(window.URL.createObjectURL(bb),"sample.txt");
+			},false);
+			document.getElementById("btn_openfile").addEventListener("click", function(event) {
+				console.log(document.getElementById("fl_projpath").value);
+				var files = document.getElementById("fl_projpath").files;
+				loadProjectFile(files);
+
+			},false);
+			//=============================================================================================
 			//---アプリバージョンの設定
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
 			this.loadSetting();
@@ -490,6 +481,63 @@ function calculatePosition(eventtype,event,target,opt) {
 					document.getElementById("dlg_pen_mode").style.display = "none";
 				},false);
 			}*/
+		},
+		createbody : function(wi,he,isshow){
+			document.getElementById("initialsetup").style.display = "none";
+			document.getElementById("apptitle").style.display = "none";
+			document.getElementById("ctrlpanel").style.display = "block";
+			//document.getElementById("colorpalette").style.display = "block";
+			//document.getElementById("layoutcontrol").style.display = "block";
+			document.getElementById("prespanel").style.display = "block";
+			//Draw.generateCanvas(wi, he);
+			document.getElementById("basepanel")
+			document.getElementById("canvaspanel").style.width = wi + "px";
+			document.getElementById("canvaspanel").style.height = (he) + "px";
+			document.getElementById("canvaspanel").style.border = "2px solid #808080";
+			document.getElementById("canvaspanel").style.marginLeft = "auto";
+			document.getElementById("canvaspanel").style.marginRight = "auto";
+			document.getElementById("canvaspanel").style.marginTop = "auto";
+			document.getElementById("canvaspanel").style.marginBottom = "auto";
+			document.getElementById("canvaspanel").className = "canvaspanel";
+			document.getElementById("canvaspanel").style.transformOrigin = "left top";
+			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
+			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,false);
+			lay.canvas.className = "mostbase-canvas";
+			Draw.layer.push(lay);
+			Draw.layer[0].select(Draw.context);
+			Draw.canvassize = [wi, he];
+			Draw.defaults.canvas.size = [wi, he];
+			document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
+			document.getElementById("info_magni").innerText = "1.0";
+			//document.getElementById("btn_panel").style.visibility = "visible";
+			Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+			if (wi > he) {
+				document.getElementById("prev_img").width = "126";
+			}else{
+				document.getElementById("prev_img").height = "126";
+			}
+			Draw.pen.pencil.click();
+			//---ダミーのキャンバスも作成
+			Draw.canvas = document.createElement("canvas");
+			Draw.canvas.id = "dumcanvas";
+			Draw.canvas.className = "dummy-canvas";
+			Draw.canvas.width = wi;
+			Draw.canvas.height = he;
+			Draw.canvas.style.zIndex = 0;
+			document.body.appendChild(Draw.canvas);
+			//---操作用のキャンバスも作成
+			Draw.opecan = document.createElement("canvas");
+			Draw.opecan.id = "opecanvas";
+			Draw.opecan.className = "dummy-canvas";
+			Draw.opecan.width = wi;
+			Draw.opecan.height = he;
+			Draw.opecan.style.zIndex = 0;
+			document.body.appendChild(Draw.canvas);
+			if (isshow) {
+				document.getElementById("basepanel").style.display = "block";
+			}
+			document.getElementById("openedProjName").innerText = "";
+			return true;
 		},
 		clearBody : function (){
 			//参照コンテキストをメインのキャンバスに戻す
@@ -535,6 +583,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			//document.getElementById("colorpalette").style.display = "none";
 			//document.getElementById("layoutcontrol").style.display = "none";
 			document.getElementById("prespanel").style.display = "none";
+			document.getElementById("openedProjName").innerText = "";
 			Draw.saveSetting();
 			return true;
 		},
@@ -638,22 +687,107 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		},
 		prepareSaveProject : function (){
+			var def = $.Deferred();
 			var rawdatas = [];
+			var projectdata = [];
 			var fnldata = "";
-			for (var obj in this.layer) {
+			//---Header
+			projectdata.push("paintm");
+			projectdata.push(appversion);
+			projectdata.push("0");
+			projectdata.push("4");
+			projectdata.push(Draw.canvassize[0]);
+			projectdata.push(Draw.canvassize[1]);
+			projectdata.push("1");
+			projectdata.push("3");
+			//Color Mode Data Block
+			projectdata.push("768");
+			//Image Resource Block
+			projectdata.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length);
+			//Image Data
+			projectdata.push(Draw.layer.length);
+			for (var obj in Draw.layer) {
 				var r = "";
-				r = this.layer[obj] = canvas.data.join(",");
-				rawdatas.push("#" + r.length + "#" + r);
+				var con = Draw.layer[obj].canvas.getContext("2d");
+				var imgd = con.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+				var nulcnt = 0;
+				//Image Data (each Layer)
+				projectdata.push(0);
+				projectdata.push(0);
+				projectdata.push(Draw.canvassize[1]);
+				projectdata.push(Draw.canvassize[0]);
+				projectdata.push(Draw.layer[obj].title);
+				projectdata.push(Draw.layer[obj].isvisible ? "1" : "0");
+				projectdata.push(Draw.layer[obj].Alpha);
+				projectdata.push(" ");projectdata.push(" ");projectdata.push(" ");projectdata.push(" ");
+				for (var i = 0; i < imgd.data.length; i++) {
+					
+					if (imgd.data[i] == 0) {
+						if (nulcnt == 0) {
+							//最初の0のみ保存
+							r += imgd.data[i];
+						}
+						nulcnt++;
+					}else{
+						if (nulcnt > 0) {
+							r += "#" + nulcnt + ",";
+							nulcnt = 0;
+						}
+						r += parseInt(imgd.data[i]).toString(16) + ",";
+					}
+				}
+				projectdata.push(r);
 			}
-			fnldata = rawdatas.join("\t");
-			fnldata += "EOF:" + rawdatas.length;
-			return fnldata;
+			def.resolve(projectdata.join("\t"));
+			return def.promise();
+			//return projectdata.join("\t");
 		},
 		loadProject : function(data){
-			var pos_eof = data.indexOf("EOF:");
-			var alllen = parseInt(data.substr(pos_eof+4,data.length));
-			if (isNaN(alllen)) return false;
-			
+			var projectdata = String(data).split("\t");
+			var CST_width = 4
+			var CST_height = 5;
+			var CST_layerCount = 10;
+			console.log("projectdata="+projectdata.length);
+			if (projectdata.length < 8) {
+				//---ヘッダー部分ですでに8個ない場合は、不正なファイルとしてエラー
+				return false;
+			}
+			if (projectdata[0] != "paintm") {
+				return false;
+			}
+			//---キャンバスを生成
+			this.createbody(projectdata[CST_width],projectdata[CST_height],false);
+			var laycount = parseInt(projectdata[CST_layerCount]);
+			console.log("laycount="+laycount);
+			if (isNaN(laycount)) return false; //---レイヤーの個数が正常にとれなかったらエラー
+			//---レイヤーの復元
+			//レイヤー0番目はメインキャンバスなので固定で読み込み
+			console.log(projectdata[CST_layerCount+5]);
+			var data = projectdata[CST_layerCount+12].split(",");
+			this.layer[0].load(
+				projectdata[CST_layerCount+5],
+				(projectdata[CST_layerCount+6] == "1" ? true : false),
+				projectdata[CST_layerCount+7],
+				projectdata[9],
+				data
+			);
+			var layindexpos = CST_layerCount+13;
+			for (var i = 1; i < laycount; i++) {
+				var lay = new DrawLayer(this,{"w":this.canvassize[0],"h":this.canvassize[1]},false,true);
+				this.layer.push(lay);
+				console.log("layindexpos="+projectdata[layindexpos+4]);
+				data = projectdata[layindexpos+11].split(",");
+				this.layer[i].load(
+					projectdata[layindexpos+4],
+					(projectdata[layindexpos+5] == "1" ? true : false),
+					projectdata[layindexpos+6],
+					projectdata[9],
+					data
+				);
+				console.log("data="+projectdata[layindexpos+11].substr(0,100));
+				layindexpos += 12;
+			}
+			return true;
 		},
 		scale : function (val) {
 			var fnlbi = val / 100;
@@ -712,7 +846,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			this.startX = pos.x;
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
-			console.log("startPressure=" + this.startPressure);
+			//console.log("startPressure=" + this.startPressure);
 			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
 			//---右クリック、スタイラスペンの反対側は消しゴムに設定
@@ -905,7 +1039,7 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 			//通常描画モード
 			if (this.drawing) {
-				console.log("offsetPressure=" + offsetPressure);
+				//console.log("offsetPressure=" + offsetPressure);
 			//console.log("move, event.button=");
 			//console.log(event);
 				//document.getElementById("info_pen_size").innerHTML = this.context.lineWidth;
@@ -926,8 +1060,8 @@ function calculatePosition(eventtype,event,target,opt) {
 				console.log("start=" + this.startX + "x" + this.startY);
 				console.log("offset=" + offsetX + "x" + offsetY);
 				console.log("sa=" + saX + "x" + saY);
-				console.log("pm=" + pmX + "x" + pmY);*/
-				console.log("saPres=" + saPres);
+				console.log("pm=" + pmX + "x" + pmY);
+				console.log("saPres=" + saPres);*/
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
 				if ((ju_saX > this.pen.current["size"]*1) || (ju_saY > this.pen.current["size"]*1)){
 					if (this.pen.current["complete"]) {
@@ -992,7 +1126,7 @@ function calculatePosition(eventtype,event,target,opt) {
 							//cplarr.push(pos);
 							
 							//pen pressure calc
-							console.log("tempPressure=" + tempPressure);
+							//console.log("tempPressure=" + tempPressure);
 							this.pen.prepare(event,this.context,tempPressure);
 							this.pen.drawMain(this.context,
 								prevpos.x,prevpos.y,
@@ -1036,9 +1170,9 @@ function calculatePosition(eventtype,event,target,opt) {
 				});
 				offsetX = pos.x;
 				offsetY = pos.y;
-				console.log("event.pressure=" + event.pressure);
-				offsetPressure = event.pressure * 0.001;
-				console.log("offsetPressure=" + offsetPressure);
+				//console.log("event.pressure=" + event.pressure);
+				var offsetPressure = event.pressure * 0.001;
+				//console.log("offsetPressure=" + offsetPressure);
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 			}
@@ -1062,7 +1196,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				});
 				offsetX = pos.x;
 				offsetY = pos.y;
-				offsetPressure = event.pressure * 0.001;
+				var offsetPressure = event.pressure * 0.001;
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
 			}
@@ -1078,7 +1212,7 @@ function calculatePosition(eventtype,event,target,opt) {
 				});
 				this.startX = pos.x;
 				this.startY = pos.y;
-				this.startPressure = offsetPressure;
+				//this.startPressure = offsetPressure;
 				
 			}
 		}
