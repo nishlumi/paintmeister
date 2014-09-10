@@ -1,5 +1,6 @@
 ﻿// 空白のテンプレートの概要については、次のドキュメントを参照してください:
 // http://go.microsoft.com/fwlink/?LinkId=232509
+var onKeyope = true;
 function alert(message) {
     var msg = new Windows.UI.Popups.MessageDialog(message);
 
@@ -214,6 +215,7 @@ var AppStorage = {
     };
     //---ここから共通処理貼り付け
     document.addEventListener("keydown", function (event) {
+        if (!onKeyope) return false;
         //console.log(event.keyCode);
         if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
             if (document.getElementById("initialsetup").style.display == "none") {

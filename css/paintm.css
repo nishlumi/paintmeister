@@ -102,6 +102,13 @@ touch-action: none;
 	padding-top : 0.5rem;
 	text-align : center;
 }
+.sidebar_button {
+	font-size : 120%;
+	height : 32px;
+	width : 39px;
+	padding-top : 0.5rem;
+	text-align : center;
+}
 /*#btn_makecanvas {
 	background-color : #c4fab3;
 	border : 0;
@@ -113,8 +120,8 @@ touch-action: none;
 
 #ctrlpanel {
 	display : none;
-	margin-top : 5px;
-	margin-left : 10px;
+	margin-top : 0px;
+	margin-left : 0px;
 	position:fixed;
 	width:100%;
 }
@@ -126,8 +133,25 @@ touch-action: none;
 #sysbtn_panel {
 	float : left;
 	/*margin-right : 1em;*/
-	width : 15%;
+	width : 5%;
 }
+#info_panel .info_opebutton {
+	width : 100%;
+	height : 1.5rem;
+	background-color : #c4fab3;
+	border :0px solid #999999;
+	padding : 0 0 0 0;
+	font-size : 120%;
+}
+#info_panel .info_opebutton2 {
+	width : 100%;
+	height : 1.5rem;
+	background-color : #FFB99C;
+	border :0px solid #999999;
+	padding : 0 0 0 0;
+	font-size : 120%;
+}
+
 .button-panel{
 	width : 85%;
 	/*margin-left:1em; 
@@ -137,10 +161,10 @@ touch-action: none;
 }
 #menupanel {
 	display : none;
-	width : 40%;
+	width : 95%;
 	height : 40%;
 	position : absolute;
-	top : 80px;
+	top : 3rem;
 	left : 0;
 	background-color : #B6BBE4;
 	padding: 0.5rem 0.5rem;
@@ -151,7 +175,7 @@ touch-action: none;
 	border-radius : 3px;
 }
 #menu_left {
-	width : 25%;
+	width : 15%;
 	height : 100%;
 	float : left;
 	opacity : 1;
@@ -161,7 +185,7 @@ touch-action: none;
 	height : 20%;
 }
 #menu_right {
-	width : 75%;
+	width : 85%;
 	height : 50%;
 	margin-left : 2em;
 	opacity : 1;
@@ -175,12 +199,13 @@ touch-action: none;
 }
 
 #colorpicker {
-	height : 32px;
-	width : 6rem;
+	height : 27px;
+	width : 10%;
 	float:left;
 }
 #colorpalette {
 	width : 100%;
+	margin-top : 3px;
 }
 .explain_palette {
 	float:left;
@@ -189,12 +214,12 @@ touch-action: none;
 	width : 2%;
 }
 #palettepanel {
-	width : 50%;
+	width : 80%;
 	border-collapse:collapse;
 }
 .palette_button {
 	width : 5%;
-	height : 32px;
+	height : 27px;
 	border : 1px solid #808080;
 	background-color : #FFFFFF;
 	text-align : center;
@@ -238,20 +263,13 @@ touch-action: none;
 	background-color : #D8DDF6
 }
 
-#info_panel .info_opebutton {
-	width : 100%;
-	background-color : #c4fab3;
-	border :1px solid #999999;
-	padding : 0 0 0 0;
-	font-size : 120%;
-}
 #dlg_pen_mode {
 	display : none;
 	width : 50%;
 	height : 80%;
 	overflow : hidden;
 	position : absolute;
-	top : 2.5rem;
+	top : 3rem;
 	left : 44%;
 	background-color : #B6BBE4; /*#E4D8E1;*/
 	-moz-border-radius : 3px;
@@ -298,7 +316,7 @@ li.itemfolder_normal {
 	height : 30%;
 	overflow : hidden;
 	position : absolute;
-	top : 2.5rem;
+	top : 3rem;
 	left : 2%;
 	padding: 0.5rem 0.5rem;
 	background-color : #B6BBE4;
@@ -309,12 +327,13 @@ li.itemfolder_normal {
 	z-index : 11;
 }
 #tbl_magni {
-	width : 40%;
+	width : 95%;
 }
 td.magni_element {
 	background-color : #F0EEC6;
 	cursor : default;
 	text-align : center;
+	height : 1.2rem;
 }
 td.magni_element:hover {
 	background-color : #D8CCA4;
@@ -340,7 +359,7 @@ td.magni_strong:active {
 	height : 30%;
 	overflow : hidden;
 	position : absolute;
-	top : 2.5rem;
+	top : 3rem;
 	left : calc(20%);
 	padding: 0.5rem 0.5rem;
 	background-color : #B6BBE4;
@@ -353,7 +372,7 @@ td.magni_strong:active {
 #pickerpanel{
 	position : absolute;
 	top : calc(32px + 3rem + 2px);
-	left : 17%;
+	left : 1%;
 	/*border:1px solid gray;*/
 	background-color : #B6BBE4;
 	width : 200px;

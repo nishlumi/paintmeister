@@ -9,6 +9,14 @@
 		mode : "a",
 		offset : 0,
 		pickerUI : null,
+		load : function(data){
+			var val = data;
+			var arr = val.split(",");
+			for (var i = 0; i < arr.length; i++) {
+				var nm = "plt" + (i+1);
+				document.getElementById(nm).style.backgroundColor = arr[i];
+			}
+		},
 		initialize : function (){
 			var nm = "plt";
 			var elems = document.querySelectorAll("button.palette_button");
@@ -173,9 +181,10 @@
 						}*/
 						//---保存有効時、カラーパレットの各場所の色を保存
 						if (document.getElementById("chk_sv_colorpalette").checked) {
+							var inx = $("input:radio[name=sv_paletteloc]:checked").val();
 							var c = new RGBColor(event.target.style.backgroundColor);
 							if (AppStorage.isEnable()) {
-								var val = AppStorage.get("sv_colorpalette0");
+								var val = AppStorage.get("sv_colorpalette"+inx);
 								console.log(val);
 								console.log(c.toHex());
 								var arr;
@@ -187,8 +196,9 @@
 								}
 								console.log(id);
 								arr[id-1] = c.toHex();
+								document.getElementById("lab_pltloc" + inx + "_" + (id-1)).style.color = arr[id-1];
 								console.log(arr);
-								AppStorage.set("sv_colorpalette0",arr.join(","));
+								AppStorage.set("sv_colorpalette"+inx,arr.join(","));
 							}
 						}
 					}
@@ -197,14 +207,19 @@
 			}
 			if (AppStorage.isEnable()) {
 				if (document.getElementById("chk_sv_colorpalette").checked) {
+					var inx = $("input:radio[name=sv_paletteloc]:checked").val();
 					var val = AppStorage.get("sv_colorpalette0",null);
+					if (val) {
+						this.load(val);
+					}
+					/*var val = AppStorage.get("sv_colorpalette0",null);
 					if (val) {
 						var arr = val.split(",");
 						for (var i = 0; i < arr.length; i++) {
 							var nm = "plt" + (i+1);
 							document.getElementById(nm).style.backgroundColor = arr[i];
 						}
-					}
+					}*/
 				
 				}
 			}

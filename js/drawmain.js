@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.26.44";
+var appversion = "1.0.28.51";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -49,7 +49,12 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}
 	} else {
-		pos.x = event.offsetX - opt.offset;
+		if (navigator.userAgent.indexOf("Firefox") > -1) {
+			
+			pos.x = event.offsetX - opt.offset - event.target.offsetParent.offsetLeft - event.target.offsetParent.offsetParent.offsetLeft - event.target.offsetParent.clientLeft;
+		}else{
+			pos.x = event.offsetX - opt.offset;
+		}
 	}
 	
 	if (event.offsetY === undefined) {
@@ -67,7 +72,11 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}
 	} else {
-		pos.y = event.offsetY - opt.offset;
+		if (navigator.userAgent.indexOf("Firefox") > -1) {
+			pos.y = event.offsetY - opt.offset - event.target.offsetParent.clientTop - event.target.offsetParent.offsetTop - event.target.offsetParent.offsetParent.offsetTop;
+		}else{
+			pos.y = event.offsetY - opt.offset;
+		}
 	}
 	return pos;
 }
@@ -129,7 +138,7 @@ function download(url,filename) {
 		offset : 1,
 		undohist : [],
 		redohist : [],
-		lastpressure : 0.5,
+		//lastpressure : 0.5,
 		keyLikePres : null,
 		pressedKey : 0,
 		canvasspace : 0,
@@ -145,6 +154,8 @@ function download(url,filename) {
 		},
 		is_scrolling : false,
 		vCtrl_for_scroll : false,
+		is_spoiting : false,
+		elementParameter : {},
 		
 		initialize : function() {
 			this.pen = PenSet;
@@ -285,6 +296,18 @@ function download(url,filename) {
 			},false);
 			this.pres_curline.addEventListener("change", function(event) {
 				document.getElementById("presval").innerHTML = event.target.value;
+			},false);
+			//---スポイトツールボタン
+			document.getElementById("btn_spoit").addEventListener("click", function(event) {
+				if (event.target.className == "sidebar_button switchbutton_off") {
+					event.target.className = "sidebar_button switchbutton_on";
+					event.target.title = "スポイト/色引き伸ばしを無効にする";
+					Draw.is_spoiting = true;
+				}else{
+					event.target.className = "sidebar_button switchbutton_off";
+					event.target.title = "スポイト/色引き伸ばしを有効にする"
+						Draw.is_spoiting = false;
+				}
 			},false);
 			//---スクロールボタン
 			document.getElementById("btn_freescroll").addEventListener("click", function(event) {
@@ -465,7 +488,37 @@ function download(url,filename) {
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("menupanel").style.display = "none";
 			
-			
+			//---カラーパレットのプレビュー＆イベントセットアップ
+			for (var i = 0; i < 3; i++) {
+				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
+					var val = event.target.value;
+					console.log("rad_paletteloc=" + val);
+					var dat = AppStorage.get("sv_colorpalette"+val,null);
+					if (!dat) {
+						var arr = [];
+						for (var i = 0; i < 15; i++) arr.push("#FFFFFF");
+						dat = arr.join(",");
+					}
+					ColorPalette.load(dat);
+				},false);
+				var val = AppStorage.get("sv_colorpalette"+i,null);
+				var arr = "";
+				if (val) {
+					arr = val.split(",");
+				}
+				//プレビューセットアップ
+				for (var j = 0; j < 15; j++) {
+					var span = document.createElement("span");
+					if (arr) {
+						span.style.color = arr[j];
+					}else{
+						span.style.color = "#FFFFFF";
+					}
+					span.innerHTML = "&#9724;";
+					span.id = "lab_pltloc"+ i + "_" + j;
+					document.getElementById("lab_pltloc"+i).appendChild(span);
+				}
+			}
 			/*var pens = document.querySelectorAll("div#menu_right button");
 			console.log(pens);
 			var ul = document.querySelector("div#dlg_pen_mode ul li");
@@ -516,7 +569,7 @@ function download(url,filename) {
 			}else{
 				document.getElementById("prev_img").height = "126";
 			}
-			Draw.pen.pencil.click();
+			Draw.pen.items["pencil"].element.click();
 			//---ダミーのキャンバスも作成
 			Draw.canvas = document.createElement("canvas");
 			Draw.canvas.id = "dumcanvas";
@@ -846,6 +899,11 @@ function download(url,filename) {
 			this.startX = pos.x;
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
+			//---PenSetに安全に受け渡す用の値セット
+			this.elementParameter["canvas"] = {
+				"width":this.canvassize[0],
+				"height":this.canvassize[1]
+			};
 			//console.log("startPressure=" + this.startPressure);
 			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
@@ -919,6 +977,16 @@ function download(url,filename) {
 				this.is_scrolling = true;
 				isundo = false;
 			}
+			//スポイトツール
+			if (this.is_spoiting) {
+				var img = this.context.getImageData(pos.x,pos.y,1,1);
+				var rgb = "#" + img.data[0].toString(16) + img.data[1].toString(16) + img.data[2].toString(16);
+				var c = new RGBColor(rgb);
+				document.getElementById("colorpicker").value = c.toHex();
+				document.getElementById("colorpicker").style.backgroundColor = rgb;
+				$.farbtastic("#pickerpanel").setColor(c.toHex());
+				isundo = false;
+			}
 			//---Undoに保管
 			if (isundo) {
 				//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
@@ -944,8 +1012,9 @@ function download(url,filename) {
 				*/
 				//console.log(event.changedTouches);
 			}
-			if (this.pen.pentype == PenType.fill) {
-				this.pen.drawMain(this.context,this.startX,this.startY,1,1);
+			this.elementParameter["current"] = this.pen.current;
+			if (this.pen.current["pentype"] == PenType.fill) {
+				this.pen.drawMain(this.context,this.startX,this.startY,1,1,event,this.elementParameter);
 				this.drawing = false;
 			}
 		},
@@ -1130,7 +1199,8 @@ function download(url,filename) {
 							this.pen.prepare(event,this.context,tempPressure);
 							this.pen.drawMain(this.context,
 								prevpos.x,prevpos.y,
-								pos.x,pos.y
+								pos.x,pos.y,
+								event,this.elementParameter
 							);
 							/*console.log("no." + c + ":" + 
 								Math.round(prevpos.x) + "x" + Math.round(prevpos.y) + 
@@ -1148,12 +1218,12 @@ function download(url,filename) {
 					}else{
 						//pen pressure calc
 						this.pen.prepare(event,this.context,null);
-						this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
+						this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 					}
 				}else{
 					//pen pressure calc
 					this.pen.prepare(event,this.context,null);
-					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
+					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				}
 				
 			}
@@ -1174,7 +1244,7 @@ function download(url,filename) {
 				var offsetPressure = event.pressure * 0.001;
 				//console.log("offsetPressure=" + offsetPressure);
 				this.pen.prepare(event,this.context,offsetPressure);
-				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
+				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 			}
 			this.drawing = false;
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
@@ -1198,7 +1268,7 @@ function download(url,filename) {
 				offsetY = pos.y;
 				var offsetPressure = event.pressure * 0.001;
 				this.pen.prepare(event,this.context,offsetPressure);
-				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY);
+				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 			}
 			//this.drawing = false;
 		},

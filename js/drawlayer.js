@@ -155,12 +155,16 @@
 				touch.enter = 'mouseenter';
 				console.log("browser:other PC browsers with touch");
 			}
-			touch.start = "pointerdown";
-			touch.move = "pointermove";
-			touch.end = "pointerup";
-			touch.leave = 'pointerleave';
-			touch.enter = 'pointerenter';
-			configEvent(touch);
+			if (navigator.userAgent.indexOf("Firefox") > -1) {
+				configEvent(touch);
+			}else{
+				touch.start = "pointerdown";
+				touch.move = "pointermove";
+				touch.end = "pointerup";
+				touch.leave = 'pointerleave';
+				touch.enter = 'pointerenter';
+				configEvent(touch);
+			}
 			
 			//---ボタンコントロールもイベント設定
 			ctrl.addEventListener("click", function(event) {
