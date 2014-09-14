@@ -3,6 +3,10 @@ var PenType = {
 	"fill" : 1,
 	"operate" : 2
 };
+function call_parentEvent(removeLabel) {
+	var id = String(event.target.id).replace(removeLabel,"");
+	document.getElementById(id).click();
+}
 //#################################################################################
 //#################################################################################
 	var PenSet = {
@@ -170,15 +174,16 @@ var PenType = {
 			document.getElementById("menupanel").style.display = "none";
 			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
 			
-			var p = document.querySelectorAll("li.item1st");
+			var p = document.querySelectorAll("div.item1st");
 			//console.log(p);
 			for (var j = 0; j < p.length; j++) {
-				//p[j].style.listStyleType = "none";
-				if (String(p[j].innerHTML).substr(0,1).charCodeAt() == "10004")
-					p[j].innerText = String(p[j].innerHTML).substr(1,String(p[j].innerHTML).length);
+				
+				//if (String(p[j].innerHTML).substr(0,1).charCodeAt() == "10004")
+				//	p[j].innerText = String(p[j].innerHTML).substr(1,String(p[j].innerHTML).length);
+				p[j].querySelector("img").style.border = "0px";
 			}
-			//evt.target.style.listStyleType = "square";
-			evt.target.innerHTML = "&#10004;" + evt.target.innerText;
+			evt.target.querySelector("img").style.border = "2px solid #000000";
+			//evt.target.innerHTML = "&#10004;" + evt.target.innerText;
 			//console.log(event.target.id);
 			document.getElementById("dlg_pen_mode").style.display = "none";
 		},
@@ -196,29 +201,59 @@ var PenType = {
 				this.items[item.id] = item;
 				this.defaults[item.id] = item.defaults;
 				//プラグインブラシの画面要素生成
-				var li = document.createElement("li");
+				var li = document.createElement("div");
 				li.id = item.id;
+				li.title = item.name;
+				var img = document.createElement("img");
+				img.id = "img_" + item.id;
+				img.title = item.name;
 				if (item.setFolder == "special") {
 					li.className = "item1st item1st-special";
+					img.src = "images/brush_special.png";
 				}else{
 					li.className = "item1st";
+					if (item.setFolder == "pen") {
+						img.src = "images/brush_pen.png";
+					}else{
+						img.src = "images/brush_brush.png";
+						li.className = "item1st item1st-brush";
+					}
 				}
-				li.innerHTML = item.name;
+				img.width = "32";
+				img.height = "32";
+				img.className = "floatIcon";
+				li.appendChild(img);
+				img.addEventListener("click",function(event) {
+					call_parentEvent("img_");
+				},false);
+				var span = document.createElement("span");
+				span.id = "sp_" + item.id;
+				span.title = item.name;
+				span.innerHTML = item.name;
+				//span.style.marginTop = "1px";
+				li.appendChild(span);
+				span.addEventListener("click",function(event) {
+					call_parentEvent("sp_");
+				},false);
+				//li.innerHTML = item.name;
 				this.penfolders[item.setFolder].appendChild(li);
+				
 				li.addEventListener("click",function(event) {
 					var o = {
 						"colorpicker" : PenSet.colorpicker.value,
 						"sizebar" : PenSet.sizebar.value
 					};
 					var it = PenSet.items[event.target.id];
-					PenSet.current = it.set(Draw.context,o);
-					PenSet.updateInfo(it.name,Draw.context.lineWidth);
-					PenSet.sizebar.value = PenSet.current["size"];
-					PenSet.hiddenMenu(event);
-					PenSet.parent.last.pen = {
-						"name" : it.id,
-						"func" : it.element,
-					};
+					if (it) {
+						PenSet.current = it.set(Draw.context,o);
+						PenSet.updateInfo(it.name,Draw.context.lineWidth);
+						PenSet.sizebar.value = PenSet.current["size"];
+						PenSet.hiddenMenu(event);
+						PenSet.parent.last.pen = {
+							"name" : it.id,
+							"func" : it.element,
+						};
+					}
 				}, false);
 				//初期化処理呼び出し
 				this.items[item.id].initialize(this,li);
@@ -248,8 +283,8 @@ var PenType = {
 			//システムブラシ読み込み
 			var sysbru_pen = ["colorchangepen",
 							"simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
-							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint"];
-			for (var i in sysbru_pen) {
+							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint"];//,"testplugin2","testplugin3"
+			for (var i = 0; i < sysbru_pen.length; i++) {
 				var sc = document.createElement("script");
 				sc.src = "js/brush/" + sysbru_pen[i] + ".js";
 				document.body.appendChild(sc);
@@ -261,7 +296,17 @@ var PenType = {
 					"name" : "eraser",
 					"func" : PenSet.eraser
 				};
+				PenSet.parent.last.pen = {
+					"name" : "eraser",
+					"func" : PenSet.eraser
+				};
 			}, false);
+			document.getElementById("img_eraser").addEventListener("click",function(event) {
+				call_parentEvent("img_");
+			},false);
+			document.getElementById("sp_eraser").addEventListener("click",function(event) {
+				call_parentEvent("sp_");
+			},false);
 			this.fillpen.addEventListener("click",function(event) {
 				Draw.pen.setFillpen(Draw.context); // change edit style to "eraser".
 				PenSet.hiddenMenu(event);
@@ -270,6 +315,12 @@ var PenType = {
 					"func" : PenSet.fillpen
 				};
 			}, false);
+			document.getElementById("img_fillpen").addEventListener("click",function(event) {
+				call_parentEvent("img_");
+			},false);
+			document.getElementById("sp_fillpen").addEventListener("click",function(event) {
+				call_parentEvent("sp_");
+			},false);
 			
 		}
 	};

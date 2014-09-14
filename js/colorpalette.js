@@ -8,13 +8,18 @@
 		startY : 0,
 		mode : "a",
 		offset : 0,
+		defaults : {
+			"palettenum" : 16
+		},
 		pickerUI : null,
 		load : function(data){
 			var val = data;
 			var arr = val.split(",");
-			for (var i = 0; i < arr.length; i++) {
-				var nm = "plt" + (i+1);
-				document.getElementById(nm).style.backgroundColor = arr[i];
+			for (var i = 1; i < this.defaults.palettenum; i++) {
+				if (i <= arr.length) {
+					var nm = "plt" + (i);
+					document.getElementById(nm).style.backgroundColor = arr[i-1];
+				}
 			}
 		},
 		initialize : function (){

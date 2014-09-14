@@ -23,32 +23,30 @@
         <!--<table style="width:70%;"><tbody>
         <tr><td style="width:30%;">-->
         <div id="info_panel">
-            <table border="1" class="peninfo" style="width:95%;">
+            <table class="peninfo" style="width:95%;">
                 <tbody>
                     <tr>
-                        <!--<td class="infofont" style="width:70px;">キャンバス</td>-->
-                        <td class="infofont" style="width:13%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
-                        <td class="infofont" style="width:7%;" title="現在のカーソル位置"><span id="info_currentpos"></span></td>
+                        <td class="infofont" style="width:9%;"><button id="btn_menu" class="info_opebutton" title="メニューパネル開閉(1キー, SPACEキー)">Menu</button></td>
+                        <td class="infofont" style="width:6%;">
+                            <button id="btn_undo" class="info_opebutton2" title="元に戻す(Ctrl + Z)">&#8678;</button>
+                            <button id="btn_redo" class="statbutton" title="やり直し" style="display:none;">&#8680;</button>
+                        </td>
+                        <td class="infofont" style="width:20%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
                         <td class="infofont" style="width:20%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
-                        <!--<td class="infofont" style="width:100px;">現在のモード</td>-->
-                        <td class="infofont" style="width:50%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
-                        <!--<td class="infofont" style="text-align:right;"><strong id="info_pen_size"></strong></td>-->
+                        <td class="infofont" style="width:45%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <div id="sysbtn_panel">
-            <button id="btn_menu" class="statbutton" title="メニューパネル開閉(1キー, SPACEキー)">Menu</button>
-            <button id="btn_undo" class="statbutton" title="元に戻す(Ctrl + Z)">←</button>
-            <button id="btn_redo" class="statbutton" title="やり直し" style="display:none;">→</button>
+            <span id="info_currentpos" title="現在のカーソル位置"></span>
         </div>
         <!--</td><td style="width:70%;">-->
         <div id="btn_panel" class="button-panel">
-            <span>小</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0;" title="ペンの太さ" />
-            <strong id="lab_pensize"></strong>
-            <span>大</span> <!--(<strong id="info_pen_size"></strong>)-->
+            <span style="color:blue;font-size:120%;" title="ブラシ太さ">&#9999;</span>:<span>小</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0;" title="ペンの太さ" />
+            <span>大</span> : <strong id="lab_pensize"></strong>
             <div id="colorpalette">
-                <input type="text" id="colorpicker" readonly name="c1" value="#e4521e" size="5" class="color {hash:true}" title="色の選択" />
+                <input type="text" id="colorpicker" readonly name="c1" value="#e4521e" class="color {hash:true}" title="色の選択" />
                 <span class="explain_panel explain_palette" title="カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">？</span>
                 <table id="palettepanel" border="1"><tbody><tr id="palettepanel_line"></tr></tbody></table>
             </div>
@@ -61,6 +59,7 @@
     <br/>-->
     <br />
     <div id="prespanel">
+        <div id="btn_spoit" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
         <div id="btn_freescroll" class="switchbutton_off" title="スクロール有効にする">&#10021;</div>
         <div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br />
         <!--<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>-->
@@ -75,6 +74,7 @@
             <strong>キャンバスのサイズ</strong><br />
             幅　：<input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;"><strong id="lab_canwidth">600</strong><br />
             高さ：<input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%"><strong id="lab_canheight">400</strong><br />
+            <label title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります"><input type="checkbox" id="chk_limit_canvas" checked>指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</label>
             <button id="btn_makecanvas" class="button">作成</button>
         </fieldset>
         <br />
@@ -102,8 +102,13 @@
         </div>
         <div id="menu_right">
             <br />
-            <label title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette">カラーパレットを保存する</label><br />
-
+            <label title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked>カラーパレットを保存する</label><br />
+            <div>
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>パレット0 <span id="lab_pltloc0"></span></label><br />
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc1" value="1">パレット1 <span id="lab_pltloc1"></span></label><br />
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">パレット2 <span id="lab_pltloc2"></label></span><br />
+                <label title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：<input type="text" id="sv_palettevalue" size="50" /></label>
+            </div>
         </div>
         <div id="menu_bottom">
         </div>
@@ -131,36 +136,22 @@
         </div>
         <div id="lay_info">
             <label>名前:<input type="text" id="layinfo_name" size="15" /></label>
-            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked>表示</label>
-            <label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100">不透明度</label>
+            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked>表示</label><br />
+            <label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度">不透明度</label>
         </div>
     </div>
     <div id="dlg_pen_mode">
         <ul>
             <li class="item1stfolder itemfolder_special">
-                <ul>
-                    <li id="eraser" class="item1st item1st-special">消しゴム</li>
-                    <li id="fillpen" class="item1st item1st-special">塗りつぶし</li>
-                    <li id="colorchangepen" class="item1st item1st-special">色替え</li>
-                </ul>
+                <div id="dir_brush_special"><div id="eraser" class="item1st item1st-special" title="消しゴム"><img id="img_eraser" src="images/brush_special.png" width="32" height="32" style="float:left" title="消しゴム" /><span id="sp_eraser" title="消しゴム">消しゴム<span></div><div id="fillpen" class="item1st item1st-special" title="塗りつぶし"><img id="img_fillpen" src="images/brush_special.png" width="32" height="32" style="float:left" title="塗りつぶし" /><span id="sp_fillpen" title="塗りつぶし">塗りつぶし</span></div></div>
             </li>
             <li class="item1stfolder itemfolder_normal">
-                <ul>
-                    <li id="simplepen" class="item1st">ペン</li>
-                    <li id="pencil" class="item1st">鉛筆</li>
-                    <li id="fudepen" class="item1st">筆ペン</li>
-                    <li id="calligraphy" class="item1st">カリグラフィ</li>
-                    <li id="neonpen" class="item1st">ネオンペン</li>
-                </ul>
+                <div id="dir_brush_pen">
+                </div>
             </li>
-            <li class="item1stfolder itemfolder_normal">
-                <ul>
-                    <li id="airbrush" class="item1st">エアブラシ</li>
-                    <li id="oilpaint" class="item1st">油彩</li>
-                    <li id="oilpaintv" class="item1st">油彩(縦)</li>
-                    <li id="waterpaint" class="item1st">水彩</li>
-                    <li id="directpaint" class="item1st">ベタ塗り</li>
-                </ul>
+            <li class="item1stfolder itemfolder_brush">
+                <div id="dir_brush_wide">
+                </div>
             </li>
 
         </ul>

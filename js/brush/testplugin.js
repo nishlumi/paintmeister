@@ -16,7 +16,7 @@ PenSet.Add({
 	name : "V字格子ペン",
 	element : null,
 	parent : null,
-	setFolder : "special",
+	setFolder : "pen",
 	defaults : [12,"#000000"],
 	/*
 		画面からブラシを選択された時の処理

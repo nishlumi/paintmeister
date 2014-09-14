@@ -294,6 +294,15 @@ var AppStorage = {
         document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
         document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
         document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+        document.getElementById("chk_limit_canvas").addEventListener("change", function (event) {
+            if (event.target.checked) {
+                document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+                document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+            } else {
+                document.getElementById("canvas_width").max = 2160;
+                document.getElementById("canvas_height").max = 1440;
+            }
+        }, false);
         //---プログレスパネルの準備
         document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth - 300) / 100) * 50) + "px";
         document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";

@@ -21,6 +21,7 @@
 		this.isvisible = true;
 		this.Alpha = 100;
 		this.CompositeOperation = "source-over";
+		this.prev_image = null;
 		
 		this.select = function(oldcontext){
 			var ls = own.parent.layer;
@@ -306,7 +307,7 @@
 			
 			document.getElementById("lay_btns").appendChild(own.control);
 			own.generate_core(own.canvas,own.control);
-			
+			own.prev_image = own.canvas.getContext("2d").createImageData(own.canvassize.w,own.canvassize.h);
 		};
 		this.load = function(titlename,visible,opacity,datalength,data) {
 			own.title = titlename;

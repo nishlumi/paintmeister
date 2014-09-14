@@ -69,6 +69,7 @@
 <strong>キャンバスのサイズ</strong><br/>
 幅　：<input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
 高さ：<input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
+<label title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked>指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</label>
 <button id="btn_makecanvas" class="button">作成</button>
 </fieldset>
 <br/>
@@ -94,11 +95,12 @@
 	</div>
 	<div id="menu_right">
 		<br />
-		<label  title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette">カラーパレットを保存する</label><br/>
+		<label  title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked>カラーパレットを保存する</label><br/>
 		<div>
 		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>パレット0 <span id="lab_pltloc0"></span></label><br/>
 		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc1" value="1">パレット1 <span id="lab_pltloc1"></span></label><br/>
 		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">パレット2 <span id="lab_pltloc2"></label></span><br/>
+		<label title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：<input type="text" id="sv_palettevalue" size="50"/></label>
 		</div>
 	</div>
 	<div id="menu_bottom">
@@ -134,30 +136,15 @@
 <div id="dlg_pen_mode">
 <ul>
 	<li class="item1stfolder itemfolder_special">
-	<ul id="dir_brush_special" >
-		<li id="eraser" class="item1st item1st-special">消しゴム</li>
-		<li id="fillpen" class="item1st item1st-special">塗りつぶし</li>
-		<!--<li id="colorchangepen" class="item1st item1st-special">色替え</li>
-		<li id="testbru" class="item1st item1st-special">テスト</li>-->
-	</ul>
+	<div id="dir_brush_special" ><div id="eraser" class="item1st item1st-special" title="消しゴム"><img id="img_eraser" src="images/brush_special.png" width="32" height="32" style="float:left" title="消しゴム"/><span id="sp_eraser" title="消しゴム">消しゴム<span></div><div id="fillpen" class="item1st item1st-special" title="塗りつぶし"><img id="img_fillpen" src="images/brush_special.png" width="32" height="32" style="float:left" title="塗りつぶし"/><span id="sp_fillpen" title="塗りつぶし">塗りつぶし</span></div></div>
 	</li>
 	<li class="item1stfolder itemfolder_normal">
-	<ul id="dir_brush_pen">
-		<!--<li id="simplepen" class="item1st" >ペン</li>
-		<li id="pencil" class="item1st">鉛筆</li>
-		<li id="fudepen" class="item1st">筆ペン</li>
-		<li id="calligraphy" class="item1st">カリグラフィ</li>
-		<li id="neonpen" class="item1st">ネオンペン</li>-->
-	</ul>
+	<div id="dir_brush_pen">
+	</div>
 	</li>
-	<li class="item1stfolder itemfolder_normal">
-	<ul id="dir_brush_wide">
-		<!--<li id="airbrush" class="item1st">エアブラシ</li>
-		<li id="oilpaint" class="item1st">油彩</li>
-		<li id="oilpaintv" class="item1st">油彩(縦)</li>
-		<li id="waterpaint" class="item1st">水彩</li>
-		<li id="directpaint" class="item1st">ベタ塗り</li>-->
-	</ul>
+	<li class="item1stfolder itemfolder_brush">
+	<div id="dir_brush_wide">
+	</div>
 	</li>
 
 </ul>

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.28.51";
+var appversion = "1.0.31.54";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -234,6 +234,7 @@ function download(url,filename) {
 				if (obj) {
 					obj.layer.getContext("2d").clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 					obj.layer.getContext("2d").putImageData(obj.image,0,0);
+					obj = null;
 				}
 				console.log(Draw.undohist);
 			},false);
@@ -487,18 +488,46 @@ function download(url,filename) {
 			document.getElementById("dlg_pen_mode").style.display = "none";
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("menupanel").style.display = "none";
-			
 			//---カラーパレットのプレビュー＆イベントセットアップ
+			document.getElementById("sv_palettevalue").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+			document.getElementById("sv_palettevalue").addEventListener("change", function(event) {
+				var val = event.target.value;
+				var arr = val.split(",");
+				ColorPalette.load(val);
+				var inx = $("input:radio[name=sv_paletteloc]:checked").val();
+				for (var i = 1; i < 16; i++) {
+					if (i <= arr.length) {
+						document.getElementById("lab_pltloc" + inx + "_" + (i-1)).style.color = arr[i-1];
+					}
+				}
+				AppStorage.set("sv_colorpalette"+inx,val);
+			},false);
+			document.getElementById("chk_sv_colorpalette").addEventListener("click", function(event) {
+				var dis = "";
+				if (event.target.checked) {
+					dis = "";
+				}else{
+					dis = "disabled";
+				}
+				for (var i = 0; i < 3; i++) {
+					document.getElementById("rad_paletteloc"+i).disabled = dis;
+					document.getElementById("sv_palettevalue").disabled = dis;
+				}
+			},false);
 			for (var i = 0; i < 3; i++) {
 				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
 					var val = event.target.value;
 					console.log("rad_paletteloc=" + val);
 					var dat = AppStorage.get("sv_colorpalette"+val,null);
+					//console.log("dat="+dat);
 					if (!dat) {
 						var arr = [];
 						for (var i = 0; i < 15; i++) arr.push("#FFFFFF");
 						dat = arr.join(",");
 					}
+					document.getElementById("sv_palettevalue").value = dat;
 					ColorPalette.load(dat);
 				},false);
 				var val = AppStorage.get("sv_colorpalette"+i,null);
@@ -519,6 +548,8 @@ function download(url,filename) {
 					document.getElementById("lab_pltloc"+i).appendChild(span);
 				}
 			}
+			var dat = AppStorage.get("sv_colorpalette0",null);
+			document.getElementById("sv_palettevalue").value = dat;
 			/*var pens = document.querySelectorAll("div#menu_right button");
 			console.log(pens);
 			var ul = document.querySelector("div#dlg_pen_mode ul li");
@@ -918,7 +949,7 @@ function download(url,filename) {
 					//それ以外の場合、消しゴムのデフォルト太さを採用
 					svv = 20;
 				}
-				this.pen.eraser.click();
+				//this.pen.eraser.click();
 				this.pen.setEraser(this.context,{"size":svv});
 			}else{
 				//再びペンの先などでタッチされたら、前のペンを再採用する
@@ -965,6 +996,7 @@ function download(url,filename) {
 				//console.log(parseInt(this.init_scale));
 				this.init_scale = parseInt(this.init_scale);
 				isundo = false;
+				this.drawing = false;
 			}
 			//スクロール
 			if ((event.ctrlKey) || (this.vCtrl_for_scroll)) {
@@ -976,6 +1008,7 @@ function download(url,filename) {
 				console.log("scrollHeight="+cp.scrollHeight);
 				this.is_scrolling = true;
 				isundo = false;
+				this.drawing = false;
 			}
 			//スポイトツール
 			if (this.is_spoiting) {
@@ -1016,6 +1049,9 @@ function download(url,filename) {
 			if (this.pen.current["pentype"] == PenType.fill) {
 				this.pen.drawMain(this.context,this.startX,this.startY,1,1,event,this.elementParameter);
 				this.drawing = false;
+			}else{
+				this.pen.prepare(event,this.context,null);
+				this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
 			}
 		},
 		
@@ -1159,7 +1195,7 @@ function download(url,filename) {
 							
 							pos.x = prevpos.x + (ju_saX / completeCount * pmX);
 							pos.y = prevpos.y + (ju_saY / completeCount * pmY);
-							tempPressure = prevpres - (ju_saPres / (completeCount*2) * pmPres);
+							tempPressure = prevpres + (ju_saPres / (completeCount*2) * pmPres);
 							/*if (ju_saX > ju_saY) {
 								bigsa = ju_saX;
 								littlesa = ju_saY;
