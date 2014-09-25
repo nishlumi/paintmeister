@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.31.54";
+var appversion = "1.0.31.59";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -88,10 +88,28 @@ function download(url,filename) {
 }
 //#################################################################################
 //#################################################################################
-	var UndoBuffer = function (targetlayer,imagedata) {
-		this.layer = targetlayer;
-		this.image = imagedata;
+var UndoType = {
+	"paint" : "0",
+	"layadd" : "1",
+	"laydel" : "2",
+	"" : ""
+};
+var UndoBuffer = function (undotype,targetlayer,imagedata) {
+	var own = this;
+	this.type = undotype;
+	this.layer = targetlayer;
+	/*
+		対応関係
+		[n-1].image == [n].prev_image
+	*/
+	this.image = imagedata;
+	this.prev_image = null;
+	this.destroy = function(){
+		own.layer = null;
+		own.image = null;
+		own.prev_image = null;
 	}
+}
 //#################################################################################
 //#################################################################################
 	var Draw = {
@@ -99,6 +117,7 @@ function download(url,filename) {
 		opecan : null,
 		layer : [],
 		context : null, 
+		currentLayer : null,
 		pen : null,
 		sizebar : null,
 		colorpicker : null,
@@ -122,6 +141,7 @@ function download(url,filename) {
 				"max" : 15
 			},
 			"undo" : {
+				"divide" : 5,
 				"max" : 99,
 			}
 		},
@@ -136,7 +156,10 @@ function download(url,filename) {
 		startY : 0,
 		startPressure : 0,
 		offset : 1,
+		undoindex : -1,
+		canundo : false,
 		undohist : [],
+		canredo : false,
 		redohist : [],
 		//lastpressure : 0.5,
 		keyLikePres : null,
@@ -156,6 +179,7 @@ function download(url,filename) {
 		vCtrl_for_scroll : false,
 		is_spoiting : false,
 		elementParameter : {},
+		draw_linehist : [],
 		
 		initialize : function() {
 			this.pen = PenSet;
@@ -211,46 +235,63 @@ function download(url,filename) {
 				saveImage();
 			},false);
 			this.undobtn.addEventListener("click", function(event) {
+				if (!Draw.canundo) return;
 				console.log(Draw.undohist);
-				var obj = Draw.undohist.pop(); //一つ前の状態取得
-				//Draw.redohist.push(obj);
-				//console.log("redohist=");
-				//console.log(Draw.redohist);
+				//var obj = Draw.undohist.pop(); //一つ前の状態取得
+				var obj = Draw.undohist[Draw.undoindex];
 				console.log("undohist=");
 				console.log(obj);
 				//未操作の場合、取得した一つ前の状態が現在の状態と同じ場合
 				if (!obj) return;
-				if (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.image.data) {
-					obj = Draw.undohist.pop();
+				if (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.prev_image.data) {
+					//obj = Draw.undohist.pop();
+					Draw.undoindex--;
+					if (Draw.undoindex < 0) Draw.undoindex = 0;
+					obj = Draw.undohist[Draw.undoindex];
 				}
-				/*if (Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.data) {
-					//もう一つ前の状態取得
-					obj = Draw.undohist.pop();
-					//console.log("redohist=");
-					//Draw.redohist.push(obj);
-				}*/
 				
-				//if (obj) Draw.context.putImageData(obj,0,0);
-				if (obj) {
+				if (obj && obj.prev_image) {
+					Draw.canredo = true;
+					Draw.toggleRedo(true);
+					//---undoの場合はprev_imageから復元
 					obj.layer.getContext("2d").clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-					obj.layer.getContext("2d").putImageData(obj.image,0,0);
+					obj.layer.getContext("2d").putImageData(obj.prev_image,0,0);
 					obj = null;
+					Draw.undoindex--;
+					if (Draw.undoindex < 0) Draw.undoindex = 0;
 				}
 				console.log(Draw.undohist);
+				if ((Draw.undohist.length == 0) || (Draw.undoindex == 0)) {
+					Draw.canundo = false;
+					Draw.toggleUndo(false);
+				}
+				console.log("undoindex="+Draw.undoindex);
 			},false);
 			this.redobtn.addEventListener("click", function(event) {
+				if (!Draw.canredo) return;
+				Draw.undoindex++;
+				if (Draw.undoindex >= Draw.undohist.length) Draw.undoindex = Draw.undohist.length - 1;
+				var obj = Draw.undohist[Draw.undoindex];
+				
 				console.log(Draw.redohist);
-				var obj = Draw.redohist.pop();
-				Draw.undohist.push(obj);
-				console.log(Draw.redohist);
-				if (Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.data) {
-					obj = Draw.redohist.pop();
-					Draw.undohist.push(obj);
+				if (Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.image.data) {
+					Draw.undoindex++;
+					if (Draw.undoindex >= Draw.undohist.length) Draw.undoindex = Draw.undohist.length - 1;
+					obj = Draw.undohist[Draw.undoindex];
 				}
-				if (obj) {
-					Draw.context.putImageData(obj,0,0);
+				if (obj && obj.image) {
+					Draw.canundo = true;
+					Draw.toggleUndo(true);
+					//---redoの場合はimageから復元
+					obj.layer.getContext("2d").clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+					obj.layer.getContext("2d").putImageData(obj.image,0,0);
 				}
-				console.log(Draw.redohist);
+				console.log(Draw.undohist);
+				console.log("undoindex="+Draw.undoindex);
+				if (Draw.undoindex >= Draw.undohist.length-1) {
+					Draw.canredo = false;
+					Draw.toggleRedo(false);
+				}
 			},false);
 			this.clearbtn.addEventListener("click", function(event) {
 				var msg = "キャンバスの内容を全部削除します。よろしいですか？\n" +
@@ -465,6 +506,11 @@ function download(url,filename) {
 					lay.data = imgd.data;
 					pstdata["layer"].push(lay);
 				}
+				document.getElementById("prg_btn_cancel").onclick = function(event) {
+					wkr.terminate();
+					Draw.progresspanel.style.display = "none";
+					document.getElementById("progressicon").className = "";
+				}
 				//=======
 				wkr.postMessage(pstdata);
 				//saveProject(Draw.prepareSaveProject);
@@ -479,16 +525,7 @@ function download(url,filename) {
 				loadProjectFile(files);
 
 			},false);
-			//=============================================================================================
-			//---アプリバージョンの設定
-			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
-			this.loadSetting();
-			//---その他、初期化が必要な処理
-			document.getElementById("dlg_canvasinfo").style.display = "none";
-			document.getElementById("dlg_pen_mode").style.display = "none";
-			document.getElementById("dlg_layer").style.display = "none";
-			document.getElementById("menupanel").style.display = "none";
-			//---カラーパレットのプレビュー＆イベントセットアップ
+			
 			document.getElementById("sv_palettevalue").addEventListener("keydown", function(event) {
 				event.stopPropagation();
 			},false);
@@ -516,6 +553,17 @@ function download(url,filename) {
 					document.getElementById("sv_palettevalue").disabled = dis;
 				}
 			},false);
+			//=============================================================================================
+			//---アプリバージョンの設定
+			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
+			this.loadSetting();
+			//---その他、初期化が必要な処理
+			document.getElementById("dlg_canvasinfo").style.display = "none";
+			document.getElementById("dlg_pen_mode").style.display = "none";
+			document.getElementById("dlg_layer").style.display = "none";
+			document.getElementById("menupanel").style.display = "none";
+			
+			//---カラーパレットのプレビュー＆イベントセットアップ
 			for (var i = 0; i < 3; i++) {
 				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
 					var val = event.target.value;
@@ -566,6 +614,7 @@ function download(url,filename) {
 				},false);
 			}*/
 		},
+		//--------------ここまでinitialize--------------------------------------------------------------
 		createbody : function(wi,he,isshow){
 			document.getElementById("initialsetup").style.display = "none";
 			document.getElementById("apptitle").style.display = "none";
@@ -621,6 +670,10 @@ function download(url,filename) {
 				document.getElementById("basepanel").style.display = "block";
 			}
 			document.getElementById("openedProjName").innerText = "";
+			//this.undohist.push(new UndoBuffer(this.context.canvas,this.context.getImageData(0,0,this.canvassize[0],this.canvassize[1])));
+			Draw.toggleUndo(false);
+			Draw.toggleRedo(false);
+			document.getElementById("prg_btn_cancel").style.display = "block";
 			return true;
 		},
 		clearBody : function (){
@@ -639,6 +692,10 @@ function download(url,filename) {
 			Draw.redohist.splice(0,Draw.redohist.length);
 			Draw.undohist = [];
 			Draw.redohist = [];
+			Draw.canundo = false;
+			Draw.canredo = false;
+			Draw.toggleUndo(false);
+			Draw.toggleRedo(false);
 			//document.getElementById("previewer").src = null;
 			Draw.init_scale = 1.0;
 			Draw.during_scale = 1.0;
@@ -920,6 +977,116 @@ function download(url,filename) {
 				if (chk == "0") AppStorage.remove("sv_colorpalette0");
 			}
 		},
+		saveUndo : function(pensize,lowpos,highpos,context){
+			var block = {w:0, h:0};
+			block.w = this.canvassize[0] / this.defaults.undo.divide;
+			block.h = this.canvassize[1] / this.defaults.undo.divide;
+			var blockhit = [
+				[false,false,false,false,false],
+				[false,false,false,false,false],
+				[false,false,false,false,false],
+				[false,false,false,false,false],
+				[false,false,false,false,false]
+			];
+			/*
+				キャンバスを指定のブロック数に分けて、lowpos,highposからUndo保管用の
+				対象ブロックを割り出す
+			*/
+			var SaveBlock = function(){
+				this.pos = {x:0, y:0};
+				this.image = null;
+			}
+			var savelist = [];
+			for (var y = 0; y < this.defaults.undo.divide; y++) {
+				var sty = block.h * y;
+				var edy = sty = block.h;
+				if (((sty <= lowpos.y) && (lowpos.y <= edy)) || 	//lowpos.yが短形のY範囲内か
+					((sty <= highpos.y) && (highpos.y <= edy)) ||	//highpos.yが短形のY範囲内か
+					((lowpos.y <= edy) && (edy <= highpos.y))		//短形の終点Yがlowpos.yとhightpos.yの範囲内か
+				) {
+					for (var x = 0; x < this.defaults.undo.divide; x++) {
+						//---短形の左上
+						var stx = block.w * x;
+						//---短形の右下
+						var edx = stx + block.w;
+						if (((stx <= lowpos.x) && (lowpos.x <= edx)) ||		//lowpos.xが短形のX範囲内か
+							((stx <= highpos.x) && (highpos.x <= edx)) ||	//highpos.yが短形のX範囲内か
+							((lowpos.x <= edx) && (edx <= highpos.x))		//短形の終点Xがlowpos.xとhightpos.xの範囲内か
+						) {
+							blockhit[x][y] = true;
+							var sv = new SaveBlock();
+							sv.pos.x = stx;
+							sv.pos.y = sty;
+							sv.image = this.currentLayer.prev_image; //canvas.getContext("2d").getImageData(stx,sty,edx,edy);
+							savelist.push(sv);
+						}
+					}
+				}
+			}
+			this.undohist.push(new UndoBuffer(Draw.context.canvas,savelist));
+			if (this.undohist.length > this.defaults.undo.max) {
+				var o = this.undohist.shift();
+				o.layer = null;
+				o.image = [];
+				o = null;
+			}
+		},
+		loadUndo : function(){
+			var block = {w:0, h:0};
+			block.w = this.canvassize[0] / this.defaults.undo.divide;
+			block.h = this.canvassize[1] / this.defaults.undo.divide;
+			var obj = Draw.undohist.pop(); //一つ前の状態取得
+			var ishit = false;
+			var samestat = 0;
+			if (!obj) return;
+			//---1回めは現在と一つ前の状態が同じかどうかのチェックのみ
+			for (var i = 0; i < obj.image.length; i++) {
+				var svi = obj.image[i];
+				if (obj.layer.getContext("2d").getImageData(svi.pos.x,svi.pos.y,block.w,block.h).data == svi.image.data) {
+					samestat++;
+					
+				}
+			}
+			//---完全に同じだったら次を読み込み
+			if (samestat == obj.image.length) {
+				obj = Draw.undohist.pop();
+			}
+			//---2回めが本当のUndoデータからの復元
+			if (obj) {
+				for (var i = 0; i < obj.image.length; i++) {
+					var svi = obj.image[i];
+					if (svi) {
+						//指定のキャンバスの短形をUndoから復元
+						obj.layer.getContext("2d").clearRect(svi.pos.x, svi.pos.y, block.w, block.h);
+						obj.layer.getContext("2d").putImageData(svi.image, svi.pos.x, svi.pos.y, 
+							svi.pos.x, svi.pos.y,	//prev_image内の開始位置
+							block.w, block.h		//短形の幅と高さ
+						);
+						svi = null;
+						ishit = true;
+					}
+				}
+			}
+			if (ishit) {
+				obj = null;
+			}
+		},
+		loadRedo : function(){
+		},
+		toggleUndo : function (flag) {
+			if (flag){
+				Draw.undobtn.disabled = "";
+			}else{
+				Draw.undobtn.disabled = "disabled";
+			}
+		},
+		toggleRedo : function (flag) {
+			if (flag){
+				Draw.redobtn.disabled = "";
+			}else{
+				Draw.redobtn.disabled = "disabled";
+			}
+		},
 		touchStart : function(event) {
 			this.drawing = true;
 			
@@ -930,6 +1097,8 @@ function download(url,filename) {
 			this.startX = pos.x;
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
+			this.draw_linehist.splice(0,this.draw_linehist.length);
+			this.draw_linehist.push(pos);
 			//---PenSetに安全に受け渡す用の値セット
 			this.elementParameter["canvas"] = {
 				"width":this.canvassize[0],
@@ -1021,13 +1190,19 @@ function download(url,filename) {
 				isundo = false;
 			}
 			//---Undoに保管
+			this.currentLayer.prev_image = this.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+			//さかのぼっていたら現在位置以降を削除
 			if (isundo) {
-				//this.undohist.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]));
-				this.undohist.push(new UndoBuffer(Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-				if (this.undohist.length > this.defaults.undo.max) {
-					var o = this.undohist.shift();
-					delete o;
+				if (this.undoindex > -1) {
+					for (var i = this.undoindex+1; i < this.undohist.length; i++) {
+						this.undohist[i].layer = null;
+						this.undohist[i].image = null;
+					}
+					this.undohist.splice(this.undoindex+1,this.undohist.length);
 				}
+				this.undoindex = this.undohist.length-1;
+				this.canredo = false;
+				this.toggleRedo(false);
 			}
 			//console.log(this.undohist);
 			//色選択をここでも確定
@@ -1082,6 +1257,7 @@ function download(url,filename) {
 			offsetX = pos.x;
 			offsetY = pos.y;
 			offsetPressure = event.pressure;
+			this.draw_linehist.push(pos);
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
@@ -1281,6 +1457,20 @@ function download(url,filename) {
 				//console.log("offsetPressure=" + offsetPressure);
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+				//---save undo
+				this.canundo = true;
+				this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
+				this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
+				this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
+				//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
+				this.undoindex = this.undohist.length-1;
+				if (this.undohist.length > this.defaults.undo.max) {
+					var o = this.undohist.shift();
+					//o.destroy();
+					o = null;
+					this.undoindex = this.undohist.length-1;
+				}
+				this.toggleUndo(true);
 			}
 			this.drawing = false;
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
@@ -1291,6 +1481,34 @@ function download(url,filename) {
 			this.init_scale = this.during_scale;
 			this.touchpoints = {};
 			this.is_scrolling = false;
+			console.log(this.draw_linehist);
+			var lc = 0, hc = 0;
+			var lx = this.draw_linehist[0].x, ly = this.draw_linehist[0].y, hx = this.draw_linehist[0].x, hy = this.draw_linehist[0].y;
+			for (var i = 0; i < this.draw_linehist.length; i++) {
+				//most low
+				if (lx >= this.draw_linehist[i].x) {
+					lx = this.draw_linehist[i].x;
+					lc = i;
+				}
+				if (ly >= this.draw_linehist[i].y) {
+					ly = this.draw_linehist[i].y;
+				}
+				//most high
+				if (hx <= this.draw_linehist[i].x) {
+					hx = this.draw_linehist[i].x;
+					hc = i;
+				}
+				if (hy <= this.draw_linehist[i].y) {
+					hy = this.draw_linehist[i].y;
+				}
+				
+			}
+			console.log("low count="+lc);
+			console.log("lx="+lx);
+			console.log("ly="+ly);
+			console.log("high count="+hc);
+			console.log("hx="+hx);
+			console.log("hy="+hy);
 		},
 		touchLeave : function(event){
 			//console.log("leave, event.button=");
@@ -1305,6 +1523,20 @@ function download(url,filename) {
 				var offsetPressure = event.pressure * 0.001;
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+				//---save undo
+				this.canundo = true;
+				this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
+				//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
+				this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
+				this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
+				this.undoindex = this.undohist.length-1;
+				if (this.undohist.length > this.defaults.undo.max) {
+					var o = this.undohist.shift();
+					//o.destroy();
+					o = null;
+					this.undoindex = this.undohist.length-1;
+				}
+				this.toggleUndo(true);
 			}
 			//this.drawing = false;
 		},

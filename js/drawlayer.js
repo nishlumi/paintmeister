@@ -54,6 +54,7 @@
 				newcontext.lineJoin = oldcontext.lineJoin;
 			}
 			own.parent.context = newcontext;
+			own.parent.currentLayer = own;
 			document.getElementById("layinfo_opacity").value = own.Alpha;
 			document.getElementById("layinfo_toggle").checked = own.isvisible;
 			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.style.zIndex);
@@ -308,6 +309,7 @@
 			document.getElementById("lay_btns").appendChild(own.control);
 			own.generate_core(own.canvas,own.control);
 			own.prev_image = own.canvas.getContext("2d").createImageData(own.canvassize.w,own.canvassize.h);
+			own.parent.undohist.push(new UndoBuffer(UndoType.layadd,own.canvas,own.canvas.getContext("2d").getImageData(0,0,own.canvassize.w,own.canvassize.h)));
 		};
 		this.load = function(titlename,visible,opacity,datalength,data) {
 			own.title = titlename;

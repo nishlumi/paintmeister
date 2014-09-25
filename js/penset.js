@@ -182,7 +182,11 @@ function call_parentEvent(removeLabel) {
 				//	p[j].innerText = String(p[j].innerHTML).substr(1,String(p[j].innerHTML).length);
 				p[j].querySelector("img").style.border = "0px";
 			}
-			evt.target.querySelector("img").style.border = "2px solid #000000";
+			if (evt.target.tagName.toLowerCase() == "img") {
+				evt.target.style.border = "2px solid #000000";
+			}else{
+				evt.target.querySelector("img").style.border = "2px solid #000000";
+			}
 			//evt.target.innerHTML = "&#10004;" + evt.target.innerText;
 			//console.log(event.target.id);
 			document.getElementById("dlg_pen_mode").style.display = "none";
@@ -289,6 +293,10 @@ function call_parentEvent(removeLabel) {
 				sc.src = "js/brush/" + sysbru_pen[i] + ".js";
 				document.body.appendChild(sc);
 			}
+			PenSet.parent.last.eraser = {
+				"name" : "eraser",
+				"func" : PenSet.eraser
+			};
 			this.eraser.addEventListener("click",function(event) {
 				Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
 				PenSet.hiddenMenu(event);

@@ -9,8 +9,8 @@ PaintMeister (1.0.31.59)
 ・Undo、Redoのボタンを使用不可能な場合は色を変えるようにした
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/09/23 13:00:00
-ChromeApps		- 
-ストアアプリ		- 
+ChromeApps		- 2014/09/25 15:00:00
+ストアアプリ		- 2014/09/25 15:00:00
 
 
 PaintMeister (1.0.31.54)

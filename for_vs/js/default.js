@@ -246,6 +246,11 @@ var AppStorage = {
                 Draw.undobtn.click();
                 return;
             }
+        } else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Z
+            if (document.getElementById("initialsetup").style.display == "none") {
+                Draw.redobtn.click();
+                return;
+            }
         } else if (event.keyCode == "83" && event.ctrlKey) { //Ctrl + S
             if (document.getElementById("initialsetup").style.display == "none") {
                 Draw.checkstat.click();

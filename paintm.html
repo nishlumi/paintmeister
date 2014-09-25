@@ -25,13 +25,13 @@
 		<tbody>
 		<tr>
 		<td class="infofont" style="width:9%;"><button id="btn_menu" class="info_opebutton" title="メニューパネル開閉(1キー, SPACEキー)">Menu</button></td>
-		<td class="infofont" style="width:6%;">
+		<td class="infofont" style="width:18%;">
 			<button id="btn_undo" class="info_opebutton2" title="元に戻す(Ctrl + Z)">&#8678;</button>
-			<button id="btn_redo" class="statbutton" title="やり直し" style="display:none;">&#8680;</button>
+			<button id="btn_redo" class="info_opebutton2" title="やり直し(Ctrl + Y)">&#8680;</button>
 		</td>
-		<td class="infofont" style="width:20%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
-		<td class="infofont" style="width:20%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
-		<td class="infofont" style="width:45%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
+		<td class="infofont" style="width:17%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
+		<td class="infofont" style="width:16%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
+		<td class="infofont" style="width:40%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
 		</tr>
 		</tbody>
 		</table>
@@ -154,6 +154,7 @@
 <span>読み込んでいます...</span><br/>
 <div id="progressicon"></div>
 <!--<progress max="100" id="progressbar">読み込んでいます...</progress>-->
+<button id="prg_btn_cancel" class="button2" style="display:none;">キャンセル</button>
 </div>
 
 <div id="log" class="debugmsg"></div>

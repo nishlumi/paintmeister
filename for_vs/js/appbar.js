@@ -10,6 +10,8 @@
                 .addEventListener("click", doClickSave, false);
             document.getElementById("cmdUndo")
                 .addEventListener("click", doClickUndo, false);
+            document.getElementById("cmdRedo")
+                .addEventListener("click", doClickRedo, false);
             WinJS.log && WinJS.log("To show the bar, swipe up from " +
                 "the bottom of the screen, right-click, or " +
                 "press Windows Logo + z. To dismiss the bar, " +
@@ -28,6 +30,9 @@
 
     function doClickUndo() {
         Draw.undobtn.click();
+    }
+    function doClickRedo() {
+        Draw.redobtn.click();
     }
     function doClickClear() {
         Draw.clearbtn.click();

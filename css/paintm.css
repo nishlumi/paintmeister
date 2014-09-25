@@ -23,6 +23,15 @@ touch-action: none;
 .button:active {
 	background-color : #91d780;
 }
+.button2 {
+	overflow : hidden;
+	background-color : #c4fab3;
+	border : 0;
+}
+.button2:active {
+	background-color : #91d780;
+}
+
 .statbutton {
 	width : 45%; /*60px;*/
 	height : 40px;
@@ -144,14 +153,16 @@ touch-action: none;
 	font-size : 120%;
 }
 #info_panel .info_opebutton2 {
-	width : 100%;
+	width : 47%;
 	height : 1.5rem;
 	background-color : #FFB99C;
 	border :0px solid #999999;
 	padding : 0 0 0 0;
 	font-size : 120%;
 }
-
+#info_panel .info_opebutton2:disabled {
+	background-color : #d3c9c5;
+}
 .button-panel{
 	width : 85%;
 	/*margin-left:1em; 
@@ -405,7 +416,7 @@ td.magni_strong:active {
 	top:0;
 	left:0;
 	width:300px;
-	height:100px;
+	height:120px;
 	background-color : #B6BBE4;;
 	display : none;
 	z-index : 999;
