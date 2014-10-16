@@ -189,6 +189,19 @@ var AppStorage = {
 		}
 	}
 };
+var PluginManager = {
+	plugins : [],
+	platform : "",	//web, chromeapps, storeapp
+	add : function (data) {
+		
+	},
+	initialize : function (pltfrm){
+		this.platform = pltfrm;
+		if (pltfrm == "web") {
+		}else if (pltfrm == "chromeapps") {
+		}
+	}
+};
 //#################################################################################
 //#################################################################################
 (function(){
@@ -309,7 +322,8 @@ var AppStorage = {
 
 			}, false);
 			document.body.addEventListener(touchend, function(event) {
-				Draw.drawing = false;
+				if (!Draw.focusing)
+					Draw.drawing = false;
 			}, false);
 			$("#colorpicker").on(touchstart, function(event) {
 				$("#pickerpanel").show();
@@ -329,7 +343,9 @@ var AppStorage = {
 				//Draw.drawing = true;
 			}, false);
 			document.body.addEventListener(touchend, function(event) {
-				Draw.drawing = false;
+				console.log("document.body touchend");
+				if (!Draw.focusing)
+					Draw.drawing = false;
 			}, false);
 			window.addEventListener("resize",function(event){
 				console.log("width=" + event.target.innerWidth);

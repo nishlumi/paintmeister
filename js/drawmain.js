@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.31.59";
+var appversion = "1.0.33.60";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -32,6 +32,9 @@ var virtual_pressure = {
 	'37' : 50, //->
 	'39' : 50 //<-
 };
+var plugin_hostpath = [
+	"https://1681f097ba2c27b904a58c88939d90e3b76de92e.googledrive.com/host/0BybsGSqkFuyuM1k5WXJIR2RxdW8/"
+];
 function calculatePosition(eventtype,event,target,opt) {
 	var pos = {"x" : 0, "y" : 0};
 	if (event.offsetX === undefined) {
@@ -116,6 +119,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		canvas : null, 
 		opecan : null,
 		layer : [],
+		layermax : 0,
 		context : null, 
 		currentLayer : null,
 		pen : null,
@@ -151,6 +155,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		},
 		
 		drawing : false,
+		focusing : false,
 		canvassize : [600,400],
 		startX : 0,
 		startY : 0,
@@ -202,6 +207,25 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			this.progresspanel = document.getElementById("progresspanel");
 			
 			//---other control events setup
+			//---初期画面コントロール-----------------------------------------
+			this.canwidth.addEventListener("change", function(event) {
+				document.getElementById("lab_canwidth").innerHTML = event.target.value;
+			},false);
+			this.canheight.addEventListener("change", function(event) {
+				document.getElementById("lab_canheight").innerHTML = event.target.value;
+			},false);
+			this.makecanvasbtn.addEventListener("click", function(event) {
+				var wi = document.getElementById("canvas_width").value;
+				var he = document.getElementById("canvas_height").value;
+				console.log("wi=" + wi + ", he=" + he);
+				function call_createbody(){
+					Draw.createbody(wi,he,true);
+				}
+				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
+					call_createbody
+				);
+			},false);
+			//---メイン画面======================================================================
 			this.sizebar.addEventListener("change", function(event) {
 				document.getElementById("lab_pensize").innerHTML = event.target.value;
 				//Draw.currentpen["size"] = event.target.value;
@@ -243,7 +267,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				console.log(obj);
 				//未操作の場合、取得した一つ前の状態が現在の状態と同じ場合
 				if (!obj) return;
-				if (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.prev_image.data) {
+				if ((obj.prev_image["data"]) && (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.prev_image.data)) {
 					//obj = Draw.undohist.pop();
 					Draw.undoindex--;
 					if (Draw.undoindex < 0) Draw.undoindex = 0;
@@ -301,23 +325,14 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				);
 				document.getElementById("btn_menu").click();
 			},false);
-			this.canwidth.addEventListener("change", function(event) {
-				document.getElementById("lab_canwidth").innerHTML = event.target.value;
-			},false);
-			this.canheight.addEventListener("change", function(event) {
-				document.getElementById("lab_canheight").innerHTML = event.target.value;
-			},false);
-			this.makecanvasbtn.addEventListener("click", function(event) {
-				var wi = document.getElementById("canvas_width").value;
-				var he = document.getElementById("canvas_height").value;
-				console.log("wi=" + wi + ", he=" + he);
-				function call_createbody(){
-					Draw.createbody(wi,he,true);
-				}
-				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
-					call_createbody
+			this.newbtn.addEventListener("click", function(event) {
+				var msg = "キャンバスの設定をリセットし、最初の画面へ戻ります。よろしいですか？";
+				confirm(msg,
+					Draw.returnTopMenu
 				);
+				document.getElementById("btn_menu").click();
 			},false);
+			//---レイヤーパネル関係-==============================================================
 			this.layer_add.addEventListener("click", function(event) {
 				if (Draw.layer.length == Draw.defaults.layer.max){
 					alert("これ以上レイヤーを追加することはできません。");
@@ -336,11 +351,27 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					}
 				);
 			},false);
-			this.pres_curline.addEventListener("change", function(event) {
-				document.getElementById("presval").innerHTML = event.target.value;
+			document.getElementById("layinfo_opacity").addEventListener("change", function(event) {
+				var val = event.target.value;
+				Draw.getSelectedLayer().opacity(val);
+			},false);
+			document.getElementById("layinfo_toggle").addEventListener("change", function(event) {
+				var val = event.target.checked;
+				Draw.getSelectedLayer().toggleShow();
+			},false);
+			document.getElementById("layinfo_name").addEventListener("change", function(event) {
+				var val = event.target.value;
+				Draw.getSelectedLayer().title = val;
+			},false);
+			document.getElementById("layinfo_name").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+			document.getElementById("layinfo_lock").addEventListener("change", function(event) {
+				console.log(event.target.checked);
+				Draw.currentLayer.SetLock(event.target.checked);
 			},false);
 			//---スポイトツールボタン
-			document.getElementById("btn_spoit").addEventListener("click", function(event) {
+			document.getElementById("btn_dropper").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
 					event.target.className = "sidebar_button switchbutton_on";
 					event.target.title = "スポイト/色引き伸ばしを無効にする";
@@ -364,6 +395,9 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				}
 			},false);
 			//---手動筆圧切り替えボタン
+			this.pres_curline.addEventListener("change", function(event) {
+				document.getElementById("presval").innerHTML = event.target.value;
+			},false);
 			document.getElementById("chk_enable_handpres").addEventListener("click", function(event) {
 				
 				if (event.target.className == "switchbutton_off") {
@@ -378,29 +412,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					Draw.pres_curline.disabled = true;
 					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 				}
-			},false);
-			this.newbtn.addEventListener("click", function(event) {
-				var msg = "キャンバスの設定をリセットし、最初の画面へ戻ります。よろしいですか？";
-				confirm(msg,
-					Draw.returnTopMenu
-				);
-				document.getElementById("btn_menu").click();
-			},false);
-			//---レイヤーパネル関係
-			document.getElementById("layinfo_opacity").addEventListener("change", function(event) {
-				var val = event.target.value;
-				Draw.getSelectedLayer().opacity(val);
-			},false);
-			document.getElementById("layinfo_toggle").addEventListener("change", function(event) {
-				var val = event.target.checked;
-				Draw.getSelectedLayer().toggleShow();
-			},false);
-			document.getElementById("layinfo_name").addEventListener("change", function(event) {
-				var val = event.target.value;
-				Draw.getSelectedLayer().title = val;
-			},false);
-			document.getElementById("layinfo_name").addEventListener("keydown", function(event) {
-				event.stopPropagation();
 			},false);
 			var magarr = ["25","50","100","150","200","400"];
 			for (var m in magarr) {
@@ -553,6 +564,61 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					document.getElementById("sv_palettevalue").disabled = dis;
 				}
 			},false);
+			document.getElementById("btn_man_plugin").addEventListener("click", function(event) {
+				if (document.getElementById("dlg_plugin").style.display == "none") {
+					Draw.turnMenuPanel("dlg_plugin",null,true);
+				}else{
+					Draw.turnMenuPanel("dlg_plugin",null,false);
+				}
+			},false);
+			document.getElementById("btn_close_plugin").addEventListener("click", function(event) {
+				Draw.turnMenuPanel("dlg_plugin",null,false);
+			},false);
+			document.getElementById("rad_ld_server").addEventListener("click", function(event) {
+				document.getElementById("btn_reload_plugin").disabled = "";
+				document.getElementById("sel_srv_plugin").disabled = "";
+				document.getElementById("txt_ld_otherpath").disabled = "disabled";
+			},false);
+			document.getElementById("rad_ld_other").addEventListener("click", function(event) {
+				document.getElementById("btn_reload_plugin").disabled = "disabled";
+				document.getElementById("sel_srv_plugin").disabled = "disabled";
+				document.getElementById("txt_ld_otherpath").disabled = "";
+			},false);
+			document.getElementById("btn_reload_plugin").addEventListener("click", function(event) {
+				document.getElementById("btn_reload_plugin").disabled = "disabled";
+				//---サーバプラグイン読込
+				$.ajax(plugin_hostpath[0]+"/00lst",
+				{
+					type : "get",
+					datatype : "text",
+					data : {
+						
+					},
+					success : function(data, status, jqXHR){
+						console.log("success is");
+						console.log(data);
+						$("#sel_srv_plugin > option").remove();
+						var ln = String(data).split("\r\n");
+						for (var obj in ln) {
+							var opt = document.createElement("option");
+							opt.value = ln[obj];
+							opt.innerHTML = ln[obj];
+							document.getElementById("sel_srv_plugin").appendChild(opt);
+						}
+						document.getElementById("btn_reload_plugin").disabled = "";
+					},
+					error : function ( jqXHR, textStatus, errorThrown ) {
+						console.log("error is ");
+						console.log(textStatus);
+						console.log(errorThrown);
+						alert("サーバからの読み込みでエラーが発生しました。しばらく経ってから再度試してください。");
+						$("#sel_srv_plugin > option").remove();
+						document.getElementById("btn_reload_plugin").disabled = "";
+					}
+				});
+			},false);
+			document.getElementById("btn_download_plugin").addEventListener("click", function(event) {
+			},false);
 			//=============================================================================================
 			//---アプリバージョンの設定
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
@@ -562,7 +628,40 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			document.getElementById("dlg_pen_mode").style.display = "none";
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("menupanel").style.display = "none";
-			
+			$("#lay_btns").sortable({
+				items : "span",
+				cancel : "input,textarea,button,select,option,a,strong",
+				update : function(evt, ui) {
+					var hitid = -1;
+					var btnhitid = -1;
+					var oid = ui.item[0].id.replace("lay_btn","");
+					//---layerから位置取得
+					for (var i = 0; i < Draw.layer.length; i++) {
+						if (Draw.layer[i].originID == oid) {
+							hitid = i;
+							break;
+						}
+					}
+					//---要素から位置取得
+					var elms = $("#lay_btns > *");
+					for (var i = 0; i < elms.length; i++) {
+						if (elms[i].id == ui.item[0].id) {
+							btnhitid = i;
+							break;
+						}
+					}
+					console.log("hitid="+hitid);
+					console.log("btnhitid="+btnhitid);
+					if ((hitid == -1) || (btnhitid == -1)) return;
+					/*
+						要素位置を取得したあと、layer位置をそれに合わせて変更。
+						cssのz-indexもその通りに変更。
+					*/
+					Draw.moveLayer(oid,hitid,btnhitid);
+					
+				}
+			});
+			$("#lay_btns").disableSelection();
 			//---カラーパレットのプレビュー＆イベントセットアップ
 			for (var i = 0; i < 3; i++) {
 				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
@@ -614,6 +713,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				},false);
 			}*/
 		},
+		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
 		createbody : function(wi,he,isshow){
 			document.getElementById("initialsetup").style.display = "none";
@@ -634,7 +734,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			document.getElementById("canvaspanel").className = "canvaspanel";
 			document.getElementById("canvaspanel").style.transformOrigin = "left top";
 			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
-			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,false);
+			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,true);
 			lay.canvas.className = "mostbase-canvas";
 			Draw.layer.push(lay);
 			Draw.layer[0].select(Draw.context);
@@ -735,13 +835,14 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			document.getElementById("dlg_canvasinfo").style.display = "none";
 			document.getElementById("dlg_layer").style.display = "none";
 			document.getElementById("dlg_pen_mode").style.display = "none";
-			document.getElementById(target).style.display = valdisplay;
+			document.getElementById("dlg_plugin").style.display = "none";
+			if (target) document.getElementById(target).style.display = valdisplay;
 			
 			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
 			document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
 			document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
 			document.getElementById("info_btn_canvassize").style.backgroundColor = "#c4fab3";
-			document.getElementById(firebutton).style.backgroundColor = valbgcolor;
+			if (firebutton) document.getElementById(firebutton).style.backgroundColor = valbgcolor;
 			
 			this.saveSetting();
 		},
@@ -762,8 +863,36 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				return null;
 			}
 		},
-		moveLayer : function (target,direction){
-			
+		getLastAddedLayer : function (){
+			var ls = this.layer;
+			var maxbtnid = 0;
+			if (ls.length > 0) {
+				maxbtnid = parseInt(ls[0].control.textContent);
+				for (var i = 1; i < ls.length; i++) {
+					var n = parseInt(ls[i].control.textContent);
+					if (maxbtnid < n) {
+						maxbtnid = n;
+					}
+				}
+			}
+			console.log("maxbtnid="+maxbtnid);
+			return maxbtnid;
+		},
+		moveLayer : function (target,oldpos,newpos){
+			var hitid = -1;
+			for (var i = 0; i < Draw.layer.length; i++) {
+				if (Draw.layer[i].originID == target) {
+					hitid = i;
+					break;
+				}
+			}
+			var obj = Draw.layer.splice(oldpos,1);
+			Draw.layer.splice(newpos,0,obj[0]);
+			//---全てのレイヤーのz-indexをリフレッシュ
+			for (var i = 0; i < Draw.layer.length; i++) {
+				console.log(Draw.layer[i]);
+				Draw.layer[i].zMove(Draw.layer[i].canvas.style.zIndex,i+1);
+			}
 		},
 		removeLayer : function (i,isremoveArray){
 			if (this.layer[i].destroy()) {
@@ -793,8 +922,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					var lay = Draw.layer[i];
 					lay.parent = Draw;
 					lay.canvas.style.zIndex = i+1;
-					lay.control.title = lay.canvas.style.zIndex;
-					lay.control.innerHTML = lay.canvas.style.zIndex;
+					//lay.control.title = lay.canvas.style.zIndex;
+					//lay.control.innerHTML = lay.canvas.style.zIndex;
 				}
 				return true;
 			}else{
@@ -964,13 +1093,16 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		},
 		loadSetting : function (){
 			if (AppStorage.isEnable()) {
+				//---color palette
 				var chk = AppStorage.get("chk_sv_colorpalette","0");
 				chk = (chk == "1" ? true : false);
 				document.getElementById("chk_sv_colorpalette").checked = chk;
+				//---brush plugin
 			}
 		},
 		saveSetting : function (){
 			if (AppStorage.isEnable()) {
+				//---color palette
 				var chk = document.getElementById("chk_sv_colorpalette").checked;
 				chk = (chk == true ? "1" : "0");
 				AppStorage.set("chk_sv_colorpalette",chk);
@@ -1089,6 +1221,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		},
 		touchStart : function(event) {
 			this.drawing = true;
+			this.focusing = true;
 			
 			var pos  = calculatePosition("touchstart",event,this.context.canvas,{
 				"offset" : this.offset,
@@ -1188,6 +1321,13 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				document.getElementById("colorpicker").style.backgroundColor = rgb;
 				$.farbtastic("#pickerpanel").setColor(c.toHex());
 				isundo = false;
+			}
+			console.log(this.currentLayer);
+			console.log(this.currentLayer.Locking());
+			if (this.currentLayer.Locking()) {
+				alert("このレイヤーはロックがかかっているため編集できません。");
+				this.drawing = false;
+				return;
 			}
 			//---Undoに保管
 			this.currentLayer.prev_image = this.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
@@ -1437,7 +1577,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					this.pen.prepare(event,this.context,null);
 					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				}
-				
 			}
 			this.startX = offsetX;
 			this.startY = offsetY;
@@ -1452,7 +1591,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				});
 				offsetX = pos.x;
 				offsetY = pos.y;
-				//console.log("event.pressure=" + event.pressure);
+				console.log("event.pressure=" + event.pressure);
 				var offsetPressure = event.pressure * 0.001;
 				//console.log("offsetPressure=" + offsetPressure);
 				this.pen.prepare(event,this.context,offsetPressure);
@@ -1471,8 +1610,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					this.undoindex = this.undohist.length-1;
 				}
 				this.toggleUndo(true);
+				this.drawing = false;
 			}
-			this.drawing = false;
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 			//document.getElementById("log3").innerHTML = event.tiltX;
 			//console.log("end, event.button=");
@@ -1509,6 +1648,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			console.log("high count="+hc);
 			console.log("hx="+hx);
 			console.log("hy="+hy);
+			event.preventDefault();
 		},
 		touchLeave : function(event){
 			//console.log("leave, event.button=");
@@ -1539,10 +1679,12 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				this.toggleUndo(true);
 			}
 			//this.drawing = false;
+			this.focusing = false;
 		},
 		touchEnter : function(event){
 			//console.log("enter, event.button=");
 			//console.log(event);
+			this.focusing = true;
 			if (this.drawing) {
 				var pos  = calculatePosition("touchmove",event,this.context.canvas,{
 					"offset" : this.offset,

@@ -61,10 +61,19 @@ PenSet.Add({
 		parameter 3 - (自動補正処理あり時）補正された筆圧感度
 		             （touch,pointer,mouseのleave, end時）筆圧 * 0.0001の値
 		             （上記以外）null
+		必要な戻り値（JSON形式で)：
+		1, pressure - 筆圧
+		2, context  - キャンバスのコンテキスト
 	*/
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
 		//---Editable begin
 		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	/*
 		touchmove, pointermove, mousemove中に発生するブラシ描画の前処理

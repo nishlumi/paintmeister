@@ -17,7 +17,7 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":true,
-			"complete":true
+			"complete":false
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;

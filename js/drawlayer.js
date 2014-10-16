@@ -57,9 +57,10 @@
 			own.parent.currentLayer = own;
 			document.getElementById("layinfo_opacity").value = own.Alpha;
 			document.getElementById("layinfo_toggle").checked = own.isvisible;
-			document.getElementById("info_layer").textContent = "レイヤー No." + String(own.canvas.style.zIndex);
+			document.getElementById("info_layer").textContent = own.title;
 			document.getElementById("layinfo_name").value = own.title;
 			document.getElementById("prev_img").src = own.canvas.toDataURL();
+			document.getElementById("layinfo_lock").checked = !own.isremovable;
 		}
 		this.deselect = function (){
 			own.parent.context = null;
@@ -91,6 +92,15 @@
 		this.opacity = function (value){
 			own.Alpha = value;
 			own.canvas.style.opacity = value / 100;
+		}
+		this.zMove = function(oldpos,newpos) {
+			own.canvas.style.zIndex = newpos;
+		}
+		this.SetLock = function (flag) {
+			own.isremovable = !flag;
+		}
+		this.Locking = function () {
+			return !own.isremovable;
 		}
 		this.generate_core = function (canvas,ctrl){
 			function configEvent(touch) {
@@ -274,6 +284,7 @@
 		};
 		this.generateLayer = function (newname){
 			var laylength = own.parent.layer.length;
+			var reallastIndex = parseInt(own.parent.getLastAddedLayer()) + 1;
 			/*if (laylength > 0) {
 				var lastid = own.parent.layer[laylength-1].originID;
 				own.originID  = lastid + 1;
@@ -290,7 +301,8 @@
 			own.canvas.height = own.canvassize.h;
 			own.canvas.style.zIndex = laylength+1;
 			document.getElementById("canvaspanel").appendChild(own.canvas);
-			own.title = "レイヤーNo." + own.canvas.style.zIndex;
+			//own.title = "レイヤーNo." + own.canvas.style.zIndex;
+			own.title = "レイヤーNo." + reallastIndex;
 			/*var winwid = window.innerWidth;
 			var sa = winwid - own.canvassize.w;
 			var say = window.innerHeight - own.canvassize.h;
@@ -299,12 +311,18 @@
 			own.parent.canvasspace = {"w" : space, "h" : spacey};
 			ElementTransform(own.canvas,"translate("+space+"px," + spacey + "px)");*/
 			
-			own.control = document.createElement("button");
+			if (own.ismain) {
+				own.control = document.createElement("strong");
+			}else{
+				own.control = document.createElement("span");
+			}
 			own.control.id = "lay_btn" + own.originID;
 			own.ctrlname = own.control.id;
 			own.control.className = "layer_button layer_button_show";
-			own.control.title = "レイヤーNo." + own.canvas.style.zIndex;
-			own.control.innerHTML = own.canvas.style.zIndex;
+			//own.control.title = "レイヤーNo." + own.canvas.style.zIndex;
+			own.control.title = "レイヤーNo." + reallastIndex;
+			//own.control.innerHTML = own.canvas.style.zIndex;
+			own.control.innerHTML = reallastIndex;
 			
 			document.getElementById("lay_btns").appendChild(own.control);
 			own.generate_core(own.canvas,own.control);
@@ -366,7 +384,7 @@
 			own.canvassize = size;
 			own.ismain = is_main;
 			own.isremovable = removable;
-			if (is_main == true) own.isremovable = false;
+			//if (is_main == true) own.isremovable = false;
 			
 			own.generateLayer();
 			

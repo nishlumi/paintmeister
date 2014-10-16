@@ -2,13 +2,14 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
-PaintMeister (1.0.32.60)
+PaintMeister (1.0.33.60)
 ○レイヤーの並び替えに対応。
+○レイヤーの編集ロック機能を実装
 ・(WebApp/ChromeApps)たまにUndoが効かなくなるバグを修正。
 -- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2014/10/13 17:00
-ChromeApps		- 
-ストアアプリ		- 
+WebApp			- 2014/10/15 21:00
+ChromeApps		- 2014/10/16 22:00
+ストアアプリ		- 2014/10/16 22:00
 
 
 PaintMeister (1.0.31.59)
