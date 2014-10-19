@@ -1,0 +1,15 @@
+paintmeister Update history
+============
+* I referred to in () for the platform affected especially.
+
+PaintMeister (1.0.35.64)
+**Support Internationalization(Now: Japanese, English).
+**(WebApp)Support URL parameter. (lng=application language(ja, en, etc...), w=Width, h=height)
+*(WebApp/ChromeApps)Support to update maximum size of width and height on start screen resizing window.
+*(ChromeApps) Fix that it can not proceed from the start screen.
+*(ChromeApps) Correct a mistake in the description of the Chrome Web store.
+*Adjust the pressure and the width of the "Pencil", "Pen", "Ink brush pen" and "Callygraphy".
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/10/19 20:00
+ChromeApps		- 
+Store app		- 
