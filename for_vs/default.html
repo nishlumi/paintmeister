@@ -12,6 +12,7 @@
 
     <!-- PaintMeister 参照 -->
     <link rel="stylesheet" href="/js/farbtastic/farbtastic.css">
+    <link rel="stylesheet" href="/css/jquery-ui.min.css">
     <link href="/css/default.css" rel="stylesheet" />
     <link href="css/core.css" rel="stylesheet" />
     <script src="/js/appbar.js"></script>
@@ -27,13 +28,13 @@
                 <tbody>
                     <tr>
                         <td class="infofont" style="width:9%;"><button id="btn_menu" class="info_opebutton" title="メニューパネル開閉(1キー, SPACEキー)">Menu</button></td>
-                        <td class="infofont" style="width:6%;">
+                        <td class="infofont" style="width:18%;">
                             <button id="btn_undo" class="info_opebutton2" title="元に戻す(Ctrl + Z)">&#8678;</button>
-                            <button id="btn_redo" class="statbutton" title="やり直し" style="display:none;">&#8680;</button>
+                            <button id="btn_redo" class="info_opebutton2" title="やり直し(Ctrl + Y)">&#8680;</button>
                         </td>
-                        <td class="infofont" style="width:20%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
-                        <td class="infofont" style="width:20%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
-                        <td class="infofont" style="width:45%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
+                        <td class="infofont" style="width:17%;"><button id="info_btn_canvassize" class="info_opebutton" title="キャンバス情報。キャンバス操作パネルを表示します(2キー)"><span id="info_canvassize" title="キャンバスサイズ"></span>(x <span id="info_magni"></span>)</button></td>
+                        <td class="infofont" style="width:16%;"><button id="info_layer" class="info_opebutton" title="現在の操作レイヤー。レイヤー操作パネルを表示します(3キー)"></button></td>
+                        <td class="infofont" style="width:40%;"><button id="info_pen_mode" class="info_opebutton" title="現在のブラシモード。ブラシパネルを表示します(4キー)"></button></td>
                     </tr>
                 </tbody>
             </table>
@@ -43,11 +44,11 @@
         </div>
         <!--</td><td style="width:70%;">-->
         <div id="btn_panel" class="button-panel">
-            <span style="color:blue;font-size:120%;" title="ブラシ太さ">&#9999;</span>:<span>小</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0;" title="ペンの太さ" />
-            <span>大</span> : <strong id="lab_pensize"></strong>
+            <span id="info_brush_size" style="color:blue;font-size:120%;" title="ブラシ太さ">&#9999;</span>:<span>1</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0 5px 0 5px;" title="ペンの太さ" />
+            <span>30</span> : <strong id="lab_pensize"></strong>
             <div id="colorpalette">
                 <input type="text" id="colorpicker" readonly name="c1" value="#e4521e" class="color {hash:true}" title="色の選択" />
-                <span class="explain_panel explain_palette" title="カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">？</span>
+                <span id="explain_palette" class="explain_panel explain_palette" title="カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">?</span>
                 <table id="palettepanel" border="1"><tbody><tr id="palettepanel_line"></tr></tbody></table>
             </div>
         </div>
@@ -59,7 +60,7 @@
     <br/>-->
     <br />
     <div id="prespanel">
-        <div id="btn_spoit" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
+        <div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
         <div id="btn_freescroll" class="switchbutton_off" title="スクロール有効にする">&#10021;</div>
         <div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br />
         <!--<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>-->
@@ -70,17 +71,17 @@
     </div>
     <div id="initialsetup">
         <fieldset>
-            <legend>新規作成</legend>
-            <strong>キャンバスのサイズ</strong><br />
-            幅　：<input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;"><strong id="lab_canwidth">600</strong><br />
-            高さ：<input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%"><strong id="lab_canheight">400</strong><br />
-            <label title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります"><input type="checkbox" id="chk_limit_canvas" checked>指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</label>
+            <legend id="lab_initialsetup">新規作成</legend>
+            <strong id="lab_initial_canvassize">キャンバスのサイズ</strong><br />
+            <span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;"><strong id="lab_canwidth">600</strong><br />
+            <span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%"><strong id="lab_canheight">400</strong><br />
+            <label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります"><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
             <button id="btn_makecanvas" class="button">作成</button>
         </fieldset>
         <br />
         <fieldset>
-            <legend>プロジェクトファイルを開く</legend>
-            ファイルの場所：<input type="file" id="fl_projpath" size="150" />
+            <legend id="lab_loadproject">プロジェクトファイルを開く</legend>
+            <span id="lab_fileloc">ファイルの場所：</span><input type="file" id="fl_projpath" size="150" />
             <button id="btn_openfile" class="button">開く</button>
         </fieldset>
     </div>
@@ -94,27 +95,36 @@
             <br />
             <button id="btn_clear" class="statbutton2" title="キャンバスを全削除します">Clear</button><br />
             <button id="btn_new" class="statbutton2 stat_new" title="キャンバスをリセットして最初からやり直す">New</button><br />
-            <button id="checkstat" class="statbutton2 stat_save" title="現在のキャンバス内容を画像として出力します。(Ctrl + S)">Save</button><br />
+            <button id="btn_save" class="statbutton2 stat_save" title="現在のキャンバス内容を画像として出力します。(Ctrl + S)">Save</button><br />
             <button id="btn_saveproj" class="statbutton2 stat_saveas" title="現在の編集状態をプロジェクトファイルに保存します">Save as Project</button><br />
-            <a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" class="statbutton2" target="_blank" title="機能早見表" style="padding-top:5px;">
-                <strong style="color:#575858;">使い方ヘルプ</strong>
+            <a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" id="lnk_help" class="statbutton2" target="_blank" title="機能早見表" style="padding-top:5px;">
+                <strong id="lnk_help_msg" style="color:#575858;">使い方ヘルプ</strong>
             </a>
         </div>
         <div id="menu_right">
             <br />
-            <label title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked>カラーパレットを保存する</label><br />
+            <label id="lab_sv_colorpalette" title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked><span id="sv_colorpalette_msg">カラーパレットを保存する</span></label><br />
             <div>
-                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>パレット0 <span id="lab_pltloc0"></span></label><br />
-                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc1" value="1">パレット1 <span id="lab_pltloc1"></span></label><br />
-                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">パレット2 <span id="lab_pltloc2"></label></span><br />
-                <label title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：<input type="text" id="sv_palettevalue" size="50" /></label>
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>No.0 <span id="lab_pltloc0"></span></label><br />
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc1" value="1">No.1 <span id="lab_pltloc1"></span></label><br />
+                <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">No.2 <span id="lab_pltloc2"></label></span><br />
+                <span id="lab_sv_palettevalue" title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：</span><input type="text" id="sv_palettevalue" size="50" />
             </div>
+            <div style="display:none;"><span id="lab_plugin">プラグイン管理:</span> <button id="btn_man_plugin" class="statbutton2">開く</button></div>
+            <fieldset style="display:none;">
+                <legend><label title="絵を描く時間を計る、もしくは時間制限付きで絵を描くようにします"><input type="checkbox" id="chk_use_timer"><span id="lab_chk_use_timer">タイマー機能を使用する</span></label></legend>
+                <select id="sel_timermode">
+                    <option value="0">わんどろモード</option>
+                    <option value="1">タイムアタックモード</option>
+                </select>
+
+            </fieldset>
         </div>
         <div id="menu_bottom">
         </div>
     </div>
     <div id="dlg_canvasinfo">
-        <span>拡大率</span><br />
+        <span id="lab_magni">拡大率</span><br />
         <table id="tbl_magni">
             <tbody>
                 <tr><td class="magni_element" id="magni_25">25%</td><td class="magni_element" id="magni_50">50%</td></tr>
@@ -126,7 +136,7 @@
 
     </div>
     <div id="dlg_layer">
-        <span class="explain_panel" title="各ボタン：押す＝レイヤー選択、下にドラッグ（フリック）＝表示・非表示切り替え">レイヤー操作</span>
+        <span id="lab_explain_layer" class="explain_panel" title="各ボタン：押す＝レイヤー選択、左右にドラッグ＝レイヤー移動">レイヤー操作</span>
         <button id="lay_add" class="laycontrol_button" title="レイヤーを追加">+</button>
         <button id="lay_del" class="laycontrol_button" title="レイヤーを削除">-</button>
         <div id="lay_btns">
@@ -135,9 +145,10 @@
             <img src="" id="prev_img" alt="preview" width="126" title="プレビュー" />
         </div>
         <div id="lay_info">
-            <label>名前:<input type="text" id="layinfo_name" size="15" /></label>
-            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked>表示</label><br />
-            <label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度">不透明度</label>
+            <span id="lab_layinfo_name">名前:</span><input type="text" id="layinfo_name" size="15" />
+            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle">表示</span></label><br />
+            <label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度"><span id="lab_layinfo_opacity">不透明度</span></label>
+            <label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock">編集ロック</span></label><br />
         </div>
     </div>
     <div id="dlg_pen_mode">
@@ -156,11 +167,59 @@
 
         </ul>
     </div>
+
     <div id="pickerpanel"></div>
     <div id="progresspanel">
-        <span>読み込んでいます...</span><br />
+        <span id="lab_progress">読み込んでいます...</span><br />
         <div id="progressicon"></div>
         <!--<progress max="100" id="progressbar">読み込んでいます...</progress>-->
+        <button id="prg_btn_cancel" class="button2" style="display:none;">キャンセル</button>
+    </div>
+    <div id="dlg_plugin">
+        <table style="height:100%;">
+            <tbody>
+                <tr>
+                    <td style="vertical-align:top;">
+                        <button id="btn_close_plugin" class="flatbutton" title="プラグインメニューを閉じる">×</button>
+                    </td>
+                    <td>
+                        <fieldset id="box_cur_plugin" class="pluginset">
+                            <legend>プラグイン一覧</legend>
+                            <span>使用中のブラシ</span><br />
+                            <select id="sel_cur_plugin" size="8" class="pluginlist">
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                                <option value="">---</option>
+                            </select><br />
+                            <button id="btn_del_plugin" class="flatbutton" title="選択したプラグインを削除">削除</button>
+                        </fieldset>
+                    </td>
+                    <td>
+                        <button id="btn_download_plugin" title="プラグインをダウンロードして追加">&#8678;</button>
+                    </td>
+                    <td>
+                        <fieldset id="box_loadable_plugin" class="pluginset">
+                            <legend>参照先</legend>
+                            <label><input type="radio" name="rad_loadable_plugin" id="rad_ld_server" checked />PaintMeister公式サイトから</label>
+                            <button id="btn_reload_plugin" class="flatbutton" title="サーバのプラグインリストを再読み込み">&#8634;</button><br />
+                            <select id="sel_srv_plugin" size="8" class="pluginlist"><option value="">---</option></select><br />
+                            <label><input type="radio" name="rad_loadable_plugin" id="rad_ld_other" />他の場所から</label><br />
+                            URL：<input type="text" id="txt_ld_otherpath" size="37" disabled />
+                        </fieldset>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <div id="log" class="debugmsg"></div>
@@ -190,6 +249,9 @@
                 data-win-options="{id:'cmdUndo',label:'Undo',icon:'undo',
                 section:'selection',tooltip:'undo an action'}"></button>
         <button data-win-control="WinJS.UI.AppBarCommand"
+                data-win-options="{id:'cmdRedo',label:'Redo',icon:'redo',
+                section:'selection',tooltip:'redo an action'}"></button>
+        <button data-win-control="WinJS.UI.AppBarCommand"
                 data-win-options="{id:'cmdSave',label:'Save',icon:'save',
                 section:'selection',tooltip:'save a picture'}"></button>
         <button data-win-control="WinJS.UI.AppBarCommand"
@@ -198,8 +260,10 @@
     </div>
     <!-- ENDTEMPLATE -->
     <script src="/js/jquery-2.1.0.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
     <script src="/js/farbtastic/farbtastic.js"></script>
 
+    <script src="js/utils.js"></script>
     <script src="/js/drawlayer.js"></script>
     <script src="/js/colorpalette.js"></script>
     <script src="/js/penset.js"></script>

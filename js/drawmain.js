@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.33.60";
+var appversion = "1.0.35.64";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -185,13 +185,14 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		is_spoiting : false,
 		elementParameter : {},
 		draw_linehist : [],
+		urlparams : {}, //for webapp
 		
 		initialize : function() {
 			this.pen = PenSet;
 			this.pen.initialize(this);
 			//this.canvas = document.getElementById("myCanvas");
 			//this.context = this.canvas.getContext("2d");
-			this.checkstat = document.getElementById("checkstat");
+			this.checkstat = document.getElementById("btn_save");
 			this.sizebar = document.getElementById("pensize");
 			this.colorpicker = document.getElementById("colorpicker");
 			this.clearbtn = document.getElementById("btn_clear");
@@ -221,7 +222,9 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				function call_createbody(){
 					Draw.createbody(wi,he,true);
 				}
-				confirm("キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？",
+				var msg = _T("makecanvasbtn_click_msg",[wi,he]);
+				//"キャンバスを" + wi + "x" + he + "のサイズで作成します。よろしいですか？"
+				confirm(msg,
 					call_createbody
 				);
 			},false);
@@ -260,11 +263,11 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			},false);
 			this.undobtn.addEventListener("click", function(event) {
 				if (!Draw.canundo) return;
-				console.log(Draw.undohist);
+				//console.log(Draw.undohist);
 				//var obj = Draw.undohist.pop(); //一つ前の状態取得
 				var obj = Draw.undohist[Draw.undoindex];
-				console.log("undohist=");
-				console.log(obj);
+				//console.log("undohist=");
+				//console.log(obj);
 				//未操作の場合、取得した一つ前の状態が現在の状態と同じ場合
 				if (!obj) return;
 				if ((obj.prev_image["data"]) && (obj.layer.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.prev_image.data)) {
@@ -284,12 +287,12 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					Draw.undoindex--;
 					if (Draw.undoindex < 0) Draw.undoindex = 0;
 				}
-				console.log(Draw.undohist);
+				//console.log(Draw.undohist);
 				if ((Draw.undohist.length == 0) || (Draw.undoindex == 0)) {
 					Draw.canundo = false;
 					Draw.toggleUndo(false);
 				}
-				console.log("undoindex="+Draw.undoindex);
+				//console.log("undoindex="+Draw.undoindex);
 			},false);
 			this.redobtn.addEventListener("click", function(event) {
 				if (!Draw.canredo) return;
@@ -297,7 +300,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				if (Draw.undoindex >= Draw.undohist.length) Draw.undoindex = Draw.undohist.length - 1;
 				var obj = Draw.undohist[Draw.undoindex];
 				
-				console.log(Draw.redohist);
+				//console.log(Draw.redohist);
 				if (Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data == obj.image.data) {
 					Draw.undoindex++;
 					if (Draw.undoindex >= Draw.undohist.length) Draw.undoindex = Draw.undohist.length - 1;
@@ -310,23 +313,25 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					obj.layer.getContext("2d").clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 					obj.layer.getContext("2d").putImageData(obj.image,0,0);
 				}
-				console.log(Draw.undohist);
-				console.log("undoindex="+Draw.undoindex);
+				//console.log(Draw.undohist);
+				//console.log("undoindex="+Draw.undoindex);
 				if (Draw.undoindex >= Draw.undohist.length-1) {
 					Draw.canredo = false;
 					Draw.toggleRedo(false);
 				}
 			},false);
 			this.clearbtn.addEventListener("click", function(event) {
-				var msg = "キャンバスの内容を全部削除します。よろしいですか？\n" +
-					"(レイヤー情報、およびUNDOの履歴もすべて削除されます)";
+				//var msg = "キャンバスの内容を全部削除します。よろしいですか？\n" +
+				//	"(レイヤー情報、およびUNDOの履歴もすべて削除されます)";
+				var msg = _T("clearbtn_click_msg1") + "\n" + _T("clearbtn_click_msg2");
 				confirm(msg,
 					Draw.clearBody
 				);
 				document.getElementById("btn_menu").click();
 			},false);
 			this.newbtn.addEventListener("click", function(event) {
-				var msg = "キャンバスの設定をリセットし、最初の画面へ戻ります。よろしいですか？";
+				//var msg = "キャンバスの設定をリセットし、最初の画面へ戻ります。よろしいですか？";
+				var msg = _T("newbtn_click_msg1");
 				confirm(msg,
 					Draw.returnTopMenu
 				);
@@ -335,7 +340,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			//---レイヤーパネル関係-==============================================================
 			this.layer_add.addEventListener("click", function(event) {
 				if (Draw.layer.length == Draw.defaults.layer.max){
-					alert("これ以上レイヤーを追加することはできません。");
+					//alert("これ以上レイヤーを追加することはできません。");
+					alert(_T("layer_add_click_msg1"));
 					return;
 				}else{
 					var lay = new DrawLayer(Draw,{"w":Draw.canvassize[0],"h":Draw.canvassize[1]},false,true);
@@ -343,11 +349,13 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				}
 			},false);
 			this.layer_del.addEventListener("click", function(event) {
-				var msg = document.getElementById("info_layer").innerText + "を削除します。よろしいですか？";
+				//var msg = document.getElementById("info_layer").innerText + "を削除します。よろしいですか？";
+				var msg = _T("layer_del_click_msg1",[document.getElementById("info_layer").innerText]);
 				confirm(msg,
 					Draw.removeLayerController,
 					function () {
-				    	alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
+				    	//alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
+				    	alert(_T("layer_del_click_msg2"));
 					}
 				);
 			},false);
@@ -367,31 +375,34 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				event.stopPropagation();
 			},false);
 			document.getElementById("layinfo_lock").addEventListener("change", function(event) {
-				console.log(event.target.checked);
 				Draw.currentLayer.SetLock(event.target.checked);
 			},false);
 			//---スポイトツールボタン
 			document.getElementById("btn_dropper").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
 					event.target.className = "sidebar_button switchbutton_on";
-					event.target.title = "スポイト/色引き伸ばしを無効にする";
+					//event.target.title = "スポイト/色引き伸ばしを無効にする";
+					event.target.title = _T("btn_dropper_click_msg1");
 					Draw.is_spoiting = true;
 				}else{
 					event.target.className = "sidebar_button switchbutton_off";
-					event.target.title = "スポイト/色引き伸ばしを有効にする"
-						Draw.is_spoiting = false;
+					event.target.title = "スポイト/色引き伸ばしを有効にする";
+					event.target.title = _T("btn_dropper_title");
+					Draw.is_spoiting = false;
 				}
 			},false);
 			//---スクロールボタン
 			document.getElementById("btn_freescroll").addEventListener("click", function(event) {
 				if (event.target.className == "switchbutton_off") {
 					event.target.className = "switchbutton_on";
-					event.target.title = "スクロール無効にする";
+					//event.target.title = "スクロール無効にする";
+					event.target.title = _T("btn_freescroll_click_title");
 					Draw.vCtrl_for_scroll = true;
 				}else{
 					event.target.className = "switchbutton_off";
-					event.target.title = "スクロール有効にする"
-						Draw.vCtrl_for_scroll = false;
+					//event.target.title = "スクロール有効にする";
+					event.target.title = _T("btn_freescroll_title");
+					Draw.vCtrl_for_scroll = false;
 				}
 			},false);
 			//---手動筆圧切り替えボタン
@@ -496,7 +507,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					saveProject(evt.data);
 				},false);
 				wkr.addEventListener("error",function(evt){
-					alert("プロジェクトファイルの保存中にエラーが発生しました<br/>"+
+					//alert("プロジェクトファイルの保存中にエラーが発生しました<br/>"+
+					alert(_T("btn_saveproj_click_msg1")+
 						evt.message + "<br/>" +
 						evt.filename + " , line number=" + evt.lineno + "<br/>"
 					);
@@ -666,7 +678,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			for (var i = 0; i < 3; i++) {
 				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
 					var val = event.target.value;
-					console.log("rad_paletteloc=" + val);
+					//console.log("rad_paletteloc=" + val);
 					var dat = AppStorage.get("sv_colorpalette"+val,null);
 					//console.log("dat="+dat);
 					if (!dat) {
@@ -697,24 +709,18 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			}
 			var dat = AppStorage.get("sv_colorpalette0",null);
 			document.getElementById("sv_palettevalue").value = dat;
-			/*var pens = document.querySelectorAll("div#menu_right button");
-			console.log(pens);
-			var ul = document.querySelector("div#dlg_pen_mode ul li");
-			for (var i = 0; i < ul.length; i++) {
-				ul[i].onclick = pens[i].onclick;
-				ul[i].addEventListener("click",function(event){
-					var p = document.querySelectorAll("div#dlg_pen_mode ul li");
-					for (var j = 0; j < p.length; j++) {
-						p[j].style.listStyleType = "none";
-					}
-					event.target.style.listStyleType = "square";
-					console.log(event.target.id);
-					document.getElementById("dlg_pen_mode").style.display = "none";
-				},false);
-			}*/
+			
 		},
 		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
+		parseURL : function (){
+			var paramarr = document.location.search.replace("?","").split("&");
+			//---URL引数から lng=* を取得
+			for (var i = 0; i < paramarr.length; i++) {
+				var pelem = paramarr[i].split("=");
+				this.urlparams[pelem[0]] = pelem[1];
+			}
+		},
 		createbody : function(wi,he,isshow){
 			document.getElementById("initialsetup").style.display = "none";
 			document.getElementById("apptitle").style.display = "none";
@@ -749,7 +755,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			}else{
 				document.getElementById("prev_img").height = "126";
 			}
-			Draw.pen.items["pencil"].element.click();
+			/*if ("pencil" in Draw.pen.items) */Draw.pen.items["pencil"].element.click();
 			//---ダミーのキャンバスも作成
 			Draw.canvas = document.createElement("canvas");
 			Draw.canvas.id = "dumcanvas";
@@ -775,6 +781,26 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			Draw.toggleRedo(false);
 			document.getElementById("prg_btn_cancel").style.display = "block";
 			return true;
+		},
+		direct_createbody : function(){
+			//---URL引数にw と hがある場合、直接キャンバスを作成する
+			var tw = false, th = false;
+			if ("w" in Draw.urlparams) {
+				tw = parseInt(Draw.urlparams["w"]);
+			}
+			if ("h" in Draw.urlparams) {
+				th = parseInt(Draw.urlparams["h"]);
+			}
+			console.log("w=" + tw);
+			console.log("h=" + th);
+			if ((tw) && (th) && (!isNaN(tw)) && (!isNaN(th))) {
+				//---wとhがある場合のみ、いきなりキャンバス作成
+				if (tw > Number(document.getElementById("canvas_width").max)) tw = Number(document.getElementById("canvas_width").max);
+				if (tw < 100) tw = 100;
+				if (th > Number(document.getElementById("canvas_height").max)) th = Number(document.getElementById("canvas_height").max);
+				if (th < 100) th = 100;
+				Draw.createbody(tw,th,true);
+			}
 		},
 		clearBody : function (){
 			//参照コンテキストをメインのキャンバスに戻す
@@ -845,6 +871,88 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			if (firebutton) document.getElementById(firebutton).style.backgroundColor = valbgcolor;
 			
 			this.saveSetting();
+		},
+		setupLocale : function(){
+			var did = function(name){
+				return document.getElementById(name);
+			}
+			//initial panel
+			did("lab_initialsetup").textContent = _T("lab_initialsetup");
+			did("lab_initial_canvassize").textContent = _T("lab_initial_canvassize");
+			did("lab_canvas_width").textContent = _T("lab_canvas_width");
+			did("lab_canvas_height").textContent = _T("lab_canvas_height");
+			did("txt_limit_canvas").textContent = _T("txt_limit_canvas");
+			did("lab_limit_canvas").title = _T("lab_limit_canvas_title");
+			did("btn_makecanvas").textContent = _T("btn_makecanvas");
+			
+			did("lab_loadproject").textContent = _T("lab_loadproject");
+			did("lab_fileloc").textContent = _T("lab_fileloc");
+			did("btn_openfile").textContent = _T("btn_openfile");
+			//main panel - menu bar
+			did("btn_menu").textContent = _T("btn_menu");
+			did("btn_menu").title = _T("btn_menu_title");
+			did("btn_undo").title = _T("btn_undo_title");
+			did("btn_redo").title = _T("btn_redo_title");
+			did("info_btn_canvassize").title = _T("info_btn_canvassize_title");
+			did("info_canvassize").title = _T("info_canvassize_title");
+			did("info_layer").textContent = _T("info_layer");
+			did("info_layer").title = _T("info_layer_title");
+			did("info_pen_mode").textContent = _T("info_pen_mode");
+			did("info_pen_mode").title = _T("info_pen_mode_title");
+			//brush bar
+			did("info_currentpos").title = _T("info_currentpos_title");
+			did("info_brush_size").title = _T("info_brush_size_title");
+			//color bar
+			did("colorpicker").title = _T("colorpicker_title");
+			did("explain_palette").title = _T("explain_palette_title");
+			//side bar
+			did("btn_dropper").title = _T("btn_dropper_title");
+			did("btn_freescroll").title = _T("btn_freescroll_title");
+			did("chk_enable_handpres").title = _T("chk_enable_handpres_title");
+			did("pres_curline").title = _T("pres_curline_title");
+			//menu panel
+			did("btn_clear").textContent = _T("btn_clear");
+			did("btn_clear").title = _T("btn_clear_title");
+			did("btn_new").textContent = _T("btn_new");
+			did("btn_new").title = _T("btn_new_title");
+			did("btn_save").textContent = _T("btn_save");
+			did("btn_save").title = _T("btn_save_title");
+			did("btn_saveproj").textContent = _T("btn_saveproj");
+			did("btn_saveproj").title = _T("btn_saveproj_title");
+			did("lnk_help").title = _T("lnk_help_title");
+			did("lnk_help_msg").textContent = _T("lnk_help_msg");
+			did("lab_sv_colorpalette").title = _T("lab_sv_colorpalette_title");
+			did("sv_colorpalette_msg").textContent = _T("sv_colorpalette_msg");
+			did("lab_sv_palettevalue").title = _T("lab_sv_palettevalue_title");
+			did("lab_sv_palettevalue").textContent = _T("lab_sv_palettevalue");
+
+			//canvas info panel
+			did("lab_magni").textContent = _T("lab_magni_title");
+			//layer panel
+			did("lab_explain_layer").title = _T("lab_explain_layer_title");
+			did("lab_explain_layer").textContent = _T("lab_explain_layer");
+			did("lay_add").title = _T("lay_add_title");
+			did("lay_del").title = _T("lay_del_title");
+			did("prev_img").title = _T("prev_img_title");
+			did("lab_layinfo_name").textContent = _T("lab_layinfo_name");
+			did("lab_layinfo_toggle").textContent = _T("lab_layinfo_toggle");
+			did("layinfo_opacity").title = _T("layinfo_opacity_title");
+			did("lab_layinfo_opacity").textContent = _T("lab_layinfo_opacity");
+			did("lab_layinfo_lock").textContent = _T("lab_layinfo_lock");
+			//brush panel
+			did("eraser").title = _T("brush_eraser");
+			did("img_eraser").title = _T("brush_eraser");
+			did("sp_eraser").title = _T("brush_eraser");
+			did("sp_eraser").textContent = _T("brush_eraser");
+			did("fillpen").title = _T("brush_fillpen");
+			did("img_fillpen").title = _T("brush_fillpen");
+			did("sp_fillpen").title = _T("brush_fillpen");
+			did("sp_fillpen").textContent = _T("brush_fillpen");
+			
+			//progress panel
+			did("lab_progress").textContent = _T("lab_progress");
+			did("prg_btn_cancel").textContent = _T("prg_btn_cancel");
+			
 		},
 		getSelectedLayerIndex : function (){
 			var ls = this.layer;
@@ -1045,7 +1153,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			for (var i = 1; i < laycount; i++) {
 				var lay = new DrawLayer(this,{"w":this.canvassize[0],"h":this.canvassize[1]},false,true);
 				this.layer.push(lay);
-				console.log("layindexpos="+projectdata[layindexpos+4]);
+				//console.log("layindexpos="+projectdata[layindexpos+4]);
 				data = projectdata[layindexpos+11].split(",");
 				this.layer[i].load(
 					projectdata[layindexpos+4],
@@ -1054,7 +1162,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					projectdata[9],
 					data
 				);
-				console.log("data="+projectdata[layindexpos+11].substr(0,100));
+				//console.log("data="+projectdata[layindexpos+11].substr(0,100));
 				layindexpos += 12;
 			}
 			return true;
@@ -1322,10 +1430,11 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				$.farbtastic("#pickerpanel").setColor(c.toHex());
 				isundo = false;
 			}
-			console.log(this.currentLayer);
-			console.log(this.currentLayer.Locking());
+			//console.log(this.currentLayer);
+			//console.log(this.currentLayer.Locking());
 			if (this.currentLayer.Locking()) {
-				alert("このレイヤーはロックがかかっているため編集できません。");
+				//alert("このレイヤーはロックがかかっているため編集できません。");
+				alert(_T("touchstart_msg1"));
 				this.drawing = false;
 				return;
 			}

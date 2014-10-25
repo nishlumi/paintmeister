@@ -302,7 +302,8 @@
 			own.canvas.style.zIndex = laylength+1;
 			document.getElementById("canvaspanel").appendChild(own.canvas);
 			//own.title = "レイヤーNo." + own.canvas.style.zIndex;
-			own.title = "レイヤーNo." + reallastIndex;
+			//own.title = "レイヤーNo." + reallastIndex;
+			own.title = _T("generateLayer_defaultname") + reallastIndex;
 			/*var winwid = window.innerWidth;
 			var sa = winwid - own.canvassize.w;
 			var say = window.innerHeight - own.canvassize.h;
@@ -320,7 +321,8 @@
 			own.ctrlname = own.control.id;
 			own.control.className = "layer_button layer_button_show";
 			//own.control.title = "レイヤーNo." + own.canvas.style.zIndex;
-			own.control.title = "レイヤーNo." + reallastIndex;
+			//own.control.title = "レイヤーNo." + reallastIndex;
+			own.control.title = _T("generateLayer_defaultname") + reallastIndex;
 			//own.control.innerHTML = own.canvas.style.zIndex;
 			own.control.innerHTML = reallastIndex;
 			

@@ -30,7 +30,8 @@ function saveImage() {
 			console.log("writableEntry=");
 			console.log(writableEntry);
 			writeFileEntry(writableEntry, blob, function(e) {
-				$.jGrowl("キャンバスの画像を保存しました");
+				//$.jGrowl("キャンバスの画像を保存しました");
+				$.jGrowl(_T("saveImage_msg1"));
 			});
 		});
 	}else{
@@ -44,11 +45,13 @@ function saveImage() {
 function loadProjectFile(files){
 	var reader = new FileReader();
 	if (files.length == 0) {
-		alert("ファイルが指定されていません！");
+		//alert("ファイルが指定されていません！");
+		alert(_T("loadProjectFile_msg1"));
 		return false;
 	}
 	if (files[0].name.indexOf(".pmpf") == -1) {
-		alert("有効なPaintMeisterプロジェクトファイルではありません！");
+		//alert("有効なPaintMeisterプロジェクトファイルではありません！");
+		alert(_T("loadProjectFile_msg2"));
 		return false;
 	}else{
 		reader.onloadstart = function (e){
@@ -64,11 +67,13 @@ function loadProjectFile(files){
 				Draw.progresspanel.style.display = "none";
 				document.getElementById("progressicon").className = "";
 			}else{
-				alert("有効なPaintMeisterプロジェクトファイルではありません！");
+				//alert("有効なPaintMeisterプロジェクトファイルではありません！");
+				alert(_T("loadProjectFile_msg2"));
 			}
 		}
 		reader.onerror = function(e){
-			alert("有効なPaintMeisterプロジェクトファイルではありません！");
+			//alert("有効なPaintMeisterプロジェクトファイルではありません！");
+			alert(_T("loadProjectFile_msg2"));
 		}
 		reader.readAsText(files[0]);
 		return true;
@@ -87,7 +92,8 @@ function saveProject(data){
 				var blob = new Blob([data],{type:"text/plain",encodings:"native"});
 				writeFileEntry(writableEntry, blob, function(e) {
 				});
-				$.jGrowl("プロジェクトファイルに保存しました");
+				//$.jGrowl("プロジェクトファイルに保存しました");
+				$.jGrowl(_T("saveProject_msg1"));
 				document.getElementById("openedProjName").innerText = " - " + writableEntry.name;
 				Draw.progresspanel.style.display = "none";
 				document.getElementById("progressicon").className = "";
@@ -97,7 +103,8 @@ function saveProject(data){
 			}
 		});
 	}else{
-		prompt("ファイル名を入力してください。(拡張子は不要です）",function(fl){
+		//"ファイル名を入力してください。(拡張子は不要です）"
+		prompt(_T("saveProject_msg2"),function(fl){
 			if (fl) {
 				var bb = new Blob([data],{type:"text/plain",encodings:"native"});
 				if (navigator.userAgent.indexOf("Trident") > -1){
@@ -174,8 +181,8 @@ var AppStorage = {
 			chrome.storage.local.get("appstorage",function(items){
 				if (items["appstorage"]) {
 					AppStorage.chromestorage = items["appstorage"];
-					callback();
 				}
+				callback();
 			});
 		}else{
 			this.apptype = "webapp";
@@ -281,85 +288,116 @@ var PluginManager = {
 			Draw.keyLikePres = null;
 			Draw.pressedKey = 0;
 		}, false);
-		AppStorage.initialize(function(){
-			Draw.initialize();
-			ColorPalette.initialize();
-			$("#pickerpanel").hide();
-			$("#colorpicker").on("click", function(event) {
-				$("#pickerpanel").show();
-			});
-			document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
-			document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-			document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-			document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-			document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
-				if (event.target.checked) {
-					document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
-					document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-				}else{
-					document.getElementById("canvas_width").max = 2160;
-					document.getElementById("canvas_height").max = 1440;
+		Draw.parseURL();
+		setupLocale(Draw.urlparams)
+		.then(function(flag){
+			var def = $.Deferred();
+			Draw.setupLocale();
+			def.resolve(true);
+			return def;
+		})
+		.then(function(flag){
+			var def = $.Deferred();
+			AppStorage.initialize(function(){
+				document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
+				document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+				document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+				document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+				document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
+					if (event.target.checked) {
+						document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
+						document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+					}else{
+						document.getElementById("canvas_width").max = 2160;
+						document.getElementById("canvas_height").max = 1440;
+					}
+				},false);
+				Draw.initialize();
+				ColorPalette.initialize();
+				$("#pickerpanel").hide();
+				$("#colorpicker").on("click", function(event) {
+					$("#pickerpanel").show();
+				});
+				//---プログレスパネルの準備
+				document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth-300) / 100) * 50) + "px";
+				document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight-50) / 100) * 50) + "px";
+				//---キャンバス外からタッチしたまま入ったときのための描画制御
+				var touchstart = 'touchstart';
+				var touchend = 'touchend';
+				var touchleave = 'touchleave';
+				if (window.PointerEvent){
+					touchstart = "pointerdown";
+					touchend = "pointerup";
+					touchleave = 'pointerleave';
+				}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
+					touchstart = 'MSPointerDown';
+					touchend = 'MSPointerUp';
+					touchleave = 'MSPointerLeave';
 				}
-			},false);
-			//---プログレスパネルの準備
-			document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth-300) / 100) * 50) + "px";
-			document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight-50) / 100) * 50) + "px";
-			//---キャンバス外からタッチしたまま入ったときのための描画制御
-			var touchstart = 'touchstart';
-			var touchend = 'touchend';
-			var touchleave = 'touchleave';
-			if (window.PointerEvent){
-				touchstart = "pointerdown";
-				touchend = "pointerup";
-				touchleave = 'pointerleave';
-			}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
-				touchstart = 'MSPointerDown';
-				touchend = 'MSPointerUp';
-				touchleave = 'MSPointerLeave';
-			}
-			document.body.addEventListener(touchstart, function(event) {
-				//Draw.drawing = true;
+				document.body.addEventListener(touchstart, function(event) {
+					//Draw.drawing = true;
 
-			}, false);
-			document.body.addEventListener(touchend, function(event) {
-				if (!Draw.focusing)
-					Draw.drawing = false;
-			}, false);
-			$("#colorpicker").on(touchstart, function(event) {
-				$("#pickerpanel").show();
+				}, false);
+				document.body.addEventListener(touchend, function(event) {
+					if (!Draw.focusing)
+						Draw.drawing = false;
+				}, false);
+				$("#colorpicker").on(touchstart, function(event) {
+					$("#pickerpanel").show();
+				});
+				$("#pickerpanel").on(touchleave, function(event) {
+					$("#pickerpanel").hide();
+			    	event.preventDefault();
+				});
+				
+				touchstart = 'mousedown';
+				touchend = 'mouseup';
+				touchleave = 'mouseleave';
+				document.body.oncontextmenu = function(event) {
+					return false;
+				}
+				document.body.addEventListener(touchstart, function(event) {
+					//Draw.drawing = true;
+				}, false);
+				document.body.addEventListener(touchend, function(event) {
+					console.log("document.body touchend");
+					if (!Draw.focusing)
+						Draw.drawing = false;
+				}, false);
+				window.addEventListener("resize",function(event){
+					console.log("width=" + event.target.innerWidth);
+					console.log("height=" + event.target.innerHeight);
+					document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
+					document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+					document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+					document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+					Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
+				}, false);
+				$("#colorpicker").on(touchstart, function(event) {
+					$("#pickerpanel").show();
+				});
+				$("#pickerpanel").on(touchleave, function(event) {
+					$("#pickerpanel").hide();
+			    	event.preventDefault();
+				});
+				def.resolve(true);
 			});
-			$("#pickerpanel").on(touchleave, function(event) {
-				$("#pickerpanel").hide();
-		    	event.preventDefault();
-			});
-			
-			touchstart = 'mousedown';
-			touchend = 'mouseup';
-			touchleave = 'mouseleave';
-			document.body.oncontextmenu = function(event) {
-				return false;
+			return def;
+		})
+		.then(function(flag){
+			var def = $.Deferred();
+			//システムブラシ読み込み
+			var sysbru_pen = ["colorchangepen",
+							"simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
+							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint"];//,"testplugin2","testplugin3"
+			for (var i = 0; i < sysbru_pen.length; i++) {
+				var sc = document.createElement("script");
+				sc.src = "js/brush/" + sysbru_pen[i] + ".js";
+				document.body.appendChild(sc);
+				def.resolve(true);
 			}
-			document.body.addEventListener(touchstart, function(event) {
-				//Draw.drawing = true;
-			}, false);
-			document.body.addEventListener(touchend, function(event) {
-				console.log("document.body touchend");
-				if (!Draw.focusing)
-					Draw.drawing = false;
-			}, false);
-			window.addEventListener("resize",function(event){
-				console.log("width=" + event.target.innerWidth);
-				console.log("height=" + event.target.innerHeight);
-				Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
-			}, false);
-			$("#colorpicker").on(touchstart, function(event) {
-				$("#pickerpanel").show();
-			});
-			$("#pickerpanel").on(touchleave, function(event) {
-				$("#pickerpanel").hide();
-		    	event.preventDefault();
-			});
-		});
+			return def;
+		})
 		console.log(window.innerWidth + "/" + window.innerHeight);
 	},false);
 })();

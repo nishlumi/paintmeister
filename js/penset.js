@@ -58,7 +58,7 @@ function call_parentEvent(removeLabel) {
 			context.shadowBlur = 0;
 			context.lineCap = "round";
 			
-			this.updateInfo("消しゴム",context.lineWidth);
+			this.updateInfo(_T("brush_eraser"),context.lineWidth);
 			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.normal;
 		},
@@ -80,7 +80,7 @@ function call_parentEvent(removeLabel) {
 			context.shadowBlur = 0;
 			context.lineCap = "round";
 			
-			this.updateInfo("塗りつぶし",context.lineWidth);
+			this.updateInfo(_T("brush_fill"),context.lineWidth);
 			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.fill;
 		},
@@ -145,7 +145,18 @@ function call_parentEvent(removeLabel) {
 			}
 			this.parent.elementParameter["lastpressure"] = this.lastpressure;
 			if (this.current["mode"] in this.items) {
-				this.items[this.current["mode"]].prepare(event, context, pressure2);
+				var retobj = this.items[this.current["mode"]].prepare(event, context, this.parent.elementParameter["lastpressure"]);
+				if (retobj) {
+					if ("pressure" in retobj) {
+						if (!isNaN(parseFloat(retobj["pressure"]))) {
+							this.lastpressure = parseFloat(retobj["pressure"]);
+							this.parent.elementParameter["lastpressure"] = this.lastpressure;
+						}
+					}
+					if ("context" in retobj) {
+						context = retobj["context"];
+					}
+				}
 			}
 		},
 		drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
@@ -200,17 +211,18 @@ function call_parentEvent(removeLabel) {
 				}
 			}
 			if (ishit) {
-				return [false,"すでに同じ名前のブラシが存在します"];
+				//return [false,"すでに同じ名前のブラシが存在します"];
+				return [false,_T("penset_Add_msg1")];
 			}else{
 				this.items[item.id] = item;
 				this.defaults[item.id] = item.defaults;
 				//プラグインブラシの画面要素生成
 				var li = document.createElement("div");
 				li.id = item.id;
-				li.title = item.name;
+				li.title = item.name[curLocale.name];
 				var img = document.createElement("img");
 				img.id = "img_" + item.id;
-				img.title = item.name;
+				img.title = item.name[curLocale.name];
 				if (item.setFolder == "special") {
 					li.className = "item1st item1st-special";
 					img.src = "images/brush_special.png";
@@ -232,8 +244,8 @@ function call_parentEvent(removeLabel) {
 				},false);
 				var span = document.createElement("span");
 				span.id = "sp_" + item.id;
-				span.title = item.name;
-				span.innerHTML = item.name;
+				span.title = item.name[curLocale.name];
+				span.innerHTML = item.name[curLocale.name];
 				//span.style.marginTop = "1px";
 				li.appendChild(span);
 				span.addEventListener("click",function(event) {
@@ -250,7 +262,7 @@ function call_parentEvent(removeLabel) {
 					var it = PenSet.items[event.target.id];
 					if (it) {
 						PenSet.current = it.set(Draw.context,o);
-						PenSet.updateInfo(it.name,Draw.context.lineWidth);
+						PenSet.updateInfo(it.name[curLocale.name],Draw.context.lineWidth);
 						PenSet.sizebar.value = PenSet.current["size"];
 						PenSet.hiddenMenu(event);
 						PenSet.parent.last.pen = {
@@ -260,6 +272,7 @@ function call_parentEvent(removeLabel) {
 					}
 				}, false);
 				//初期化処理呼び出し
+				console.log("add finished="+item.id);
 				this.items[item.id].initialize(this,li);
 				return [true,""];
 			}
@@ -285,14 +298,14 @@ function call_parentEvent(removeLabel) {
 			this.colorpicker = document.getElementById("colorpicker");
 			
 			//システムブラシ読み込み
-			var sysbru_pen = ["colorchangepen",
+			/*var sysbru_pen = ["colorchangepen",
 							"simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
 							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint"];//,"testplugin2","testplugin3"
 			for (var i = 0; i < sysbru_pen.length; i++) {
 				var sc = document.createElement("script");
 				sc.src = "js/brush/" + sysbru_pen[i] + ".js";
 				document.body.appendChild(sc);
-			}
+			}*/
 			PenSet.parent.last.eraser = {
 				"name" : "eraser",
 				"func" : PenSet.eraser
