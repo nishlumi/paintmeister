@@ -2,6 +2,15 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.36.65)
+**Add the mode to draw a shapes(Available straight line, rectangle and circle. suppport the mouse, pen and touch)
+*Fix that is difficult to select the Layer button at the pen and touch.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/10/25 16:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.35.64)
 **Support Internationalization(Now: Japanese, English).
 **(WebApp)Support URL parameter. (lng=application language(ja, en, etc...), w=Width, h=height)
@@ -11,5 +20,5 @@ PaintMeister (1.0.35.64)
 *Adjust the pressure and the width of the "Pencil", "Pen", "Ink brush pen" and "Callygraphy".
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/10/19 20:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/10/20 22:00
+Store app		- 2014/10/20 22:00

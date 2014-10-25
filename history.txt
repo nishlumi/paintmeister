@@ -2,6 +2,15 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
+PaintMeister (1.0.36.65)
+○図形描画モードを実装。（直線・四角・丸を描くことができます、マウス・ペン・タッチいずれでも可能）
+・ペンやタッチ時にレイヤーボタンの選択がしづらかった（レイヤーの移動になってしまう）のを修正。
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/10/25 16:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.35.64)
 ○国際化に対応（現時点：日本語、英語）
 ○(WebApp)URL引数に対応（lng=言語(ja, en, etc...)、w=幅、h=高さ）
@@ -11,8 +20,8 @@ PaintMeister (1.0.35.64)
 ・鉛筆、ペン、筆ペン、カリグラフィーの筆圧感度・太さを調整。
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/10/19 20:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/10/20 22:00
+Store app		- 2014/10/20 22:00
 
 
 PaintMeister (1.0.33.60)
