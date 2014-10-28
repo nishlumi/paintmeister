@@ -1,24 +1,47 @@
 var onKeyope = true;
 function alert(message){
-	$.messager.alert("PaintMeister",message,"warning");
+	alertify.set({ 
+		buttonReverse : true,
+	});
+	alertify.alert(message);
+	//$.messager.alert("PaintMeister",message,"warning");
 }
 function confirm(message,callback,callthen) {
-	$.messager.confirm("PaintMeister",message,function(ret){
+	alertify.set({ 
+		buttonReverse : true
+	});
+	alertify.confirm(message,function(ret){
 		if (ret){
 			if (!callback()) {
 				if (callthen) callthen();
 			}
 		}
 	});
+	/*$.messager.confirm("PaintMeister",message,function(ret){
+		if (ret){
+			if (!callback()) {
+				if (callthen) callthen();
+			}
+		}
+	});*/
 }
-function prompt(message,callthen){
+function prompt(message,callthen,defaultval){
 	onKeyope = false;
-	$.messager.prompt("PaintMeister",message,function(ret){
+	alertify.set({ 
+		buttonReverse : true
+	});
+	alertify.prompt(message,function(ret,str){
+		//if (ret) {
+			if (callthen) callthen(str);
+		//}
+		onKeyope = true;
+	},defaultval);
+	/*$.messager.prompt("PaintMeister",message,function(ret){
 		//if (ret) {
 			if (callthen) callthen(ret);
 			onKeyope = true;
 		//}
-	});
+	});*/
 }
 function saveImage() {
 	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
@@ -64,6 +87,7 @@ function loadProjectFile(files){
 			if (Draw.loadProject(reader.result)) {
 				document.getElementById("basepanel").style.display = "block";
 				document.getElementById("openedProjName").innerText = " - " + files[0].name;
+				Draw.filename = files[0].name;
 				Draw.progresspanel.style.display = "none";
 				document.getElementById("progressicon").className = "";
 			}else{
@@ -81,7 +105,13 @@ function loadProjectFile(files){
 }
 function saveProject(data){
 	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
-		var config = {type: 'saveFile', suggestedName: "New Project.pmpf",
+		var sugfilename;
+		if (Draw.filename == "") {
+			sugfilename = "New Project.pmpf"
+		}else{
+			sugfilename = Draw.filename;
+		}
+		var config = {type: 'saveFile', suggestedName: sugfilename,
 		accepts:[
 			{description:"PaintMeister Project File (*.pmpf)", extensions:["pmpf"]}
 		]};
@@ -95,6 +125,7 @@ function saveProject(data){
 				//$.jGrowl("プロジェクトファイルに保存しました");
 				$.jGrowl(_T("saveProject_msg1"));
 				document.getElementById("openedProjName").innerText = " - " + writableEntry.name;
+				Draw.filename = writableEntry.name;
 				Draw.progresspanel.style.display = "none";
 				document.getElementById("progressicon").className = "";
 			}else{
@@ -107,6 +138,7 @@ function saveProject(data){
 		prompt(_T("saveProject_msg2"),function(fl){
 			if (fl) {
 				var bb = new Blob([data],{type:"text/plain",encodings:"native"});
+				Draw.filename = fl + ".pmpf";
 				if (navigator.userAgent.indexOf("Trident") > -1){
 					window.navigator.msSaveBlob(bb, fl + ".pmpf");
 					document.getElementById("openedProjName").innerText = " - " + fl + ".pmpf";
@@ -127,7 +159,7 @@ function saveProject(data){
 			}
 			console.log("fl=");
 			console.log(fl);
-		});
+		},Draw.filename.replace(/\..+$/,""));
 	}
 }
 function ElementTransform(element, value) {
@@ -256,16 +288,16 @@ var PluginManager = {
 					Draw.checkstat.click();
 					return;
 				}
-			}else if (event.keyCode == "48" && event.altKey) { // 0 + ctrl
+			}else if (event.keyCode == "48" && event.altKey) { // Alt + 0
 				document.getElementById("canvaspanel").style.transform = "scale(1.0)";
 				document.getElementById("info_magni").innerText = "1.0";
 				Draw.canvassize[0] = Draw.defaults.canvas.size[0];
 				Draw.canvassize[1] = Draw.defaults.canvas.size[0];
 				Draw.resizeCanvasMargin(window.innerWidth,window.innerHeight);
 				Draw.init_scale = 1.0;
-			}else if (event.keyCode == "38") { // Up key
+			}else if (event.keyCode == "38" && event.altKey) { // Alt + Up key
 				Draw.scaleUp();
-			}else if (event.keyCode == "40") { // Down key
+			}else if (event.keyCode == "40" && event.altKey) { // Alt + Down key
 				Draw.scaleDown();
 			}
 			var relkey = ["81","87"];
@@ -280,8 +312,8 @@ var PluginManager = {
 					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
 				}
 				document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
-				Draw.pressedKey = event.keyCode;
 			}
+			Draw.pressedKey = event.keyCode;
 			document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
 		}, false);
 		document.addEventListener("keyup", function(event) {
@@ -339,8 +371,9 @@ var PluginManager = {
 
 				}, false);
 				document.body.addEventListener(touchend, function(event) {
-					if (!Draw.focusing)
+					if (!Draw.focusing) {
 						Draw.drawing = false;
+					}
 				}, false);
 				$("#colorpicker").on(touchstart, function(event) {
 					$("#pickerpanel").show();

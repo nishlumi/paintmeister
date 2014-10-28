@@ -6,7 +6,7 @@ function alert(message) {
 
 
 
-    msg.commands.append(new Windows.UI.Popups.UICommand("閉じる", null, 1));
+    msg.commands.append(new Windows.UI.Popups.UICommand(_T("cons_close"), null, 1));
     msg.defaultCommandIndex = 1;
     try {
         
@@ -21,8 +21,8 @@ function confirm(message,callback,callthen) {
 
 
 
-    msg.commands.append(new Windows.UI.Popups.UICommand("はい", null, 1));
-    msg.commands.append(new Windows.UI.Popups.UICommand("キャンセル", null, 2));
+    msg.commands.append(new Windows.UI.Popups.UICommand(_T("cons_yes"), null, 1));
+    msg.commands.append(new Windows.UI.Popups.UICommand(_T("cons_cancel"), null, 2));
     msg.defaultCommandIndex = 2;
     msg.cancelCommandIndex = 2;
     var ret = msg.showAsync();//.then(callback);
@@ -109,14 +109,17 @@ function loadProjectFile(files) {
                 if (Draw.loadProject(reader.result)) {
                     document.getElementById("basepanel").style.display = "block";
                     document.getElementById("openedProjName").innerText = " - " + file.name;
+                    Draw.filename = file.name;
                     Draw.progresspanel.style.display = "none";
                     document.getElementById("progressicon").className = "";
                 } else {
-                    alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                    //alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                    alert(_T("loadProjectFile_msg2"));
                 }
             }
             reader.onerror = function (e) {
-                alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                //alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                alert(_T("loadProjectFile_msg2"));
             }
             reader.readAsText(file);
 
@@ -139,11 +142,17 @@ function saveProject(data) {
     var svpick = new Windows.Storage.Pickers.FileSavePicker();
     svpick.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.picturesLibrary;
     svpick.fileTypeChoices.insert("PaintMeister Project file", [".pmpf"]);
-    svpick.suggestedFileName = "New Project";
+    if (Draw.filename == "") {
+        svpick.suggestedFileName = "New Project";
+    } else {
+        svpick.suggestedFileName = Draw.filename;
+    }
+
 
     svpick.pickSaveFileAsync().then(function (file) {
         if (file) {
             document.getElementById("openedProjName").innerText = " - " + file.name;
+            Draw.filename = file.name;
             Windows.Storage.FileIO.writeTextAsync(file, data);
             Draw.progresspanel.style.display = "none";
             document.getElementById("progressicon").className = "";
@@ -191,7 +200,7 @@ var AppStorage = {
 
     var app = WinJS.Application;
     var activation = Windows.ApplicationModel.Activation;
-
+    
     app.onactivated = function (args) {
         if (args.detail.kind === activation.ActivationKind.launch) {
             if (args.detail.previousExecutionState !== activation.ApplicationExecutionState.terminated) {
@@ -214,6 +223,7 @@ var AppStorage = {
         // args.setPromise() を呼び出してください。
     };
     //---ここから共通処理貼り付け
+    //---ここからストアアプリも共通
     document.addEventListener("keydown", function (event) {
         if (!onKeyope) return false;
         //console.log(event.keyCode);
@@ -256,16 +266,16 @@ var AppStorage = {
                 Draw.checkstat.click();
                 return;
             }
-        } else if (event.keyCode == "48" && event.altKey) { // 0 + ctrl
+        } else if (event.keyCode == "48" && event.altKey) { // Alt + 0
             document.getElementById("canvaspanel").style.transform = "scale(1.0)";
             document.getElementById("info_magni").innerText = "1.0";
             Draw.canvassize[0] = Draw.defaults.canvas.size[0];
             Draw.canvassize[1] = Draw.defaults.canvas.size[0];
             Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
             Draw.init_scale = 1.0;
-        } else if (event.keyCode == "38") { // Up key
+        } else if (event.keyCode == "38" && event.altKey) { // Alt + Up key
             Draw.scaleUp();
-        } else if (event.keyCode == "40") { // Down key
+        } else if (event.keyCode == "40" && event.altKey) { // Alt + Down key
             Draw.scaleDown();
         }
         var relkey = ["81", "87"];
@@ -280,90 +290,125 @@ var AppStorage = {
                 document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
             }
             document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
-            Draw.pressedKey = event.keyCode;
         }
+        Draw.pressedKey = event.keyCode;
         document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
     }, false);
     document.addEventListener("keyup", function (event) {
         Draw.keyLikePres = null;
         Draw.pressedKey = 0;
     }, false);
-    AppStorage.initialize(function () {
-        Draw.initialize();
-        ColorPalette.initialize();
-        $("#pickerpanel").hide();
-        $("#colorpicker").on("click", function (event) {
-            $("#pickerpanel").show();
-        });
-        document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
-        document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-        document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-        document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-        document.getElementById("chk_limit_canvas").addEventListener("change", function (event) {
-            if (event.target.checked) {
-                document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
-                document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-            } else {
-                document.getElementById("canvas_width").max = 2160;
-                document.getElementById("canvas_height").max = 1440;
+    Draw.parseURL();
+    setupLocale(Draw.urlparams)
+    .then(function (flag) {
+        var def = $.Deferred();
+        Draw.setupLocale();
+        def.resolve(true);
+        return def;
+    })
+    .then(function (flag) {
+        var def = $.Deferred();
+        AppStorage.initialize(function () {
+            document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+            document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+            document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+            document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+            document.getElementById("chk_limit_canvas").addEventListener("change", function (event) {
+                if (event.target.checked) {
+                    document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+                    document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+                } else {
+                    document.getElementById("canvas_width").max = 2160;
+                    document.getElementById("canvas_height").max = 1440;
+                }
+            }, false);
+            Draw.initialize();
+            ColorPalette.initialize();
+            $("#pickerpanel").hide();
+            $("#colorpicker").on("click", function (event) {
+                $("#pickerpanel").show();
+            });
+            //---プログレスパネルの準備
+            document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth - 300) / 100) * 50) + "px";
+            document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";
+            //---キャンバス外からタッチしたまま入ったときのための描画制御
+            var touchstart = 'touchstart';
+            var touchend = 'touchend';
+            var touchleave = 'touchleave';
+            if (window.PointerEvent) {
+                touchstart = "pointerdown";
+                touchend = "pointerup";
+                touchleave = 'pointerleave';
+            } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
+                touchstart = 'MSPointerDown';
+                touchend = 'MSPointerUp';
+                touchleave = 'MSPointerLeave';
             }
-        }, false);
-        //---プログレスパネルの準備
-        document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth - 300) / 100) * 50) + "px";
-        document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";
-        //---キャンバス外からタッチしたまま入ったときのための描画制御
-        var touchstart = 'touchstart';
-        var touchend = 'touchend';
-        var touchleave = 'touchleave';
-        if (window.PointerEvent) {
-            touchstart = "pointerdown";
-            touchend = "pointerup";
-            touchleave = 'pointerleave';
-        } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
-            touchstart = 'MSPointerDown';
-            touchend = 'MSPointerUp';
-            touchleave = 'MSPointerLeave';
-        }
-        document.body.addEventListener(touchstart, function (event) {
-            //Draw.drawing = true;
+            document.body.addEventListener(touchstart, function (event) {
+                //Draw.drawing = true;
 
-        }, false);
-        document.body.addEventListener(touchend, function (event) {
-            Draw.drawing = false;
-        }, false);
-        $("#colorpicker").on(touchstart, function (event) {
-            $("#pickerpanel").show();
-        });
-        $("#pickerpanel").on(touchleave, function (event) {
-            $("#pickerpanel").hide();
-            event.preventDefault();
-        });
+            }, false);
+            document.body.addEventListener(touchend, function (event) {
+                if (!Draw.focusing) {
+                    Draw.drawing = false;
+                }
+            }, false);
+            $("#colorpicker").on(touchstart, function (event) {
+                $("#pickerpanel").show();
+            });
+            $("#pickerpanel").on(touchleave, function (event) {
+                $("#pickerpanel").hide();
+                event.preventDefault();
+            });
 
-        touchstart = 'mousedown';
-        touchend = 'mouseup';
-        touchleave = 'mouseleave';
-        document.body.oncontextmenu = function (event) {
-            return false;
+            touchstart = 'mousedown';
+            touchend = 'mouseup';
+            touchleave = 'mouseleave';
+            document.body.oncontextmenu = function (event) {
+                return false;
+            }
+            document.body.addEventListener(touchstart, function (event) {
+                //Draw.drawing = true;
+            }, false);
+            document.body.addEventListener(touchend, function (event) {
+                console.log("document.body touchend");
+                if (!Draw.focusing)
+                    Draw.drawing = false;
+            }, false);
+            window.addEventListener("resize", function (event) {
+                console.log("width=" + event.target.innerWidth);
+                console.log("height=" + event.target.innerHeight);
+                document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+                document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+                document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+                document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+                Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
+            }, false);
+            $("#colorpicker").on(touchstart, function (event) {
+                $("#pickerpanel").show();
+            });
+            $("#pickerpanel").on(touchleave, function (event) {
+                $("#pickerpanel").hide();
+                event.preventDefault();
+            });
+            def.resolve(true);
+        });
+        return def;
+    })
+    .then(function (flag) {
+        var def = $.Deferred();
+        //システムブラシ読み込み
+        var sysbru_pen = ["colorchangepen",
+                        "simplepen", "pencil", "fudepen", "calligraphy", "neonpen", "testplugin",
+                        "airbrush", "oilpaint", "oilpaintv", "waterpaint", "directpaint"];//,"testplugin2","testplugin3"
+        for (var i = 0; i < sysbru_pen.length; i++) {
+            var sc = document.createElement("script");
+            sc.src = "js/brush/" + sysbru_pen[i] + ".js";
+            document.body.appendChild(sc);
+            def.resolve(true);
         }
-        document.body.addEventListener(touchstart, function (event) {
-            //Draw.drawing = true;
-        }, false);
-        document.body.addEventListener(touchend, function (event) {
-            Draw.drawing = false;
-        }, false);
-        window.addEventListener("resize", function (event) {
-            console.log("width=" + event.target.innerWidth);
-            console.log("height=" + event.target.innerHeight);
-            Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
-        }, false);
-        $("#colorpicker").on(touchstart, function (event) {
-            $("#pickerpanel").show();
-        });
-        $("#pickerpanel").on(touchleave, function (event) {
-            $("#pickerpanel").hide();
-            event.preventDefault();
-        });
-    });
+        return def;
+    })
     console.log(window.innerWidth + "/" + window.innerHeight);
 
     app.start();

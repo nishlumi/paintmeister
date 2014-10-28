@@ -11,6 +11,8 @@
 	<link rel="stylesheet" href="plugin/css/easyui/icon.css">
 	<link rel="stylesheet" href="plugin/js/farbtastic/farbtastic.css">
 	<link rel="stylesheet" href="plugin/js/jquery-ui/jquery-ui.min.css">
+	<link rel="stylesheet" href="plugin/css/alertify/alertify.core.css">
+	<link rel="stylesheet" href="plugin/css/alertify/alertify.bootstrap.css">
 
 	<link href="css/paintm.css" rel="stylesheet" />
 	<link href="css/core.css" rel="stylesheet" />
@@ -60,6 +62,13 @@
 <div id="prespanel">
 	<div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
 	<div id="btn_freescroll" class="switchbutton_off" title="スクロール有効にする">&#10021;</div>
+	<div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする">&#8968;</div>
+	<div id="box_shapes">
+		<div id="chk_shapes_line" class="sidebar_radiobutton sidebar_radio_on" title="直線">/</div>
+		<div id="chk_shapes_box" class="sidebar_radiobutton sidebar_radio_off" title="四角">&#9744;</div>
+		<div id="chk_shapes_circle" class="sidebar_radiobutton sidebar_radio_off" title="丸">&#9675;</div>
+		<div id="chk_shapes_triangle" class="sidebar_radiobutton sidebar_radio_off" title="三角">&#9651;</div>
+	</div>
 	<div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br/>
 	<!--<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>-->
 	<label id="pres_label" class="pres_vallabel"><span id="presval">50</span>
@@ -212,12 +221,13 @@
 <div id="log2" class="debugmsg"></div>
 <div id="log3" class="debugmsg"></div>
 <script src="plugin/js/jquery-2.1.0.min.js"></script>
-<script src="plugin/js/jquery.easyui.min.js"></script>
-<script src="plugin/js/easyui-lang-jp.js"></script>
+<!--<script src="plugin/js/jquery.easyui.min.js"></script>
+<script src="plugin/js/easyui-lang-jp.js"></script>-->
 <script src="plugin/js/jquery.jgrowl.min.js"></script>
 <script src="plugin/js/jquery-ui.min.js"></script>
 <script src="plugin/js/rgbcolor.js"></script>
 <script src="plugin/js/farbtastic/farbtastic.js"></script>
+<script src="plugin/js/alertify.js"></script>
 <script src="plugin/js/hand.js"></script>
 
 <script src="js/utils.js"></script>
@@ -227,6 +237,5 @@
 <script src="js/drawmain.js"></script>
 <script src="js/filectrl.js"></script>
 <script src="js/paintm.js"></script>
-
 </body>
 </html>

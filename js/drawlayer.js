@@ -94,7 +94,7 @@
 			own.canvas.style.opacity = value / 100;
 		}
 		this.zMove = function(oldpos,newpos) {
-			own.canvas.style.zIndex = newpos;
+			own.canvas.style.zIndex = 10 + newpos;
 		}
 		this.SetLock = function (flag) {
 			own.isremovable = !flag;
@@ -299,7 +299,7 @@
 			own.canvas.className = "main-canvas";
 			own.canvas.width = own.canvassize.w;
 			own.canvas.height = own.canvassize.h;
-			own.canvas.style.zIndex = laylength+1;
+			own.canvas.style.zIndex = 10 + laylength+1;
 			document.getElementById("canvaspanel").appendChild(own.canvas);
 			//own.title = "レイヤーNo." + own.canvas.style.zIndex;
 			//own.title = "レイヤーNo." + reallastIndex;

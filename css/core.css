@@ -34,6 +34,7 @@
 	background-color : #999999;
 	color : #FFFFFF;
 	position : relative;
+	overflow : hidden;
 }
 #chk_enable_handpres {
 	font-size : 120%;
@@ -239,6 +240,31 @@
 	padding-top : 0.5rem;
 	text-align : center;
 }
+#box_shapes {
+	padding-left:0.3rem;
+	display : none;
+}
+.sidebar_radiobutton {
+	width : 30px;
+	height : 36px;
+	font-size : 120%;
+	text-align : center;
+	padding-top : 0.5rem;
+	margin : 10px 5px 10px 5px; 
+	border 3px inset #188643;
+	/*color : #188643;
+	background-color : #FFFFFF;*/
+	border-radius : 15px 15px 15px 15px;
+	cursor : default;
+}
+.sidebar_radio_on {
+	color : #2A5EAC;
+	background-color : #84c0e1;
+}
+.sidebar_radio_off {
+	color : #188643;
+	background-color : #FFFFFF;
+}
 /*#btn_makecanvas {
 	background-color : #c4fab3;
 	border : 0;
@@ -356,7 +382,22 @@
 	background-color : #FFFFFF;
 	text-align : center;
 }
-
+#dlg_layer {
+	display : none;
+	width : 75%;
+	height : 30%;
+	overflow : hidden;
+	position : absolute;
+	top : 3rem;
+	left : calc(20%);
+	padding: 0.5rem 0.5rem;
+	background-color : #B6BBE4;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+	opacity : 0.9;
+	z-index : 12;
+}
 .layer_button {
 	width : 48px;
 	height : 32px;
@@ -511,22 +552,6 @@ td.magni_strong:active {
 	background-color : #A29617;
 }
 
-#dlg_layer {
-	display : none;
-	width : 75%;
-	height : 30%;
-	overflow : hidden;
-	position : absolute;
-	top : 3rem;
-	left : calc(20%);
-	padding: 0.5rem 0.5rem;
-	background-color : #B6BBE4;
-	-moz-border-radius : 3px;
-	-webkit-border-radius : 3px;
-	border-radius : 3px;
-	opacity : 0.9;
-	z-index : 12;
-}
 #pickerpanel{
 	position : absolute;
 	top : calc(32px + 3rem + 2px);

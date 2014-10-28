@@ -3,14 +3,14 @@ paintmeister Update history
 * I referred to in () for the platform affected especially.
 
 PaintMeister (1.0.37.66)
-**Add the mode to draw a shapes(Available straight line, rectangle and circle. suppport the mouse, pen and touch)
+**Add the mode to draw a shapes(Available straight line, rectangle, circle and triangle. suppport the mouse, pen and touch)
 **(WebApp/ChromeApps)Changed the library for messages to alertifyJS.
 *Fix that is difficult to select the Layer button at the pen and touch.
-*(WebApp)Fix that can not set default file name when to save a project, because change the library.
+*Fix that can not set default file name when to overwhite the project.
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/10/25 22:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/10/29 0:00
+Store app		- 2014/10/29 0:00
 
 
 PaintMeister (1.0.35.64)

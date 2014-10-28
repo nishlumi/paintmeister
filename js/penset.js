@@ -272,7 +272,7 @@ function call_parentEvent(removeLabel) {
 					}
 				}, false);
 				//初期化処理呼び出し
-				console.log("add finished="+item.id);
+				//console.log("add finished="+item.id);
 				this.items[item.id].initialize(this,li);
 				return [true,""];
 			}
