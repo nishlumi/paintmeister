@@ -2,6 +2,22 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.39.73)
+**Add the mode to select.(select some area, can do following operation: copy, cut, make clip area.)
+**Change the Side bar to 2 columns and move the option buttons to right column.
+*(WebApp)Add a message to confirm, when to close a browser or to push return button.
+*Adjust greatly function of Ink brush pen.
+*Adjust correction for the brush.
+*Adjust detection of pen pressure: Pen, Ink brush pen, calligraphy and Air brush.
+*Fix that UNDO do not work correctly after to clear a canvas.
+*Fix that a button on the sidebar was turned on even after to press the New button.
+*Fix that can not display the translation of the brush Fill correctly.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/11/09 17:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.37.66)
 **Add the mode to draw a shapes(Available straight line, rectangle, circle and triangle. suppport the mouse, pen and touch)
 **(WebApp/ChromeApps)Changed the library for messages to alertifyJS.
