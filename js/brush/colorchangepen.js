@@ -5,7 +5,10 @@
 */
 PenSet.Add({
 	id : "colorchangepen",
-	name : "色替え",
+	name : {
+		"ja":"色替え",
+		"en":"Color change"
+	},
 	element : null,
 	parent : null,
 	setFolder : "special",
@@ -32,6 +35,14 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.beginPath();

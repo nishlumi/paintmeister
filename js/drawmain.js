@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.37.66";
+var appversion = "1.0.40.73";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -113,15 +113,146 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		own.prev_image = null;
 	}
 }
+var selectionType = {
+	"box" : 0,
+	"free" : 1,
+	"move" : 2
+};
+var selectActionType = {
+	"clip" : 0,
+	"copy" : 1,
+	"cut" : 2,
+	"paste" : 3
+};
+var selectionStatus = {
+	"during" : 0,
+	"end" : 1,
+	"past_begin": 2,
+	"pasting" : 3,
+	"paste_end" : 4
+}
+var Selector = function(id){
+	var own = this;
+	this.id = "";
+	this.x = 0;
+	this.y = 0;
+	this.destx = 0;
+	this.desty = 0;
+	this.origdestx = 0;
+	this.origdesty = 0;
+	this.w = 0;
+	this.h = 0;
+	this.directionx = 1;
+	this.directiony = 1;
+	this.points = [];
+	this.oldx = 0;
+	this.oldy = 0;
+	this.curfrom = null;
+	this.status = selectionStatus.during;
+	this.action = selectActionType.clip;
+	this.selectType = selectionType.box;
+	this.addPoint = function(x,y) {
+		var o = {"x" : x, "y" : y};
+		own.points.push(o);
+	};
+	this.calculateAngle = function() {
+		var lt = {}, rb = {};
+		if (own.x > own.origdestx) {
+			lt["x"] = own.origdestx;
+			rb["x"] = own.x - own.origdestx;
+		}else{
+			lt["x"] = own.x;
+			rb["x"] = own.origdestx - own.x;
+		}
+		if (own.y > own.origdesty) {
+			lt["y"] = own.origdesty;
+			rb["y"] = own.y - own.origdesty;
+		}else{
+			lt["y"] = own.y;
+			rb["y"] = own.origdesty - own.y;
+		}
+		return {"lt":lt, "rb":rb};
+	};
+	this.copyFrom = function(orig) {
+		own.x = orig.x;
+		own.y = orig.y;
+		own.destx = orig.destx;
+		own.desty = orig.desty;
+		own.origdestx = orig.origdestx;
+		own.origdesty = orig.origdesty;
+		own.w = orig.w;
+		own.h = orig.h;
+		own.directionx = orig.directionx;
+		own.directiony = orig.directiony;
+		own.oldx = orig.oldx;
+		own.oldy = orig.oldy;
+		own.points.splice(0,own.points.length);
+		own.points = own.points.concat(orig.points);
+		own.status = selectionStatus.during;
+		own.action = selectActionType.clip;
+		own.selectType = selectionType.box;
+	}
+}
+var Selectors = function(){
+	var own = this;
+	this.items = [];
+	this.add = function(selector) {
+		own.items.push(selector);
+	}
+	this.remove = function(id) {
+		for (var i = 0; i < own.items.length; i++) {
+			if (id == own.items[i].id) {
+				var o = own.items.splice(i,1);
+				o = null;
+				break;
+			}
+		}
+	}
+	this.clear = function (){
+		for (var i = 0; i < own.items.length; i++) {
+			var o = own.items[i];
+			o = null;
+		}
+		own.items.splice(0,own.items.length);
+	}
+	this.find = function(x,y) {
+		for (var i = 0; i < own.items.length; i++) {
+			var it = own.items[i];
+			if ((it.directionx == 1) && (it.directiony == 1)) {
+				if (((it.x <= x) && (x <= it.destx)) && ((it.y <= y) && (y <= it.desty))) {
+					return it;
+				}
+			}
+			if ((it.directionx == -1) && (it.directiony == 1)) {
+				if (((it.x >= x) && (x >= it.destx)) && ((it.y <= y) && (y <= it.desty))) {
+					return it;
+				}
+			}
+			if ((it.directionx == 1) && (it.directiony == -1)) {
+				if (((it.x <= x) && (x <= it.destx)) && ((it.y >= y) && (y >= it.desty))) {
+					return it;
+				}
+			}
+			if ((it.directionx == -1) && (it.directiony == -1)) {
+				if (((it.x >= x) && (x >= it.destx)) && ((it.y >= y) && (y >= it.desty))) {
+					return it;
+				}
+			}
+		}
+	}
+}
 //#################################################################################
 //#################################################################################
 	var Draw = {
-		canvas : null, 
-		opecan : null,
+		canvas : null,	//ダミーキャンバス 
+		canvas2: null,
+		opecan : null,	//操作用キャンバス1
+		opeselcan : null, //操作・選択用キャンバス
 		layer : [],
 		layermax : 0,
 		context : null, 
 		opecontext : null,
+		opeselcontext : null,
 		currentLayer : null,
 		pen : null,
 		sizebar : null,
@@ -148,7 +279,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			"undo" : {
 				"divide" : 5,
 				"max" : 99,
-			}
+			},
+			"cliphistory" : 10
 		},
 		last : {
 			"pen" : null,
@@ -187,10 +319,27 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 		is_spoiting : false,
 		is_drawing_line : false,
 		drawing_type : "line",
+		is_selecting : false,
+		select_type : "box",
+		select_operation : "clip",
+		select_clipboard : null,
 		elementParameter : {},
 		draw_linehist : [],
 		urlparams : {}, //for webapp
 		filename : "",
+		discomplete_count : {
+			"cnt" : 0,
+			"dir" : "x",
+			"startx" : 0,
+			"starty" : 0,
+			"offsetx": 0,
+			"offsety": 0,
+			"ju_sax" : 0,
+			"ju_say" : 0
+		},
+		is_discomplete : false,
+		selectors : null,
+		cliphist : [],
 		
 		initialize : function() {
 			this.pen = PenSet;
@@ -211,6 +360,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			this.pres_curline  = document.getElementById("pres_curline");
 			this.newbtn  = document.getElementById("btn_new");
 			this.progresspanel = document.getElementById("progresspanel");
+			this.selectors = new Selectors();
+			this.select_clipboard = new Selector();
 			
 			//---other control events setup
 			//---初期画面コントロール-----------------------------------------
@@ -385,6 +536,36 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			document.getElementById("layinfo_lock").addEventListener("change", function(event) {
 				Draw.currentLayer.SetLock(event.target.checked);
 			},false);
+			document.getElementById("layinfo_clip").addEventListener("change", function(event) {
+				if (event.target.checked) {
+					Draw.context.save();
+					Draw.currentLayer.SetClip(true,null);
+				}else{
+					Draw.currentLayer.ClearClip(false);
+				}
+			},false);
+			document.getElementById("layinfo_clearclip").addEventListener("click", function(event) {
+				Draw.currentLayer.ClearClip(true);
+				document.getElementById("layinfo_clip").checked = false;
+				document.getElementById("layinfo_clip").disabled = "disabled";
+				document.getElementById("layinfo_clearclip").disabled = "disabled";
+			},false);
+			document.getElementById("layinfo_call_cliphist").addEventListener("click", function(event) {
+				console.log(parseInt($("#layinfo_cliphistory").val()));
+				var o = Draw.getCliphist(parseInt($("#layinfo_cliphistory").val()));
+				console.log(o);
+				Draw.currentLayer.ClearClip(true);
+				Draw.context.save();
+				Draw.currentLayer.SetClip(true,o);
+				document.getElementById("layinfo_clip").checked = true;
+				document.getElementById("layinfo_clip").disabled = "";
+				document.getElementById("layinfo_clearclip").disabled = "";
+			},false);
+			document.getElementById("layinfo_cliphistory").addEventListener("change", function(event) {
+				var o = Draw.getCliphist(parseInt($("#layinfo_cliphistory").val()));
+				document.getElementById("img_clipthumb").src = o.curfrom;
+			},false);
+			//---サイドバー関係-==============================================================
 			//---スポイトツールボタン
 			document.getElementById("btn_dropper").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
@@ -401,13 +582,13 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			},false);
 			//---スクロールボタン
 			document.getElementById("btn_freescroll").addEventListener("click", function(event) {
-				if (event.target.className == "switchbutton_off") {
-					event.target.className = "switchbutton_on";
+				if (event.target.className == "sidebar_button switchbutton_off") {
+					event.target.className = "sidebar_button switchbutton_on";
 					//event.target.title = "スクロール無効にする";
 					event.target.title = _T("btn_freescroll_click_title");
 					Draw.vCtrl_for_scroll = true;
 				}else{
-					event.target.className = "switchbutton_off";
+					event.target.className = "sidebar_button switchbutton_off";
 					//event.target.title = "スクロール有効にする";
 					event.target.title = _T("btn_freescroll_title");
 					Draw.vCtrl_for_scroll = false;
@@ -416,28 +597,36 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			//---図形描画ボタン
 			document.getElementById("btn_shapes").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
+					if (Draw.is_selecting) {
+						document.getElementById("btn_select").click();
+					}
 					event.target.className = "sidebar_button switchbutton_on";
 					//event.target.title = "図形描画を無効にする";
 					event.target.title = _T("btn_shapes_click_msg1");
 					$("#box_shapes").css({"display":"block"});
+					$("#prespanel").css({"width":"100px"});
+					$("#pres_sub").css({"display":"block"});
 					Draw.is_drawing_line = true;
 				}else{
 					event.target.className = "sidebar_button switchbutton_off";
 					//event.target.title = "図形描画を有効にする";
 					event.target.title = _T("btn_shapes_title");
 					$("#box_shapes").css({"display":"none"});
+					$("#prespanel").css({"width":"45px"});
+					$("#pres_sub").css({"display":"none"});
 					Draw.is_drawing_line = false;
 					Draw.drawpoints.splice(0,Draw.drawpoints.length);
 				}
 			},false);
-			var chk_shapes_clicking = function(event) {
+			var sidebar_radio_clicking = function(event, parent) {
 				if (event.target.className == "sidebar_radiobutton sidebar_radio_off") { //オンにする
 					var elm = document.querySelectorAll(".sidebar_radiobutton");
 					for (var obj in elm) {
-						elm[obj].className = "sidebar_radiobutton sidebar_radio_off";
+						if ((elm[obj]["id"]) && (elm[obj].id.indexOf(parent) > -1)) {
+							elm[obj].className = "sidebar_radiobutton sidebar_radio_off";
+						}
 					}
 					event.target.className = "sidebar_radiobutton sidebar_radio_on";
-					Draw.drawing_type = String(event.target.id).replace("chk_shapes_","");
 				}else{ //オフにする
 					var elm = document.querySelectorAll(".sidebar_radiobutton");
 					for (var obj in elm) {
@@ -447,13 +636,93 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 							}
 						}
 					}
-					event.target.className = "sidebar_radiobutton sidebar_radio_off";
+					if ((elm[obj]["id"]) && (elm[obj].id.indexOf(parent) > -1)) {
+						event.target.className = "sidebar_radiobutton sidebar_radio_off";
+					}
+				}
+			};
+			var chk_shapes_clicking = function(event) {
+				sidebar_radio_clicking(event,"chk_shapes_");
+				if (event.target.className == "sidebar_radiobutton sidebar_radio_on") {
+					Draw.drawing_type = String(event.target.id).replace("chk_shapes_","");
 				}
 			};
 			document.getElementById("chk_shapes_line").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_box").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_circle").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_triangle").addEventListener("click", chk_shapes_clicking,false);
+			//---選択操作ボタン
+			document.getElementById("btn_select").addEventListener("click", function(event) {
+				if (event.target.className == "sidebar_button switchbutton_off") {
+					if (Draw.is_drawing_line) {
+						document.getElementById("btn_shapes").click();
+					}
+					event.target.className = "sidebar_button switchbutton_on";
+					//event.target.title = "選択操作を無効にする";
+					//event.target.title = _T("btn_select_click_msg1");
+					$("#box_select").css({"display":"block"});
+					$("#prespanel").css({"width":"100px"});
+					$("#pres_sub").css({"display":"block"});
+					Draw.is_selecting = true;
+				}else{
+					Draw.opecontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
+					Draw.selectors.clear();
+					event.target.className = "sidebar_button switchbutton_off";
+					//event.target.title = "選択操作を有効にする";
+					//event.target.title = _T("btn_select_title");
+					$("#box_select").css({"display":"none"});
+					$("#prespanel").css({"width":"45px"});
+					$("#pres_sub").css({"display":"none"});
+					document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton-disabled";
+					document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title"); //"貼り付け";
+					document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
+					Draw.is_selecting = false;
+					Draw.select_clipboard = new Selector();
+				}
+			},false);
+			var sel_seltype_clicking = function(event) {
+				/*if (Draw.select_operation == "clip") {
+				}else{
+					if (event.target.id == "sel_seltype_free") {
+						//操作の種類がコピー・切り取り時は自由選択はできません
+						alert("操作の種類がコピー・切り取り時は自由選択はできません");
+						return false;
+					}
+				}*/
+				sidebar_radio_clicking(event,"sel_seltype_");
+				if (event.target.className == "sidebar_radiobutton sidebar_radio_on") {
+					Draw.select_type = String(event.target.id).replace("sel_seltype_","");
+				}
+			};
+			document.getElementById("sel_seltype_box").addEventListener("click", sel_seltype_clicking,false);
+			document.getElementById("sel_seltype_free").addEventListener("click", sel_seltype_clicking,false);
+			document.getElementById("sel_seltype_move").addEventListener("click", sel_seltype_clicking,false);
+			var sel_operationtype_clicking = function(event) {
+				if (Draw.select_type == "free") {
+					if ((event.target.id == "sel_operationtype_copy") || (event.target.id == "sel_operationtype_cut")) {
+						//alert("操作の種類がコピー・切り取り時は自由選択はできません");
+						alert(_T("sel_operationtype_clicking_msg1"));
+						return false;
+					}
+				}
+				if (Draw.select_type == "move") {
+					if ((event.target.id == "sel_operationtype_clip") || (event.target.id == "sel_operationtype_copy") || (event.target.id == "sel_operationtype_cut")) {
+						//alert("移動モードの時はクリップ領域作成・コピー・切り取りはできません");
+						alert(_T("sel_operationtype_clicking_msg2"));
+						return false;
+					}
+				}
+				if (event.target.className.indexOf("flatbutton-disabled") > -1) {
+					//---コピー・切り取りするまで貼り付けは無効化
+					return;
+				}
+				Draw.select_operation = String(event.target.id).replace("sel_operationtype_","");
+				Draw.select_function_execute(event);
+			};
+			document.getElementById("sel_operationtype_copy").addEventListener("click", sel_operationtype_clicking,false);
+			document.getElementById("sel_operationtype_cut").addEventListener("click", sel_operationtype_clicking,false);
+			document.getElementById("sel_operationtype_clip").addEventListener("click", sel_operationtype_clicking,false);
+			document.getElementById("sel_operationtype_paste").addEventListener("click", sel_operationtype_clicking,false);
 			//---手動筆圧切り替えボタン
 			this.pres_curline.addEventListener("change", function(event) {
 				document.getElementById("presval").innerHTML = event.target.value;
@@ -462,13 +731,13 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				
 				if (event.target.className == "switchbutton_off") {
 					event.target.className = "switchbutton_on";
-					document.getElementById("pres_label").style.display = "inline";
+					document.getElementById("box_handpres").style.display = "block";
 					Draw.pres_curline.disabled = false;
 					Draw.pres_curline.value = 50;
 					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 				}else{
 					event.target.className = "switchbutton_off";
-					document.getElementById("pres_label").style.display = "none";
+					document.getElementById("box_handpres").style.display = "none";
 					Draw.pres_curline.disabled = true;
 					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 				}
@@ -771,166 +1040,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				this.urlparams[pelem[0]] = pelem[1];
 			}
 		},
-		createbody : function(wi,he,isshow){
-			document.getElementById("initialsetup").style.display = "none";
-			document.getElementById("apptitle").style.display = "none";
-			document.getElementById("ctrlpanel").style.display = "block";
-			//document.getElementById("colorpalette").style.display = "block";
-			//document.getElementById("layoutcontrol").style.display = "block";
-			document.getElementById("prespanel").style.display = "block";
-			//Draw.generateCanvas(wi, he);
-			document.getElementById("basepanel")
-			document.getElementById("canvaspanel").style.width = wi + "px";
-			document.getElementById("canvaspanel").style.height = (he) + "px";
-			document.getElementById("canvaspanel").style.border = "2px solid #808080";
-			document.getElementById("canvaspanel").style.marginLeft = "auto";
-			document.getElementById("canvaspanel").style.marginRight = "auto";
-			document.getElementById("canvaspanel").style.marginTop = "auto";
-			document.getElementById("canvaspanel").style.marginBottom = "auto";
-			document.getElementById("canvaspanel").className = "canvaspanel";
-			document.getElementById("canvaspanel").style.transformOrigin = "left top";
-			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
-			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,true);
-			lay.canvas.className = "mostbase-canvas";
-			Draw.layer.push(lay);
-			Draw.layer[0].select(Draw.context);
-			Draw.canvassize = [wi, he];
-			Draw.defaults.canvas.size = [wi, he];
-			document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
-			document.getElementById("info_magni").innerText = "1.0";
-			//document.getElementById("btn_panel").style.visibility = "visible";
-			Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
-			if (wi > he) {
-				document.getElementById("prev_img").width = "126";
-			}else{
-				document.getElementById("prev_img").height = "126";
-			}
-			/*if ("pencil" in Draw.pen.items) */Draw.pen.items["pencil"].element.click();
-			//---ダミーのキャンバスも作成
-			Draw.canvas = document.createElement("canvas");
-			Draw.canvas.id = "dumcanvas";
-			Draw.canvas.className = "dummy-canvas";
-			Draw.canvas.width = wi;
-			Draw.canvas.height = he;
-			Draw.canvas.style.zIndex = 0;
-			document.body.appendChild(Draw.canvas);
-			//---操作用のキャンバスも作成
-			Draw.opecan = document.createElement("canvas");
-			Draw.opecan.id = "opecanvas";
-			Draw.opecan.className = "operate-canvas";
-			Draw.opecan.width = wi;
-			Draw.opecan.height = he;
-			Draw.opecan.style.zIndex = 5;
-			document.getElementById("canvaspanel").appendChild(Draw.opecan);
-			Draw.opecontext = Draw.opecan.getContext("2d");
-			if (isshow) {
-				document.getElementById("basepanel").style.display = "block";
-			}
-			document.getElementById("openedProjName").innerText = "";
-			//this.undohist.push(new UndoBuffer(this.context.canvas,this.context.getImageData(0,0,this.canvassize[0],this.canvassize[1])));
-			Draw.toggleUndo(false);
-			Draw.toggleRedo(false);
-			document.getElementById("prg_btn_cancel").style.display = "block";
-			return true;
-		},
-		direct_createbody : function(){
-			//---URL引数にw と hがある場合、直接キャンバスを作成する
-			var tw = false, th = false;
-			if ("w" in Draw.urlparams) {
-				tw = parseInt(Draw.urlparams["w"]);
-			}
-			if ("h" in Draw.urlparams) {
-				th = parseInt(Draw.urlparams["h"]);
-			}
-			console.log("w=" + tw);
-			console.log("h=" + th);
-			if ((tw) && (th) && (!isNaN(tw)) && (!isNaN(th))) {
-				//---wとhがある場合のみ、いきなりキャンバス作成
-				if (tw > Number(document.getElementById("canvas_width").max)) tw = Number(document.getElementById("canvas_width").max);
-				if (tw < 100) tw = 100;
-				if (th > Number(document.getElementById("canvas_height").max)) th = Number(document.getElementById("canvas_height").max);
-				if (th < 100) th = 100;
-				Draw.createbody(tw,th,true);
-			}
-		},
-		clearBody : function (){
-			//参照コンテキストをメインのキャンバスに戻す
-			console.log(this.layer);
-			Draw.layer[0].select(null);
-			Draw.layer[0].Alpha = 100;
-			Draw.context = Draw.layer[0].canvas.getContext("2d");
-			Draw.removeLayerAll();
-			//---メインのキャンバスだけは直接クリアのみ
-			Draw.context.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-			for (var i = 0; i < Draw.undohist.length; i++) {
-				delete Draw.undohist[i];
-			}
-			Draw.undohist.splice(0,Draw.undohist.length);
-			Draw.redohist.splice(0,Draw.redohist.length);
-			Draw.undohist = [];
-			Draw.redohist = [];
-			Draw.canundo = false;
-			Draw.canredo = false;
-			Draw.toggleUndo(false);
-			Draw.toggleRedo(false);
-			//document.getElementById("previewer").src = null;
-			Draw.init_scale = 1.0;
-			Draw.during_scale = 1.0;
-			Draw.during_distance = 0;
-			Draw.touchpoints = {};
-			Draw.is_scaling = false;
-			Draw.is_scrolling = false;
-			document.getElementById("layinfo_toggle").checked = true;
-			document.getElementById("layinfo_opacity").value = "100";
-			Draw.layer[0].opacity("100");
-			return true;
-		},
-		returnTopMenu : function (){
-			Draw.clearBody();
-			Draw.filename = "";
-			//---メインも完全削除
-			document.getElementById("canvaspanel").removeChild(document.getElementById(Draw.layer[0].canvas.id));
-			//own.control.remove();
-			document.getElementById("lay_btns").removeChild(document.getElementById(Draw.layer[0].control.id));
-			Draw.layer.splice(0,1);
-			//---パネル系解除
-			if (document.getElementById("btn_shapes").className == "sidebar_button switchbutton_on") {
-				document.getElementById("btn_shapes").click();
-			}
-			if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
-				document.getElementById("chk_enable_handpres").click();
-			}
-			
-			ElementTransform(document.getElementById("basepanel"),"translate(0,0)");
-			document.getElementById("basepanel").style.display = "none";
-			document.getElementById("initialsetup").style.display = "block";
-			document.getElementById("apptitle").style.display = "block";
-			document.getElementById("ctrlpanel").style.display = "none";
-			//document.getElementById("colorpalette").style.display = "none";
-			//document.getElementById("layoutcontrol").style.display = "none";
-			document.getElementById("prespanel").style.display = "none";
-			document.getElementById("openedProjName").innerText = "";
-			Draw.saveSetting();
-			return true;
-		},
-		turnMenuPanel : function(target,firebutton,flag) {
-			var valdisplay = (flag ? "block" : "none");
-			var valbgcolor = (flag ? "#91d780" : "#c4fab3");
-			document.getElementById("menupanel").style.display = "none";
-			document.getElementById("dlg_canvasinfo").style.display = "none";
-			document.getElementById("dlg_layer").style.display = "none";
-			document.getElementById("dlg_pen_mode").style.display = "none";
-			document.getElementById("dlg_plugin").style.display = "none";
-			if (target) document.getElementById(target).style.display = valdisplay;
-			
-			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
-			document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
-			document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
-			document.getElementById("info_btn_canvassize").style.backgroundColor = "#c4fab3";
-			if (firebutton) document.getElementById(firebutton).style.backgroundColor = valbgcolor;
-			
-			this.saveSetting();
-		},
 		setupLocale : function(){
 			var did = function(name){
 				return document.getElementById(name);
@@ -974,6 +1083,16 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			did("chk_shapes_box").title = _T("chk_shapes_box_title");
 			did("chk_shapes_circle").title = _T("chk_shapes_circle_title");
 			did("chk_shapes_triangle").title = _T("chk_shapes_triangle_title");
+			did("btn_select").title = _T("btn_select_title");
+			did("lab_seltype").title = _T("lab_seltype_title");
+			did("sel_seltype_box").title = _T("sel_seltype_box_title") + "(R)";
+			did("sel_seltype_free").title = _T("sel_seltype_free_title") + "(T)";
+			did("sel_seltype_move").title = _T("sel_seltype_move_title") + "(Y)";
+			did("lab_operationtype").title = _T("lab_operationtype_title");
+			did("sel_operationtype_clip").title = _T("sel_operationtype_clip_title");
+			did("sel_operationtype_copy").title = _T("sel_operationtype_copy_title") + "(Ctrl+C)";
+			did("sel_operationtype_cut").title = _T("sel_operationtype_cut_title") + "(Ctrl+X)";
+			did("sel_operationtype_paste").title = _T("sel_operationtype_paste_title") + "(Ctrl+V)";
 			
 			//menu panel
 			did("btn_clear").textContent = _T("btn_clear");
@@ -1004,6 +1123,13 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			did("layinfo_opacity").title = _T("layinfo_opacity_title");
 			did("lab_layinfo_opacity").textContent = _T("lab_layinfo_opacity");
 			did("lab_layinfo_lock").textContent = _T("lab_layinfo_lock");
+			did("lab_layinfo_clip").textContent = _T("lab_layinfo_clip");
+			did("layinfo_clearclip").textContent = _T("layinfo_clearclip");
+			did("layinfo_clearclip").title = _T("layinfo_clearclip_title");
+			did("lab_layinfo_cliphistory").textContent = _T("lab_layinfo_cliphistory");
+			did("layinfo_call_cliphist").textContent = _T("layinfo_call_cliphist");
+			did("layinfo_call_cliphist").title = _T("layinfo_call_cliphist_title");
+			
 			//brush panel
 			did("eraser").title = _T("brush_eraser");
 			did("img_eraser").title = _T("brush_eraser");
@@ -1019,90 +1145,215 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			did("prg_btn_cancel").textContent = _T("prg_btn_cancel");
 			
 		},
-		getSelectedLayerIndex : function (){
-			var ls = this.layer;
-			for (var i = 0; i < ls.length; i++) {
-				if (ls[i].selected) {
-					return i;
-				}
-			}
-			return -1;
-		},
-		getSelectedLayer : function (){
-			var inx = this.getSelectedLayerIndex();
-			if (inx > -1) {
-				return this.layer[inx];
+		createbody : function(wi,he,isshow){
+			document.getElementById("initialsetup").style.display = "none";
+			document.getElementById("apptitle").style.display = "none";
+			document.getElementById("ctrlpanel").style.display = "block";
+			//document.getElementById("colorpalette").style.display = "block";
+			//document.getElementById("layoutcontrol").style.display = "block";
+			document.getElementById("prespanel").style.display = "block";
+			//Draw.generateCanvas(wi, he);
+			document.getElementById("basepanel")
+			document.getElementById("canvaspanel").style.width = wi + "px";
+			document.getElementById("canvaspanel").style.height = (he) + "px";
+			document.getElementById("canvaspanel").style.border = "2px solid #808080";
+			document.getElementById("canvaspanel").style.marginLeft = "auto";
+			document.getElementById("canvaspanel").style.marginRight = "auto";
+			document.getElementById("canvaspanel").style.marginTop = "auto";
+			document.getElementById("canvaspanel").style.marginBottom = "auto";
+			document.getElementById("canvaspanel").className = "canvaspanel";
+			document.getElementById("canvaspanel").style.transformOrigin = "left top";
+			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
+			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,true);
+			lay.canvas.className = "mostbase-canvas";
+			Draw.layer.push(lay);
+			Draw.layer[0].select(Draw.context);
+			Draw.canvassize = [wi, he];
+			Draw.defaults.canvas.size = [wi, he];
+			document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
+			document.getElementById("info_magni").innerText = "1.0";
+			//document.getElementById("btn_panel").style.visibility = "visible";
+			Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+			if (wi > he) {
+				document.getElementById("prev_img").width = "126";
 			}else{
-				return null;
+				document.getElementById("prev_img").height = "126";
+			}
+			/*if ("pencil" in Draw.pen.items) */Draw.pen.items["pencil"].element.click();
+			//---ダミーのキャンバスも作成
+			Draw.canvas = document.createElement("canvas");
+			Draw.canvas.id = "dumcanvas";
+			Draw.canvas.className = "dummy-canvas";
+			Draw.canvas.width = wi;
+			Draw.canvas.height = he;
+			Draw.canvas.style.zIndex = 0;
+			Draw.canvas2 = document.createElement("canvas");
+			Draw.canvas2.id = "dumcanvas";
+			Draw.canvas2.className = "dummy-canvas";
+			//Draw.canvas2.width = wi;
+			//Draw.canvas2.height = he;
+			Draw.canvas2.style.zIndex = 0;
+			document.body.appendChild(Draw.canvas);
+			//---操作用のキャンバスも作成
+			Draw.opecan = document.createElement("canvas");
+			Draw.opecan.id = "opecanvas";
+			Draw.opecan.className = "operate-canvas";
+			Draw.opecan.width = wi;
+			Draw.opecan.height = he;
+			Draw.opecan.style.zIndex = 5;
+			document.getElementById("canvaspanel").appendChild(Draw.opecan);
+			Draw.opecontext = Draw.opecan.getContext("2d");
+			//---操作・選択のキャンバスも作成
+			Draw.opeselcan = document.createElement("canvas");
+			Draw.opeselcan.id = "opeselcanvas";
+			Draw.opeselcan.className = "operate-canvas";
+			Draw.opeselcan.width = wi;
+			Draw.opeselcan.height = he;
+			Draw.opeselcan.style.zIndex = 6;
+			document.getElementById("canvaspanel").appendChild(Draw.opeselcan);
+			Draw.opeselcontext = Draw.opeselcan.getContext("2d");
+			if (isshow) {
+				document.getElementById("basepanel").style.display = "block";
+			}
+			document.getElementById("openedProjName").innerText = "";
+			//this.undohist.push(new UndoBuffer(this.context.canvas,this.context.getImageData(0,0,this.canvassize[0],this.canvassize[1])));
+			Draw.toggleUndo(false);
+			Draw.toggleRedo(false);
+			document.getElementById("prg_btn_cancel").style.display = "block";
+			return true;
+		},
+		direct_createbody : function(){
+			//---URL引数にw と hがある場合、直接キャンバスを作成する
+			var tw = false, th = false;
+			if ("w" in Draw.urlparams) {
+				tw = parseInt(Draw.urlparams["w"]);
+			}
+			if ("h" in Draw.urlparams) {
+				th = parseInt(Draw.urlparams["h"]);
+			}
+			console.log("w=" + tw);
+			console.log("h=" + th);
+			if ((tw) && (th) && (!isNaN(tw)) && (!isNaN(th))) {
+				//---wとhがある場合のみ、いきなりキャンバス作成
+				if (tw > Number(document.getElementById("canvas_width").max)) tw = Number(document.getElementById("canvas_width").max);
+				if (tw < 100) tw = 100;
+				if (th > Number(document.getElementById("canvas_height").max)) th = Number(document.getElementById("canvas_height").max);
+				if (th < 100) th = 100;
+				Draw.createbody(tw,th,true);
 			}
 		},
-		getLastAddedLayer : function (){
-			var ls = this.layer;
-			var maxbtnid = 0;
-			if (ls.length > 0) {
-				maxbtnid = parseInt(ls[0].control.textContent);
-				for (var i = 1; i < ls.length; i++) {
-					var n = parseInt(ls[i].control.textContent);
-					if (maxbtnid < n) {
-						maxbtnid = n;
-					}
-				}
+		clearBody : function (){
+			while (Draw.undohist.length > 0) {
+				var o = Draw.undohist.shift();
+				o = null;
 			}
-			console.log("maxbtnid="+maxbtnid);
-			return maxbtnid;
+			//参照コンテキストをメインのキャンバスに戻す
+			console.log(this.layer);
+			Draw.layer[0].opacity(100);
+			Draw.layer[0].SetLock(false);
+			Draw.layer[0].ClearClip(true);
+			Draw.layer[0].select(null);
+			Draw.context = Draw.layer[0].canvas.getContext("2d");
+			Draw.removeLayerAll();
+			//---メインのキャンバスだけは直接クリアのみ
+			Draw.context.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+			Draw.layer[0].setup_other();
+			Draw.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			Draw.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			/*for (var i = 0; i < Draw.undohist.length; i++) {
+				delete Draw.undohist[i];
+			}*/
+			//Draw.undohist = [];
+			//Draw.redohist = [];
+			Draw.canundo = false;
+			Draw.canredo = false;
+			Draw.toggleUndo(false);
+			Draw.toggleRedo(false);
+			Draw.undoindex = -1;
+			//document.getElementById("previewer").src = null;
+			Draw.init_scale = 1.0;
+			Draw.during_scale = 1.0;
+			Draw.during_distance = 0;
+			Draw.touchpoints = {};
+			Draw.drawpoints = [];
+			Draw.is_scaling = false;
+			Draw.is_selecting = false;
+			Draw.select_type = "box";
+			Draw_select_operation = "copy";
+			Draw.selectors.clear();
+			Draw.select_clipboard = null;
+			document.getElementById("layinfo_toggle").checked = true;
+			document.getElementById("layinfo_opacity").value = "100";
+			Draw.layer[0].opacity("100");
+			return true;
 		},
-		moveLayer : function (target,oldpos,newpos){
-			var hitid = -1;
-			for (var i = 0; i < Draw.layer.length; i++) {
-				if (Draw.layer[i].originID == target) {
-					hitid = i;
-					break;
-				}
+		returnTopMenu : function (){
+			//---パネル系解除
+			if (Draw.is_spoiting) {
+				document.getElementById("btn_dropper").click();
 			}
-			var obj = Draw.layer.splice(oldpos,1);
-			Draw.layer.splice(newpos,0,obj[0]);
-			//---全てのレイヤーのz-indexをリフレッシュ
-			for (var i = 0; i < Draw.layer.length; i++) {
-				console.log(Draw.layer[i]);
-				Draw.layer[i].zMove(Draw.layer[i].canvas.style.zIndex,i+1);
+			if (Draw.vCtrl_for_scroll) {
+				document.getElementById("btn_freescroll").click();
 			}
+			if (Draw.is_drawing_line) {
+				document.getElementById("btn_shapes").click();
+			}
+			if (Draw.is_selecting) {
+				document.getElementById("btn_select").click();
+			}
+			if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
+				document.getElementById("chk_enable_handpres").click();
+			}
+			Draw.clearBody();
+			Draw.is_spoiting = false;
+			Draw.vCtrl_for_scroll = false;
+			Draw.is_scrolling = false;
+			Draw.is_drawing_line = false;
+			Draw.drawing_type = "line";
+			Draw.is_selecting = false;
+			Draw.select_type = "box";
+			Draw_select_operation = "copy";
+			Draw.selectors.clear();
+			Draw.select_clipboard = null;
+			Draw.filename = "";
+			Draw.clearCliphist();
+			document.getElementById("layinfo_cliphistory").disabled = "disabled";
+			document.getElementById("layinfo_call_cliphist").disabled = "disabled";
+			//---メインも完全削除
+			document.getElementById("canvaspanel").removeChild(document.getElementById(Draw.layer[0].canvas.id));
+			//own.control.remove();
+			document.getElementById("lay_btns").removeChild(document.getElementById(Draw.layer[0].control.id));
+			Draw.layer.splice(0,1);
+			
+			ElementTransform(document.getElementById("basepanel"),"translate(0,0)");
+			document.getElementById("basepanel").style.display = "none";
+			document.getElementById("initialsetup").style.display = "block";
+			document.getElementById("apptitle").style.display = "block";
+			document.getElementById("ctrlpanel").style.display = "none";
+			//document.getElementById("colorpalette").style.display = "none";
+			//document.getElementById("layoutcontrol").style.display = "none";
+			document.getElementById("prespanel").style.display = "none";
+			document.getElementById("openedProjName").innerText = "";
+			Draw.saveSetting();
+			return true;
 		},
-		removeLayer : function (i,isremoveArray){
-			if (this.layer[i].destroy()) {
-				if (isremoveArray) {
-					this.layer.splice(i,1);
-					return true;
-				}
-			}else{
-				return false;
-			}
-		},
-		removeLayerAll : function (){
-			for (var i = 1 ; i < this.layer.length; i++) {
-				this.removeLayer(i,false);
-			}
-			this.layer.splice(1,this.layer.length);
-		},
-		removeLayerController : function (){
-			var layindex = Draw.getSelectedLayerIndex();
-			if (Draw.removeLayer(layindex,true)) {
-				//---後始末：選択レイヤーの変更
-				Draw.layer[layindex-1].control.click();
-				//---後始末：レイヤーの優先度の再生成
-				console.log("Draw.layer=");
-				console.log(Draw.layer);
-				for (var i = 0; i < Draw.layer.length; i++) {
-					var lay = Draw.layer[i];
-					lay.parent = Draw;
-					lay.canvas.style.zIndex = i+1;
-					//lay.control.title = lay.canvas.style.zIndex;
-					//lay.control.innerHTML = lay.canvas.style.zIndex;
-				}
-				return true;
-			}else{
-				//alert("メインのキャンバスもしくはロックがかかったレイヤーは削除できません。");
-				return false;
-			}
+		turnMenuPanel : function(target,firebutton,flag) {
+			var valdisplay = (flag ? "block" : "none");
+			var valbgcolor = (flag ? "#91d780" : "#c4fab3");
+			document.getElementById("menupanel").style.display = "none";
+			document.getElementById("dlg_canvasinfo").style.display = "none";
+			document.getElementById("dlg_layer").style.display = "none";
+			document.getElementById("dlg_pen_mode").style.display = "none";
+			document.getElementById("dlg_plugin").style.display = "none";
+			if (target) document.getElementById(target).style.display = valdisplay;
+			
+			document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
+			document.getElementById("info_btn_canvassize").style.backgroundColor = "#c4fab3";
+			if (firebutton) document.getElementById(firebutton).style.backgroundColor = valbgcolor;
+			
+			this.saveSetting();
 		},
 		resizeCanvasMargin : function (winwidth, winheight){
 			var sa = winwidth - this.canvassize[0];
@@ -1114,123 +1365,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			console.log("left="+space + "/" + spacey);
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(" + this.during_scale + ") "+ "translateX("+space+"px," + spacey + "px)");
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(1.5) translateY(" + spacey + "px)");
-		},
-		prepareSaveImage : function(){
-			//ダミーのキャンバスから統合した画像を作成
-			var c = Draw.canvas.getContext("2d");
-			c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-			c.fillStyle = "#FFFFFF";
-			c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-			for (var obj in Draw.layer) {
-				if (Draw.layer[obj].isvisible) {
-					c.globalAlpha = Draw.layer[obj].Alpha / 100; //canvas.getContext("2d").globalAlpha;
-					c.globalCompositeOperation = Draw.layer[obj].CompositeOperation; //canvas.getContext("2d").globalCompositeOperation;
-					c.drawImage(Draw.layer[obj].canvas,0,0);
-				}
-			}
-		},
-		prepareSaveProject : function (){
-			var def = $.Deferred();
-			var rawdatas = [];
-			var projectdata = [];
-			var fnldata = "";
-			//---Header
-			projectdata.push("paintm");
-			projectdata.push(appversion);
-			projectdata.push("0");
-			projectdata.push("4");
-			projectdata.push(Draw.canvassize[0]);
-			projectdata.push(Draw.canvassize[1]);
-			projectdata.push("1");
-			projectdata.push("3");
-			//Color Mode Data Block
-			projectdata.push("768");
-			//Image Resource Block
-			projectdata.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length);
-			//Image Data
-			projectdata.push(Draw.layer.length);
-			for (var obj in Draw.layer) {
-				var r = "";
-				var con = Draw.layer[obj].canvas.getContext("2d");
-				var imgd = con.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-				var nulcnt = 0;
-				//Image Data (each Layer)
-				projectdata.push(0);
-				projectdata.push(0);
-				projectdata.push(Draw.canvassize[1]);
-				projectdata.push(Draw.canvassize[0]);
-				projectdata.push(Draw.layer[obj].title);
-				projectdata.push(Draw.layer[obj].isvisible ? "1" : "0");
-				projectdata.push(Draw.layer[obj].Alpha);
-				projectdata.push(" ");projectdata.push(" ");projectdata.push(" ");projectdata.push(" ");
-				for (var i = 0; i < imgd.data.length; i++) {
-					
-					if (imgd.data[i] == 0) {
-						if (nulcnt == 0) {
-							//最初の0のみ保存
-							r += imgd.data[i];
-						}
-						nulcnt++;
-					}else{
-						if (nulcnt > 0) {
-							r += "#" + nulcnt + ",";
-							nulcnt = 0;
-						}
-						r += parseInt(imgd.data[i]).toString(16) + ",";
-					}
-				}
-				projectdata.push(r);
-			}
-			def.resolve(projectdata.join("\t"));
-			return def.promise();
-			//return projectdata.join("\t");
-		},
-		loadProject : function(data){
-			var projectdata = String(data).split("\t");
-			var CST_width = 4
-			var CST_height = 5;
-			var CST_layerCount = 10;
-			console.log("projectdata="+projectdata.length);
-			if (projectdata.length < 8) {
-				//---ヘッダー部分ですでに8個ない場合は、不正なファイルとしてエラー
-				return false;
-			}
-			if (projectdata[0] != "paintm") {
-				return false;
-			}
-			//---キャンバスを生成
-			this.createbody(projectdata[CST_width],projectdata[CST_height],false);
-			var laycount = parseInt(projectdata[CST_layerCount]);
-			console.log("laycount="+laycount);
-			if (isNaN(laycount)) return false; //---レイヤーの個数が正常にとれなかったらエラー
-			//---レイヤーの復元
-			//レイヤー0番目はメインキャンバスなので固定で読み込み
-			console.log(projectdata[CST_layerCount+5]);
-			var data = projectdata[CST_layerCount+12].split(",");
-			this.layer[0].load(
-				projectdata[CST_layerCount+5],
-				(projectdata[CST_layerCount+6] == "1" ? true : false),
-				projectdata[CST_layerCount+7],
-				projectdata[9],
-				data
-			);
-			var layindexpos = CST_layerCount+13;
-			for (var i = 1; i < laycount; i++) {
-				var lay = new DrawLayer(this,{"w":this.canvassize[0],"h":this.canvassize[1]},false,true);
-				this.layer.push(lay);
-				//console.log("layindexpos="+projectdata[layindexpos+4]);
-				data = projectdata[layindexpos+11].split(",");
-				this.layer[i].load(
-					projectdata[layindexpos+4],
-					(projectdata[layindexpos+5] == "1" ? true : false),
-					projectdata[layindexpos+6],
-					projectdata[9],
-					data
-				);
-				//console.log("data="+projectdata[layindexpos+11].substr(0,100));
-				layindexpos += 12;
-			}
-			return true;
 		},
 		scale : function (val) {
 			var fnlbi = val / 100;
@@ -1281,6 +1415,38 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				AppStorage.set("chk_sv_colorpalette",chk);
 				if (chk == "0") AppStorage.remove("sv_colorpalette0");
 			}
+		},
+		undo_function_begin : function(isundo) {
+			this.currentLayer.prev_image = this.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+			//さかのぼっていたら現在位置以降を削除
+			if (isundo) {
+				if (this.undoindex > -1) {
+					for (var i = this.undoindex+1; i < this.undohist.length; i++) {
+						this.undohist[i].layer = null;
+						this.undohist[i].image = null;
+					}
+					this.undohist.splice(this.undoindex+1,this.undohist.length);
+				}
+				this.undoindex = this.undohist.length-1;
+				this.canredo = false;
+				this.toggleRedo(false);
+			}
+		},
+		undo_function_end : function() {
+			//---save undo
+			this.canundo = true;
+			this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
+			this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
+			this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
+			//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
+			this.undoindex = this.undohist.length-1;
+			if (this.undohist.length > this.defaults.undo.max) {
+				var o = this.undohist.shift();
+				//o.destroy();
+				o = null;
+				this.undoindex = this.undohist.length-1;
+			}
+			this.toggleUndo(true);
 		},
 		saveUndo : function(pensize,lowpos,highpos,context){
 			var block = {w:0, h:0};
@@ -1392,408 +1558,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				Draw.redobtn.disabled = "disabled";
 			}
 		},
-		drawshape_function_move : function (event, pos) {
-			//if ((event.shiftKey) && (this.drawpoints.length > 0)) { //マウス・ペン
-			if ((this.drawpoints.length > 0)) { //マウス・ペン
-				this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
-				if (this.pressedKey != "27") { //Escキー押下でキャンセル
-					this.opecontext.lineWidth = 2;
-					this.opecontext.strokeStyle = "#888888";
-					this.opecontext.beginPath();
-					if (this.drawing_type == "line") {
-						this.opecontext.moveTo(this.drawpoints[0].x, this.drawpoints[0].y);
-						this.opecontext.lineTo(pos.x, pos.y);
-					}else if (this.drawing_type == "box") {
-						var lt = {}, rb = {};
-						if (this.drawpoints[0].x > this.drawpoints[1].x) {
-							lt["x"] = this.drawpoints[1].x;
-							rb["x"] = this.drawpoints[0].x - this.drawpoints[1].x;
-						}else{
-							lt["x"] = this.drawpoints[0].x;
-							rb["x"] = this.drawpoints[1].x - this.drawpoints[0].x;
-						}
-						if (this.drawpoints[0].y > this.drawpoints[1].y) {
-							lt["y"] = this.drawpoints[1].y;
-							rb["y"] = this.drawpoints[0].y - this.drawpoints[1].y;
-						}else{
-							lt["y"] = this.drawpoints[0].y;
-							rb["y"] = this.drawpoints[1].y - this.drawpoints[0].y;
-						}
-						this.opecontext.strokeRect(lt.x,lt.y, rb.x, rb.y);
-					}else if (this.drawing_type == "circle") {
-						var distance = Math.sqrt(
-							(this.drawpoints[1].x - this.drawpoints[0].x)
-							* (this.drawpoints[1].x - this.drawpoints[0].x)
-							+
-							(this.drawpoints[1].y - this.drawpoints[0].y)
-							* (this.drawpoints[1].y - this.drawpoints[0].y)
-						);
-						this.opecontext.arc(this.drawpoints[0].x,this.drawpoints[0].y,distance,0/180*Math.PI,360/180*Math.PI);
-					}else if (this.drawing_type == "triangle") {
-						var top2nd = {}, top3rd = {};
-						var ang_top = {};
-						if (this.drawpoints[0].x > this.drawpoints[1].x) {
-							if (event.shiftKey) {
-								top2nd["x"] = this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = this.drawpoints[0].x;
-							}else{
-								top2nd["x"] = this.drawpoints[0].x;
-								top2nd["sx"] = this.drawpoints[0].x - this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = top3rd.x + (top2nd["sx"]/2);
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["x"] = this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = this.drawpoints[0].x;
-							}else{
-								top2nd["x"] = this.drawpoints[0].x;
-								top3rd["sx"] = this.drawpoints[1].x - this.drawpoints[0].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = top2nd.x + (top3rd["sx"]/2);
-							}
-						}
-						if (this.drawpoints[0].y > this.drawpoints[1].y) {
-							if (event.shiftKey) {
-								top2nd["y"] = this.drawpoints[0].y;
-								top2nd["sy"] = this.drawpoints[0].y - this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = top3rd.y + (top2nd["sy"]/2);
-							}else{
-								top2nd["y"] = this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] =  this.drawpoints[0].y;
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["y"] = this.drawpoints[0].y;
-								top3rd["sy"] = this.drawpoints[1].y - this.drawpoints[0].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = top2nd.y + (top3rd["sy"]/2);
-							}else{
-								top2nd["y"] = this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = this.drawpoints[0].y;
-							}
-						}
-						this.opecontext.moveTo(ang_top.x, ang_top.y);
-						this.opecontext.lineTo(top2nd.x, top2nd.y);
-						this.opecontext.lineTo(top3rd.x, top3rd.y);
-						this.opecontext.lineTo(ang_top.x, ang_top.y);
-					}
-					this.opecontext.closePath();
-					this.opecontext.stroke();
-					if (this.drawpoints.length < 2) {
-						this.drawpoints.push(pos);
-					}else{
-						this.drawpoints[1] = pos;
-					}
-					this.context.save();
-				}
-			}else if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
-				//タッチ
-				this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1])
-				this.opecontext.lineWidth = 2;
-				this.opecontext.strokeStyle = "#888888";
-				this.opecontext.beginPath();
-				if (this.drawing_type == "line") {
-					this.opecontext.moveTo(this.touchpoints["1"].pos.x, this.touchpoints["1"].pos.y);
-					this.opecontext.lineTo(this.touchpoints["2"].pos.x, this.touchpoints["2"].pos.y);
-				}else if (this.drawing_type == "box") {
-					var lt = {}, rb = {};
-					if (this.touchpoints["1"].pos.x > this.touchpoints["2"].pos.x) {
-						lt["x"] = this.touchpoints["2"].pos.x;
-						rb["x"] = this.touchpoints["1"].pos.x - this.touchpoints["2"].pos.x;
-					}else{
-						lt["x"] = this.touchpoints["1"].pos.x;
-						rb["x"] = this.touchpoints["2"].pos.x - this.touchpoints["1"].pos.x;
-					}
-					if (this.touchpoints["1"].pos.y > this.touchpoints["2"].pos.y) {
-						lt["y"] = this.touchpoints["2"].pos.y;
-						rb["y"] = this.touchpoints["1"].pos.y - this.touchpoints["2"].pos.y;
-					}else{
-						lt["y"] = this.touchpoints["1"].pos.y;
-						rb["y"] = this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y;
-					}
-					this.opecontext.strokeRect(lt.x,lt.y, rb.x, rb.y);
-				}else if (this.drawing_type == "circle") {
-					var distance = Math.sqrt(
-						(this.touchpoints["2"].pos.x - this.touchpoints["1"].pos.x)
-						* (this.touchpoints["2"].pos.x - this.touchpoints["1"].pos.x)
-						+
-						(this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y)
-						* (this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y)
-					);
-					this.opecontext.arc(this.touchpoints["1"].pos.x,this.touchpoints["1"].pos.y,distance,0/180*Math.PI,360/180*Math.PI);
-				}else if (this.drawing_type == "triangle") {
-					var top2nd = {}, top3rd = {};
-					var ang_top = {};
-					if (this.touchpoints["1"].x > this.touchpoints["2"].x) {
-						if (event.shiftKey) {
-							top2nd["x"] = this.touchpoints["2"].x;
-							top3rd["x"] = this.touchpoints["2"].x;
-							ang_top["x"] = this.touchpoints["1"].x;
-						}else{
-							top2nd["x"] = this.touchpoints["1"].x;
-							top2nd["sx"] = this.touchpoints["1"].x - this.touchpoints["2"].x;
-							top3rd["x"] = this.touchpoints["2"].x;
-							ang_top["x"] = top3rd.x + (top2nd["sx"]/2);
-						}
-					}else{
-						if (event.shiftKey) {
-							top2nd["x"] = this.touchpoints["2"].x;
-							top3rd["x"] = this.touchpoints["2"].x;
-							ang_top["x"] = this.touchpoints["1"].x;
-						}else{
-							top2nd["x"] = this.touchpoints["1"].x;
-							top3rd["sx"] = this.touchpoints["2"].x - this.touchpoints["1"].x;
-							top3rd["x"] = this.touchpoints["2"].x;
-							ang_top["x"] = top2nd.x + (top3rd["sx"]/2);
-						}
-					}
-					if (this.touchpoints["1"].y > this.touchpoints["2"].y) {
-						if (event.shiftKey) {
-							top2nd["y"] = this.touchpoints["1"].y;
-							top2nd["sy"] = this.touchpoints["1"].y - this.touchpoints["2"].y;
-							top3rd["y"] = this.touchpoints["2"].y;
-							ang_top["y"] = top3rd.y + (top2nd["sy"]/2);
-						}else{
-							top2nd["y"] = this.touchpoints["2"].y;
-							top3rd["y"] = this.touchpoints["2"].y;
-							ang_top["y"] =  this.touchpoints["1"].y;
-						}
-					}else{
-						if (event.shiftKey) {
-							top2nd["y"] = this.touchpoints["1"].y;
-							top3rd["sy"] = this.touchpoints["2"].y - this.touchpoints["1"].y;
-							top3rd["y"] = this.touchpoints["2"].y;
-							ang_top["y"] = top2nd.y + (top3rd["sy"]/2);
-						}else{
-							top2nd["y"] = this.touchpoints["2"].y;
-							top3rd["y"] = this.touchpoints["2"].y;
-							ang_top["y"] = this.touchpoints["1"].y;
-						}
-					}
-					this.opecontext.moveTo(ang_top.x, ang_top.y);
-					this.opecontext.lineTo(top2nd.x, top2nd.y);
-					this.opecontext.lineTo(top3rd.x, top3rd.y);
-					this.opecontext.lineTo(ang_top.x, ang_top.y);
-				}
-				this.opecontext.closePath();
-				this.opecontext.stroke();
-				if (event.pointerId == this.touchpoints["2"].id) {
-					this.touchpoints["2"].pos = pos;
-				}
-			}
-			this.drawing = false;
-		},
-		drawshape_function_end : function (event, pos) {
-			var is_executedraw = false;
-			var decidepos = [];
-			//if (event.shiftKey) {
-			if ((this.drawpoints.length > 0)) { //マウス・ペン
-				/*if (this.drawpoints.length < 2) {
-					this.drawpoints.push(pos);
-				}else{
-					this.drawpoints[1] = pos;
-				}*/
-				//console.log("decided drawpoints=");
-				//console.log(this.drawpoints[0].x + "x" + this.drawpoints[0].y);
-				//console.log(this.drawpoints[1].x + "x" + this.drawpoints[1].y);
-				//console.log(pos.x + "x" + pos.y);
-				if (Draw.pressedKey != "27") {
-					this.context.restore();
-					this.pen.prepare(event,this.context,0.5);
-					if (this.drawing_type == "line") {
-						decidepos.push({x:this.drawpoints[0].x, y:this.drawpoints[0].y});
-						decidepos.push({x:this.drawpoints[1].x, y:this.drawpoints[1].y});
-					}else if (this.drawing_type == "box") {
-						decidepos.push({x:this.drawpoints[0].x, y:this.drawpoints[0].y});
-						decidepos.push({x:this.drawpoints[1].x, y:this.drawpoints[0].y});
-						decidepos.push({x:this.drawpoints[1].x, y:this.drawpoints[1].y});
-						decidepos.push({x:this.drawpoints[0].x, y:this.drawpoints[1].y});
-						decidepos.push({x:this.drawpoints[0].x, y:this.drawpoints[0].y});
-					}else if (this.drawing_type == "circle") {
-						var distance = Math.sqrt(
-							(this.drawpoints[1].x - this.drawpoints[0].x)
-							* (this.drawpoints[1].x - this.drawpoints[0].x)
-							+
-							(this.drawpoints[1].y - this.drawpoints[0].y)
-							* (this.drawpoints[1].y - this.drawpoints[0].y)
-						);
-						this.context.beginPath();
-						this.context.arc(this.drawpoints[0].x,this.drawpoints[0].y,distance,0/180*Math.PI,360/180*Math.PI);
-						this.context.stroke();
-						this.context.closePath();
-						is_executedraw = true;
-					}else if (this.drawing_type == "triangle") {
-						var top2nd = {}, top3rd = {};
-						var ang_top = {};
-						if (this.drawpoints[0].x > this.drawpoints[1].x) {
-							if (event.shiftKey) {
-								top2nd["x"] = this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = this.drawpoints[0].x;
-							}else{
-								top2nd["x"] = this.drawpoints[0].x;
-								top2nd["sx"] = this.drawpoints[0].x - this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = top3rd.x + (top2nd["sx"]/2);
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["x"] = this.drawpoints[1].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = this.drawpoints[0].x;
-							}else{
-								top2nd["x"] = this.drawpoints[0].x;
-								top3rd["sx"] = this.drawpoints[1].x - this.drawpoints[0].x;
-								top3rd["x"] = this.drawpoints[1].x;
-								ang_top["x"] = top2nd.x + (top3rd["sx"]/2);
-							}
-						}
-						if (this.drawpoints[0].y > this.drawpoints[1].y) {
-							if (event.shiftKey) {
-								top2nd["y"] = this.drawpoints[0].y;
-								top2nd["sy"] = this.drawpoints[0].y - this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = top3rd.y + (top2nd["sy"]/2);
-							}else{
-								top2nd["y"] = this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] =  this.drawpoints[0].y;
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["y"] = this.drawpoints[0].y;
-								top3rd["sy"] = this.drawpoints[1].y - this.drawpoints[0].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = top2nd.y + (top3rd["sy"]/2);
-							}else{
-								top2nd["y"] = this.drawpoints[1].y;
-								top3rd["y"] = this.drawpoints[1].y;
-								ang_top["y"] = this.drawpoints[0].y;
-							}
-						}
-						decidepos.push(ang_top);
-						decidepos.push(top2nd);
-						decidepos.push(top3rd);
-						decidepos.push(ang_top);
-					}
-				}
-			}else if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
-				if (event.pointerId != this.touchpoints["1"].id ) {
-					this.context.restore();
-					this.pen.prepare(event,this.context,0.5);
-					if (this.drawing_type == "line") {
-						decidepos.push({x:this.touchpoints["1"].pos.x, y:this.touchpoints["1"].pos.y});
-						decidepos.push({x:this.touchpoints["2"].pos.x, y:this.touchpoints["2"].pos.y});
-					}else if (this.drawing_type == "box") {
-						decidepos.push({x:this.touchpoints["1"].pos.x, y:this.touchpoints["1"].pos.y});
-						decidepos.push({x:this.touchpoints["2"].pos.x, y:this.touchpoints["1"].pos.y});
-						decidepos.push({x:this.touchpoints["2"].pos.x, y:this.touchpoints["2"].pos.y});
-						decidepos.push({x:this.touchpoints["1"].pos.x, y:this.touchpoints["2"].pos.y});
-						decidepos.push({x:this.touchpoints["1"].pos.x, y:this.touchpoints["1"].pos.y});
-					}else if (this.drawing_type == "circle") {
-						var distance = Math.sqrt(
-							(this.touchpoints["2"].pos.x - this.touchpoints["1"].pos.x)
-							* (this.touchpoints["2"].pos.x - this.touchpoints["1"].pos.x)
-							+
-							(this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y)
-							* (this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y)
-						);
-						this.context.beginPath();
-						this.context.arc(this.touchpoints["1"].pos.x,this.touchpoints["1"].pos.y,distance,0/180*Math.PI,360/180*Math.PI);
-						this.context.stroke();
-						this.context.closePath();
-						is_executedraw = true;
-					}else if (this.drawing_type == "triangle") {
-						var top2nd = {}, top3rd = {};
-						var ang_top = {};
-						if (this.touchpoints["1"].x > this.touchpoints["2"].x) {
-							if (event.shiftKey) {
-								top2nd["x"] = this.touchpoints["2"].x;
-								top3rd["x"] = this.touchpoints["2"].x;
-								ang_top["x"] = this.touchpoints["1"].x;
-							}else{
-								top2nd["x"] = this.touchpoints["1"].x;
-								top2nd["sx"] = this.touchpoints["1"].x - this.touchpoints["2"].x;
-								top3rd["x"] = this.touchpoints["2"].x;
-								ang_top["x"] = top3rd.x + (top2nd["sx"]/2);
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["x"] = this.touchpoints["2"].x;
-								top3rd["x"] = this.touchpoints["2"].x;
-								ang_top["x"] = this.touchpoints["1"].x;
-							}else{
-								top2nd["x"] = this.touchpoints["1"].x;
-								top3rd["sx"] = this.touchpoints["2"].x - this.touchpoints["1"].x;
-								top3rd["x"] = this.touchpoints["2"].x;
-								ang_top["x"] = top2nd.x + (top3rd["sx"]/2);
-							}
-						}
-						if (this.touchpoints["1"].y > this.touchpoints["2"].y) {
-							if (event.shiftKey) {
-								top2nd["y"] = this.touchpoints["1"].y;
-								top2nd["sy"] = this.touchpoints["1"].y - this.touchpoints["2"].y;
-								top3rd["y"] = this.touchpoints["2"].y;
-								ang_top["y"] = top3rd.y + (top2nd["sy"]/2);
-							}else{
-								top2nd["y"] = this.touchpoints["2"].y;
-								top3rd["y"] = this.touchpoints["2"].y;
-								ang_top["y"] =  this.touchpoints["1"].y;
-							}
-						}else{
-							if (event.shiftKey) {
-								top2nd["y"] = this.touchpoints["1"].y;
-								top3rd["sy"] = this.touchpoints["2"].y - this.touchpoints["1"].y;
-								top3rd["y"] = this.touchpoints["2"].y;
-								ang_top["y"] = top2nd.y + (top3rd["sy"]/2);
-							}else{
-								top2nd["y"] = this.touchpoints["2"].y;
-								top3rd["y"] = this.touchpoints["2"].y;
-								ang_top["y"] = this.touchpoints["1"].y;
-							}
-						}
-						decidepos.push(ang_top);
-						decidepos.push(top2nd);
-						decidepos.push(top3rd);
-						decidepos.push(ang_top);
-					}
-				}
-			}
-			if (this.drawing_type != "circle") {
-				for (var i = 1; i < decidepos.length; i++) {
-					this.pen.drawMain(this.context,
-						decidepos[i-1].x,decidepos[i-1].y,
-						decidepos[i].x,decidepos[i].y,
-						event,this.elementParameter);
-					is_executedraw = true;
-				}
-			}
-			if (is_executedraw) {
-				//---save undo
-				this.canundo = true;
-				this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-				this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
-				this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
-				//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
-				this.undoindex = this.undohist.length-1;
-				if (this.undohist.length > this.defaults.undo.max) {
-					var o = this.undohist.shift();
-					//o.destroy();
-					o = null;
-					this.undoindex = this.undohist.length-1;
-				}
-				this.toggleUndo(true);
-			}
-			for (var i = 0; i < this.drawpoints.length; i++) delete this.drawpoints[i];
-			this.drawpoints.splice(0,this.drawpoints.length);
-			this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
-		},
 		touchStart : function(event) {
 			this.drawing = true;
 			this.focusing = true;
@@ -1845,6 +1609,9 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				/*if (this.is_drawing_line) {
 					this.drawpoints.push(pos);
 				}*/
+				if (this.is_selecting) {
+					this.select_function_start(event,pos);
+				}
 				this.touchpoints["1"] = {
 					"id" : event.pointerId,
 					"pos" : pos
@@ -1861,38 +1628,48 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					};
 				}
 				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
-					if (!this.is_drawing_line) { //直線描画モードがONのときはタッチによる拡大縮小は無効
-						this.is_scaling = true;
+					this.is_scaling = true;
+					this.drawing = false;
+					if (this.is_drawing_line) { //直線描画モードがONのときはタッチによる拡大縮小は無効
+						this.is_scaling = false;
+						this.drawing = true;
+					}else if (this.is_selecting) { //選択モードがONのときは拡大縮小・描画も禁止
+						this.is_scaling = false;
 						this.drawing = false;
+						isundo = false;
+						var o = this.selectors.items[0];
+						if (o.selectType == selectionType.box) {
+							o.destx = pos.x;
+							o.desty = pos.y;
+							//delete this.touchpoints["2"];
+						}else if (o.selectType == selectionType.free) {
+							//delete this.touchpoints["2"];
+						}
 					}else{
 						isundo = false;
 					}
 					console.log(this.touchpoints);
 					this.scale_pos["begin"] = this.touchpoints["1"].pos;
-					//console.log(document.getElementById("canvaspanel").style.transform);
 					this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
-					//console.log(parseInt(this.init_scale));
 					this.init_scale = parseInt(this.init_scale);
 				}
 			}else{
 				if (this.is_drawing_line) {
 					//直線描画モードの時、タッチ以外の場合の処理
-					//if (event.shiftKey) {
-						this.drawpoints.push(pos);
-						this.drawpoints.push(pos);
-						//console.log("first drawpoints=");
-						//console.log(this.drawpoints[0].x + "x" + this.drawpoints[0].y);
-						//console.log(this.drawpoints[1].x + "x" + this.drawpoints[1].y);
-					//}
+					this.drawpoints.push(pos);
+					this.drawpoints.push(pos);
+				}
+				if (this.is_selecting) {
+					this.select_function_start(event,pos);
+					isundo = false;
+					this.drawing = false;
 				}
 			}
 			//---非タッチ用拡大縮小
 			if (event.altKey) {
 				this.is_scaling = true;
 				this.scale_pos["begin"] = pos;
-				//console.log(document.getElementById("canvaspanel").style.transform);
 				this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
-				//console.log(parseInt(this.init_scale));
 				this.init_scale = parseInt(this.init_scale);
 				isundo = false;
 				this.drawing = false;
@@ -1901,10 +1678,10 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			if ((event.ctrlKey) || (this.vCtrl_for_scroll)) {
 				var cp = document.getElementById("basepanel");
 				this.scale_pos["begin"] = pos;
-				console.log("scrollTop="+cp.scrollTop);
-				console.log("scrollLeft="+cp.scrollLeft);
-				console.log("scrollWidth="+cp.scrollWidth);
-				console.log("scrollHeight="+cp.scrollHeight);
+				//console.log("scrollTop="+cp.scrollTop);
+				//console.log("scrollLeft="+cp.scrollLeft);
+				//console.log("scrollWidth="+cp.scrollWidth);
+				//console.log("scrollHeight="+cp.scrollHeight);
 				this.is_scrolling = true;
 				isundo = false;
 				this.drawing = false;
@@ -1919,7 +1696,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				$.farbtastic("#pickerpanel").setColor(c.toHex());
 				isundo = false;
 			}
-			//console.log(this.currentLayer);
 			//console.log(this.currentLayer.Locking());
 			if (this.currentLayer.Locking()) {
 				//alert("このレイヤーはロックがかかっているため編集できません。");
@@ -1928,21 +1704,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				return;
 			}
 			//---Undoに保管
-			this.currentLayer.prev_image = this.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-			//さかのぼっていたら現在位置以降を削除
-			if (isundo) {
-				if (this.undoindex > -1) {
-					for (var i = this.undoindex+1; i < this.undohist.length; i++) {
-						this.undohist[i].layer = null;
-						this.undohist[i].image = null;
-					}
-					this.undohist.splice(this.undoindex+1,this.undohist.length);
-				}
-				this.undoindex = this.undohist.length-1;
-				this.canredo = false;
-				this.toggleRedo(false);
-			}
-			//console.log(this.undohist);
+			this.undo_function_begin(isundo);
 			//色選択をここでも確定
 			this.pen.current["color"] = this.colorpicker.value;
 			//console.log(this.colorpicker.value);
@@ -1950,13 +1712,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				this.context.strokeStyle = this.colorpicker.value;
 				this.context.fillStyle = this.colorpicker.value;
 				this.context.shadowColor = this.colorpicker.value;
-				/*document.getElementById("log").innerHTML = "log=" + event.clientX + "x" + event.clientY + "/" + this.startX + "x" + this.startY + "<br/>";
-				document.getElementById("log2").innerHTML = "log2=page=" + event.pageX +"x" + event.pageY + "/canvas.offset" + this.context.canvas.offsetLeft +"x"+ this.context.canvas.offsetTop + "<br/>" +
-				this.offset + "<br/>" +
-				"/layer=" + event.layerX + "x" + event.layerY + "/offset=" + event.offsetX + "x"  + event.offsetY + "<br/>" 
-				+ this.canvasspace + "=" + (event.changedTouches ? event.changedTouches[0].pageX : 0) + "x" + (event.changedTouches ? event.changedTouches[0].pageY : 0);
-				*/
-				//console.log(event.changedTouches);
 			}
 			this.elementParameter["current"] = this.pen.current;
 			this.elementParameter["keyCode"] = this.pressedKey;
@@ -2033,9 +1788,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 						distance = 0;
 					}
 					//var distance = Math.sqrt(powsum);
-					//console.log(this.scale_pos["begin"]);
-					//console.log(this.scale_pos["end"]);
-					//console.log("distance="+distance + "(" + de + " - " + db + ")");
 					var bi = (distance) / 100;
 					var fnlbi = 1.0;
 					if (distance > 0.0) {
@@ -2061,8 +1813,6 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					"x" : (de.x - db.x) * -1,
 					"y" : (de.y - db.y) * -1
 				};
-				//console.log("distance.x=" + distance.x);
-				//console.log("distance.y=" + distance.y);
 				var cp = document.getElementById("basepanel");
 				cp.scrollTop = cp.scrollTop + (distance.y * 0.1);
 				cp.scrollLeft = cp.scrollLeft + (distance.x * 0.1);
@@ -2072,6 +1822,17 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			if (this.is_drawing_line) {
 				this.drawshape_function_move(event,pos);
 			}
+			//選択モード
+			if (this.is_selecting) {
+				if (event.pointerType == "touch") {
+					if (this.touchpoints["1"].id == event.pointerId) {
+						this.select_function_move(event,pos);
+					}
+				}else{
+					this.select_function_move(event,pos);
+				}
+				this.drawing = false;
+			}
 			//通常描画モード
 			if (this.drawing) {
 				//console.log("offsetPressure=" + offsetPressure);
@@ -2080,31 +1841,90 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				//---筆ごとの描画開始
 				document.getElementById("log").textContent = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 				//---補完判定・処理開始
+				var distance = Math.sqrt(
+					(offsetX - this.startX) * (offsetX - this.startX)
+					+ (offsetY - this.startY) * (offsetY - this.startY)
+				);
 				var saX = offsetX - this.startX;
 				var saY = offsetY - this.startY;
 				var saPres = offsetPressure - this.startPressure;
 				var ju_saX = Math.abs(saX);
 				var ju_saY = Math.abs(saY);
+				var ju_distance = Math.abs(distance);
 				var ju_saPres = saPres;
 				var pmX = (saX < 0 ? -1 : 1); //+-基準値
 				var pmY = (saY < 0 ? -1 : 1); //+-基準値
 				var pmPres = (saPres < 0 ? -1 : 1); //+-基準値
+				var size_sa = parseInt(document.getElementById("pensize").max) - this.pen.current["size"] + 1;
+				size_sa = size_sa / 4;
 				/*console.log("=====");
 				console.log("start=" + this.startX + "x" + this.startY);
 				console.log("offset=" + offsetX + "x" + offsetY);
 				console.log("sa=" + saX + "x" + saY);
+				console.log("distance=" + distance);
 				console.log("pm=" + pmX + "x" + pmY);
-				console.log("saPres=" + saPres);*/
+				console.log("saPres=" + saPres);
+				console.log("size_sa=" + size_sa);*/
+				//--距離が3以下の場合は意図的にパス（点）を減らして線の感知を少しだけ鈍らせて補正する
+				if (this.is_discomplete) {
+					//if (this.discomplete_count.cnt <= 0) {
+						this.is_discomplete = false;
+					//}
+					if ((this.discomplete_count.dir == "x") && (0.5 <= ju_saY <= 2.5)) {
+						this.startX = this.discomplete_count.startx;
+					}else if ((this.discomplete_count.dir == "y") && (0.5 <= ju_saX <= 2.5)) {
+						this.startY = this.discomplete_count.starty;
+					}else{
+						this.pen.prepare(event,this.context,null);
+						this.pen.drawMain(this.context,
+							this.discomplete_count.startx,this.discomplete_count.starty,
+							this.discomplete_count.offsetx,this.discomplete_count.offsety,event,this.elementParameter);
+					}
+					this.discomplete_count.startx = 0;
+					this.discomplete_count.offsetx = 0;
+					this.discomplete_count.ju_sax = 0;
+					this.discomplete_count.starty = 0;
+					this.discomplete_count.offsety = 0;
+					this.discomplete_count.ju_say = 0;
+				}else{
+					if ((1.0 <= ju_saX <= 2.0) && (ju_saY == 0)){
+						if (!this.is_discomplete && (this.discomplete_count.dir != "x")) {
+							this.discomplete_count.cnt = 1;
+							this.discomplete_count.dir = "x";
+							this.is_discomplete = true;
+							this.discomplete_count.startx = this.startX;
+							this.discomplete_count.offsetx = offsetX;
+							this.discomplete_count.ju_sax = ju_saX;
+							this.discomplete_count.starty = this.startY;
+							this.discomplete_count.offsety = offsetY;
+							this.discomplete_count.ju_say = ju_saY;
+						}
+					}else if ((1.0 <= ju_saY <= 2.0) && (ju_saX == 0)) {
+						if (!this.is_discomplete && (this.discomplete_count.dir != "y")) {
+							this.discomplete_count.cnt = 1;
+							this.discomplete_count.dir = "y";
+							this.is_discomplete = true;
+							this.discomplete_count.startx = this.startX;
+							this.discomplete_count.offsetx = offsetX;
+							this.discomplete_count.ju_sax = ju_saX;
+							this.discomplete_count.starty = this.startY;
+							this.discomplete_count.offsety = offsetY;
+							this.discomplete_count.ju_say = ju_saY;
+						}
+					}
+				}
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
-				if ((ju_saX > this.pen.current["size"]*1) || (ju_saY > this.pen.current["size"]*1)){
-					if (this.pen.current["complete"]) {
+				if (this.pen.current["complete"]) {
+					if ((!this.is_discomplete) && (ju_distance > size_sa)) {
+					//if ((ju_saX > this.pen.current["size"]*size_sa) || (ju_saY > this.pen.current["size"]*size_sa)){
 						//---補完算出開始
 						var completeCount = 0;
-						if (ju_saX > ju_saY) {
-							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*1));
+						/*if (ju_saX > ju_saY) {
+							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*size_sa));
 						}else{
-							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*1));
-						}
+							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*size_sa));
+						}*/
+						completeCount = Math.ceil(ju_distance / (this.pen.current["size"]*size_sa));
 						//completeCount = 5;
 						//console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
 						var cplarr = [];
@@ -2190,8 +2010,10 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				}
 			}
-			this.startX = offsetX;
-			this.startY = offsetY;
+			//if (!this.is_discomplete) {
+				this.startX = offsetX;
+				this.startY = offsetY;
+			//}
 			this.startPressure = offsetPressure;
 			event.preventDefault();
 		},
@@ -2204,29 +2026,29 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			if (this.is_drawing_line) {
 				this.drawshape_function_end(event,pos);
 			}
+			//選択モード
+			if (this.is_selecting) {
+				this.select_function_end(event,pos);
+				this.drawing = false;
+			}
 			if (this.drawing)  {
 				offsetX = pos.x;
 				offsetY = pos.y;
-				console.log("event.pressure=" + event.pressure);
+				//console.log("event.pressure=" + event.pressure);
 				var offsetPressure = event.pressure * 0.001;
 				//console.log("offsetPressure=" + offsetPressure);
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				//---save undo
-				this.canundo = true;
-				this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-				this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
-				this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
-				//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
-				this.undoindex = this.undohist.length-1;
-				if (this.undohist.length > this.defaults.undo.max) {
-					var o = this.undohist.shift();
-					//o.destroy();
-					o = null;
-					this.undoindex = this.undohist.length-1;
-				}
-				this.toggleUndo(true);
+				this.undo_function_end();
 				this.drawing = false;
+				this.is_discomplete = false;
+				this.discomplete_count.startx = 0;
+				this.discomplete_count.offsetx = 0;
+				this.discomplete_count.ju_sax = 0;
+				this.discomplete_count.starty = 0;
+				this.discomplete_count.offsety = 0;
+				this.discomplete_count.ju_say = 0;
 			}
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 			//document.getElementById("log3").innerHTML = event.tiltX;
@@ -2236,7 +2058,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 			this.init_scale = this.during_scale;
 			this.touchpoints = {};
 			this.is_scrolling = false;
-			console.log(this.draw_linehist);
+			//console.log(this.draw_linehist);
 			var lc = 0, hc = 0;
 			var lx = this.draw_linehist[0].x, ly = this.draw_linehist[0].y, hx = this.draw_linehist[0].x, hy = this.draw_linehist[0].y;
 			for (var i = 0; i < this.draw_linehist.length; i++) {
@@ -2286,19 +2108,7 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 				this.pen.prepare(event,this.context,offsetPressure);
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				//---save undo
-				this.canundo = true;
-				this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
-				//this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.currentLayer.prev_image));
-				this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
-				this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
-				this.undoindex = this.undohist.length-1;
-				if (this.undohist.length > this.defaults.undo.max) {
-					var o = this.undohist.shift();
-					//o.destroy();
-					o = null;
-					this.undoindex = this.undohist.length-1;
-				}
-				this.toggleUndo(true);
+				this.undo_function_end();
 			}
 			//this.drawing = false;
 			this.focusing = false;

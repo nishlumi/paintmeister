@@ -13,7 +13,10 @@
 */
 PenSet.Add({
 	id : "testbru",
-	name : "V字格子ペン",
+	name : {
+		"ja" : "V字格子ペン",
+		"en" : "V-shaped grid pen"
+	},
 	element : null,
 	parent : null,
 	setFolder : "pen",
@@ -62,7 +65,7 @@ PenSet.Add({
 		             （touch,pointer,mouseのleave, end時）筆圧 * 0.0001の値
 		             （上記以外）null
 		必要な戻り値（JSON形式で)：
-		1, pressure - 筆圧
+		1, pressure - 筆圧(0.0 ~ 1.0)
 		2, context  - キャンバスのコンテキスト
 	*/
 	prepare : function (event, context, pressure2){
@@ -76,7 +79,7 @@ PenSet.Add({
 		};
 	},
 	/*
-		touchmove, pointermove, mousemove中に発生するブラシ描画の前処理
+		touchmove, pointermove, mousemove中に発生するブラシ描画の処理
 		必要な引数：
 		parameter 1 - 現在のレイヤーのCanvasのコンテキスト(Canvas.context)
 		parameter 2 - ポインターの開始位置X(Number)
@@ -88,6 +91,7 @@ PenSet.Add({
 			canvas{width:****, height:****} - キャンバスの幅と高さ
 			lastpressure - 補正された最終的な筆圧感度
 			current - 現在選択中のペンの情報（set()で設定したparent.currentの内容）
+			keyCode - document.body.onkeydownで取得されたキーコード
 	*/
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		//---Editable begin

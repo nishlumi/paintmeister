@@ -5,7 +5,10 @@
 */
 PenSet.Add({
 	id : "oilpaint",
-	name : "油彩",
+	name : {
+		"ja":"油彩",
+		"en":"Oil paint"
+	},
 	element : null,
 	parent : null,
 	setFolder : "brush",
@@ -32,6 +35,14 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		var hairStX = 0;

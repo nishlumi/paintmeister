@@ -5,11 +5,14 @@
 */
 PenSet.Add({
 	id : "calligraphy",
-	name : "カリグラフィ",
+	name : {
+		"ja":"カリグラフィ",
+		"en":"Calligraphy"
+	},
 	element : null,
 	parent : null,
 	setFolder : "pen",
-	defaults : [8,"#000000"],
+	defaults : [12,"#000000"],
 	set : function (context,parentElement) {
 		var current = {
 			"mode":this.id,
@@ -32,6 +35,15 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		temppressure = temppressure * 0.3;
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		var hairStX = 0;

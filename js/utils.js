@@ -89,3 +89,15 @@ function setupLocale(params){
 
 	return def;
 }
+function locateMinMaxPosition(arr) {
+	var cnt = arr.length;
+	var lt = {"x":arr[0].x,"y":arr[0].y};
+	var rb = {"x":arr[0].x,"y":arr[0].y};
+	for (var i = 1; i < cnt; i++) {
+		if (arr[i].x < lt.x) lt.x = arr[i].x;
+		if (arr[i].y < lt.y) lt.y = arr[i].y;
+		if (arr[i].x > rb.x) rb.x = arr[i].x;
+		if (arr[i].y > rb.y) rb.y = arr[i].y;
+	}
+	return {"lt":lt, "rb":rb};
+}

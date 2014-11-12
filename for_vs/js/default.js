@@ -226,7 +226,7 @@ var AppStorage = {
     //---ここからストアアプリも共通
     document.addEventListener("keydown", function (event) {
         if (!onKeyope) return false;
-        //console.log(event.keyCode);
+        console.log(event.keyCode);
         if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("btn_menu").click();
@@ -266,6 +266,48 @@ var AppStorage = {
                 Draw.checkstat.click();
                 return;
             }
+        } else if (event.keyCode == "82") { // R
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_seltype_box").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "84") { // T
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_seltype_free").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "89") { // Y
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_seltype_move").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "88" && event.ctrlKey) { //Ctrl + X
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_operationtype_cut").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "67" && event.ctrlKey) { //Ctrl + C
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_operationtype_copy").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "86" && event.ctrlKey) { //Ctrl + V
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_operationtype_paste").click();
+                    return;
+                }
+            }
         } else if (event.keyCode == "48" && event.altKey) { // Alt + 0
             document.getElementById("canvaspanel").style.transform = "scale(1.0)";
             document.getElementById("info_magni").innerText = "1.0";
@@ -281,7 +323,7 @@ var AppStorage = {
         var relkey = ["81", "87"];
         //---手動筆圧イベント
         if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
-            if ((event.keyCode == "81") || (event.keyCode == "87")) {
+            if ((event.keyCode == "81") || (event.keyCode == "87")) { //--Q or W
                 Draw.keyLikePres += virtual_pressure[event.keyCode];
                 document.getElementById("pres_curline").value =
                     parseInt(document.getElementById("pres_curline").value) + virtual_pressure[event.keyCode];

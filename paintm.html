@@ -3,6 +3,8 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Cache-Control" content="no-cache">
 	<title>PaintMeister - canvas draw tool for Windows8.1 with Pressure</title>
 
 	<link rel="shortcut icon" href="images/paintm-16.ico"/>
@@ -60,32 +62,52 @@
 <br/>-->
 <br/>
 <div id="prespanel">
-	<div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
-	<div id="btn_freescroll" class="switchbutton_off" title="スクロール有効にする">&#10021;</div>
-	<div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする">&#8968;</div>
-	<div id="box_shapes">
-		<div id="chk_shapes_line" class="sidebar_radiobutton sidebar_radio_on" title="直線">/</div>
-		<div id="chk_shapes_box" class="sidebar_radiobutton sidebar_radio_off" title="四角">&#9744;</div>
-		<div id="chk_shapes_circle" class="sidebar_radiobutton sidebar_radio_off" title="丸">&#9675;</div>
-		<div id="chk_shapes_triangle" class="sidebar_radiobutton sidebar_radio_off" title="三角">&#9651;</div>
+	<div id="pres_main">
+		<div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
+		<div id="btn_freescroll" class="sidebar_button switchbutton_off" title="スクロール有効にする">&#10021;</div>
+		<div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする">&#8968;</div>
+		<div id="btn_select" class="sidebar_button switchbutton_off" title="選択操作を有効にする">&#9640;</div>
+		<div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br/>
+		<div id="box_handpres">
+			<label id="pres_label" class="pres_vallabel"><span id="presval">50</span>
+			<input type="range" id="pres_curline" min="0" max="100" step="" value="50" title="筆圧の度合い" disabled/>
+			</label>
+		</div>
 	</div>
-	<div id="chk_enable_handpres" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br/>
-	<!--<input type="checkbox" id="chk_enable_handpres" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)"/>-->
-	<label id="pres_label" class="pres_vallabel"><span id="presval">50</span>
-	<input type="range" id="pres_curline" min="0" max="100" step="" value="50" title="筆圧の度合い" disabled/>
-	</label>
+	<div id="pres_sub">
+		<div id="box_shapes">
+			<div id="chk_shapes_line" class="sidebar_radiobutton sidebar_radio_on" title="直線">/</div>
+			<div id="chk_shapes_box" class="sidebar_radiobutton sidebar_radio_off" title="四角">&#9744;</div>
+			<div id="chk_shapes_circle" class="sidebar_radiobutton sidebar_radio_off" title="丸">&#9675;</div>
+			<div id="chk_shapes_triangle" class="sidebar_radiobutton sidebar_radio_off" title="三角">&#9651;</div>
+		</div>
+		<div id="box_select">
+			-<span id="lab_seltype" title="選択の種類">type</span><br/>
+			<div id="sel_seltype_box" class="sidebar_radiobutton sidebar_radio_on" title="短形選択">&#9744;</div>
+			<div id="sel_seltype_free" class="sidebar_radiobutton sidebar_radio_off" title="自由選択">&#9729;</div>
+			<div id="sel_seltype_move" class="sidebar_radiobutton sidebar_radio_off" title="移動">&#10021;</div>
+			-<span id="lab_operationtype" title="操作の種類">&#9988;&#10063;</span><br/>
+			<div id="sel_operationtype_clip" class="button uibutton-mid flatbutton" title="クリップ領域作成">&#9626;</div>
+			<div id="sel_operationtype_copy" class="button uibutton-mid flatbutton2" title="コピー">&#10063;</div>
+			<div id="sel_operationtype_cut" class="button uibutton-mid flatbutton3" title="切り取り">&#9988;</div>
+			<div id="sel_operationtype_paste" class="button uibutton-mid flatbutton-disabled" title="貼り付け">&#9744;</div>
+			<hr>
+			<!--<div id="btn_operation_decide" class="button uibutton-mid flatbutton" title="選択操作を確定する">確定</div>
+			<div id="btn_operation_cancel" class="button uibutton-mid flatbutton2" title="選択操作を取り消す">Cancel</div>-->
+		</div>
+	</div>
 </div>
 <div id="initialsetup"><fieldset><legend id="lab_initialsetup">新規作成</legend>
 <strong id="lab_initial_canvassize">キャンバスのサイズ</strong><br/>
 <span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
 <span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
 <label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
-<button id="btn_makecanvas" class="button">作成</button>
+<button id="btn_makecanvas" class="button flatbutton">作成</button>
 </fieldset>
 <br/>
 <fieldset><legend id="lab_loadproject">プロジェクトファイルを開く</legend>
 <span id="lab_fileloc">ファイルの場所：</span><input type="file" id="fl_projpath" size="150" />
-<button id="btn_openfile" class="button">開く</button>
+<button id="btn_openfile" class="button flatbutton">開く</button>
 </fieldset>
 </div>
 <div id="basepanel" class="base-panel">
@@ -150,6 +172,11 @@
 		<label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle">表示</span></label><br/>
 		<label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度"><span id="lab_layinfo_opacity">不透明度</span></label>
 		<label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock">編集ロック</span></label><br/>
+		<label><input type="checkbox" id="layinfo_clip" class="layinfo_ui"  disabled><span id="lab_layinfo_clip">クリップ領域ON</span></label>
+		<button id="layinfo_clearclip" class="flatbutton uibutton" title="現在のレイヤーのクリップ領域を削除します" disabled>クリップ領域をクリア</button>
+		<span id="lab_layinfo_cliphistory">過去のクリップ領域: </span>
+		<select id="layinfo_cliphistory" disabled></select><img src="" id="img_clipthumb" alt="clip area" class="clipthumb"/>
+		<button id="layinfo_call_cliphist" class="flatbutton uibutton" title="選択した過去のクリップ領域を再適用します" disabled>再適用</button>
 	</div>
 </div>
 <div id="dlg_pen_mode">
@@ -235,6 +262,9 @@
 <script src="js/colorpalette.js"></script>
 <script src="js/penset.js"></script>
 <script src="js/drawmain.js"></script>
+<script src="js/main_exports.js"></script>
+<script src="js/main_layers.js"></script>
+<script src="js/main_modes.js"></script>
 <script src="js/filectrl.js"></script>
 <script src="js/paintm.js"></script>
 </body>

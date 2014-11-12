@@ -5,11 +5,14 @@
 */
 PenSet.Add({
 	id : "fudepen",
-	name : "筆ペン",
+	name : {
+		"ja":"筆ペン",
+		"en":"Ink brush pen"
+	},
 	element : null,
 	parent : null,
 	setFolder : "pen",
-	defaults : [12,"#000000"],
+	defaults : [10,"#000000"],
 	set : function (context,parentElement) {
 		var current = {
 			"mode":this.id,
@@ -32,8 +35,24 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		//---鉛筆の筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
+		temppressure = temppressure * 0.4;
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
+		var hairpressure = parentElement.lastpressure  ? parentElement.lastpressure : 1 ;
+		if (hairpressure == 0) {
+			hairpressure = 0.001;
+		}else if (hairpressure == undefined) {
+			hairpressure = 1;
+		}
 		var hairStX = 0;
 		var hairStY = 0;
 		var hairX = 0;
@@ -41,25 +60,63 @@ PenSet.Add({
 		var hairWidth = 0;
 		var hairDist = 0;
 		var hair_outblur = 0;
+		context.lineWidth = context.lineWidth * hairpressure * 2;
 		context.beginPath();
 		context.moveTo(startX, startY);
 		context.lineTo(offsetX, offsetY);
 		context.stroke();
+			console.log("startXY="+startX + ":" + startY);
+			console.log("offsetXY="+offsetX + ":" + offsetY);
 		hairStX = startX;
 		hairStY = startY;
 		hairX = offsetX;
 		hairY = offsetY;
 		hairWidth = context.lineWidth;
-		hairDist = 0.4;
+		hairDist = 0.3;
 		//---毛先は中心と、上下3つ
 		//毛先上
-		for (var i = 0; i < 3; i++) {
+		var hairheadcnt = 7 * hairpressure;
+		//---new
+		var ueStY = startY, shitaStY = startY;
+		var ueY = offsetY, shitaY = offsetY;
+		for (var i = 0; i < hairheadcnt; i++) {
 			//hairX = hairX - (this.context.lineWidth * hairDist);
-			hairY = hairY - (hairWidth * hairDist);
+			ueY = ueY - (hairWidth * hairDist*2);
+			shitaY = shitaY + (hairWidth * hairDist*2);
 			//hairStX = hairStX - (this.context.lineWidth * hairDist);
-			hairStY = hairStY - (hairWidth * hairDist);
+			ueStY = ueStY - (hairWidth * hairDist*2);
+			shitaStY = shitaStY + (hairWidth * hairDist*2);
 			hairWidth = hairWidth * (hairDist + hairDist);
-			context.lineWidth = hairWidth;
+			console.log("上:" + i);
+			console.log("calc="+(hairWidth * hairDist*2));
+			console.log(hairStX + ":" + hairStY);
+			console.log(hairX + ":" + hairY);
+			context.beginPath();
+			context.lineWidth = hairWidth * hairpressure * 2;
+			context.moveTo(hairStX,ueStY);
+			context.lineTo(hairX, ueY);
+			context.stroke();
+			context.beginPath();
+			context.lineWidth = hairWidth * hairpressure * 2;
+			context.moveTo(hairStX,shitaStY);
+			context.lineTo(hairX, shitaY);
+			context.stroke();
+		}
+		return;
+
+		//--old
+		for (var i = 0; i < hairheadcnt; i++) {
+			//hairX = hairX - (this.context.lineWidth * hairDist);
+			hairY = hairY - (hairWidth * hairDist*2);
+			//hairStX = hairStX - (this.context.lineWidth * hairDist);
+			hairStY = hairStY - (hairWidth * hairDist*2);
+			hairWidth = hairWidth * (hairDist + hairDist);
+			console.log("上:" + i);
+			console.log("calc="+(hairWidth * hairDist*2));
+			console.log(hairStX + ":" + hairStY);
+			console.log(hairX + ":" + hairY);
+			context.beginPath();
+			context.lineWidth = hairWidth * hairpressure * 2;
 			context.moveTo(hairStX,hairStY);
 			context.lineTo(hairX, hairY);
 			context.stroke();
@@ -70,13 +127,18 @@ PenSet.Add({
 		hairX = offsetX;
 		hairY = offsetY;
 		hairWidth = context.lineWidth;
-		for (var i = 0; i < 3; i++) {
+		for (var i = 0; i < hairheadcnt; i++) {
 			//hairX = hairX + (context.lineWidth * hairDist);
-			hairY = hairY + (hairWidth * hairDist * 2);
+			hairY = hairY + (hairWidth * hairDist*3*2);
 			//hairStX = hairStX + (context.lineWidth * hairDist);
-			hairStY = hairStY + (hairWidth * hairDist * 2);
+			hairStY = hairStY + (hairWidth * hairDist*3*2);
 			hairWidth = hairWidth * (hairDist + hairDist);
-			context.lineWidth = hairWidth;
+			console.log("下:" + i);
+			console.log("calc="+(hairWidth * hairDist*3*2));
+			console.log(hairStX + ":" + hairStY);
+			console.log(hairX + ":" + hairY);
+			context.beginPath();
+			context.lineWidth = hairWidth * hairpressure * 2;
 			context.moveTo(hairStX,hairStY);
 			context.lineTo(hairX, hairY);
 			context.stroke();

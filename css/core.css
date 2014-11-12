@@ -25,40 +25,6 @@
   Core UI parts, important define
 */
 
-#prespanel {
-	float : left;
-	width : 45px;
-	height : 70%;
-	margin-top:6rem; 
-	display : none;
-	background-color : #999999;
-	color : #FFFFFF;
-	position : relative;
-	overflow : hidden;
-}
-#chk_enable_handpres {
-	font-size : 120%;
-	height : 32px;
-	width : 39px;
-	padding-top : 0.5rem;
-	text-align : center;
-}
-.pres_vallabel {
-	display : none;
-}
-#presval {
-	margin-left : 5px;
-}
-#pres_curline{
-
-	/*margin-top : 75px;*/
-	margin-left : -75px;
-	padding-left : 0;
-	width : 200px;
-	height : 200px;
-	-webkit-transform : rotate(-90deg);
-	transform : rotate(-90deg);
-}
 
 .canvaspanel {
 	/*width : 100%;
@@ -103,6 +69,7 @@
 }
 
 .dummy-canvas {
+	background-color: transparent;
 	display : none;
 	position : absolute;
 }
@@ -134,16 +101,63 @@
 	background-color : #c0c8c2;
 	border : 0;
 }
+.flatbutton-disabled {
+	background-color : #c0c8c2;
+	border : 0;
+}
+.flatbutton2 {
+	background-color : #FFB99C;
+	border : 0;
+}
+.flatbutton2:active {
+	background-color : #DD977A;
+}
+.flatbutton2:disabled {
+	background-color : #AA6219;
+	border : 0;
+}
+.flatbutton-disabled2 {
+	background-color : #AA6219;
+	border : 0;
+}
+.flatbutton3 {
+	background-color:#C2CEFF;
+	border : 0;
+}
+.flatbutton3:active {
+	background-color:#90ACDD;
+}
+.flatbutton3:disabled {
+	background-color : #609ABB;
+	border : 0;
+}
+.flatbutton-disabled3 {
+	background-color : #609ABB;
+	border : 0;
+}
+
+.uibutton {
+	text-align : center;
+	/*vertical-align : middle;*/
+	height : 3rem;
+	
+}
+.uibutton-mid {
+	text-align : center;
+	padding-top : 50%;
+	font-size : 150%;
+	cursor : default;
+}
 
 .button {
 	width : 100%;
-	height : 3em;
+	height : 3rem;
 	overflow : hidden;
-	background-color : #c4fab3;
-	border : 0;
+	/*background-color : #c4fab3;
+	border : 0;*/
 }
 .button:active {
-	background-color : #91d780;
+	/*background-color : #91d780;*/
 }
 .button2 {
 	overflow : hidden;
@@ -216,6 +230,60 @@
 .brush-special:hover {
 	background-color : #C2883B;
 }
+
+/* =======================================sidebar=== */
+#prespanel {
+	float : left;
+	width : 45px;
+	height : 70%;
+	margin-top:6rem; 
+	display : none;
+	background-color : #999999;
+	color : #FFFFFF;
+	position : relative;
+	top : 0;
+	left : 0;
+	overflow : visible, hidden;
+}
+#pres_main {
+	width : 45px;
+	height : 100%;
+	display : inline-block;
+}
+#pres_sub {
+	width : 55px;
+	height : 100%;
+	position : absolute;
+	top : 0px;
+	left : 45px;
+	display : none;
+	background-color : #BBBBBB;
+	color : #353535;
+}
+#chk_enable_handpres {
+	font-size : 120%;
+	height : 32px;
+	width : 39px;
+	padding-top : 0.5rem;
+	text-align : center;
+}
+#box_handpres {
+	display : none;
+}
+#presval {
+	margin-left : 5px;
+}
+#pres_curline{
+
+	/*margin-top : 75px;*/
+	margin-left : -75px;
+	padding-left : 0;
+	width : 200px;
+	height : 200px;
+	-webkit-transform : rotate(-90deg);
+	transform : rotate(-90deg);
+}
+
 .switchbutton_off {
 	border : 3px outset #AFAFAF;
 	background-color : #848484;
@@ -241,7 +309,11 @@
 	text-align : center;
 }
 #box_shapes {
-	padding-left:0.3rem;
+	padding-left:0.0rem;
+	display : none;
+}
+#box_select {
+	padding-left:0.0rem;
 	display : none;
 }
 .sidebar_radiobutton {
@@ -250,9 +322,12 @@
 	font-size : 120%;
 	text-align : center;
 	padding-top : 0.5rem;
-	margin : 10px 5px 10px 5px; 
-	border 3px inset #188643;
-	/*color : #188643;
+	margin-top : 10px; 
+	margin-bottom : 10px;
+	margin-left : auto;
+	margin-right : auto;
+	/*border : 3px inset #188643;
+	color : #188643;
 	background-color : #FFFFFF;*/
 	border-radius : 15px 15px 15px 15px;
 	cursor : default;
@@ -274,6 +349,7 @@
 }*/
 
 
+/* ======================================panel=== */
 #ctrlpanel {
 	display : none;
 	margin-top : 0px;
@@ -443,7 +519,21 @@
 	float : left;
 	background-color : #D8DDF6
 }
-
+#lab_layinfo_cliphistory {
+	margin-left : 1rem;
+}
+#layinfo_cliphistory {
+	width  : 5.5rem;
+	height : 3.5rem;
+	font-size : 150%;
+}
+img.clipthumb {
+	width : 3rem;
+	height : 3rem;
+	background-color : #FFFFFF;
+	border : 0;
+	vertical-align : middle;
+}
 #dlg_pen_mode {
 	display : none;
 	width : 50%;

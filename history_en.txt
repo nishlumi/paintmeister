@@ -2,8 +2,9 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
-PaintMeister (1.0.39.73)
+PaintMeister (1.0.40.73)
 **Add the mode to select.(select some area, can do following operation: copy, cut, make clip area.)
+**Add to clip the canvas.(instead of mask. And it save 10 old clip areas.)
 **Change the Side bar to 2 columns and move the option buttons to right column.
 *(WebApp)Add a message to confirm, when to close a browser or to push return button.
 *Adjust greatly function of Ink brush pen.
@@ -13,9 +14,9 @@ PaintMeister (1.0.39.73)
 *Fix that a button on the sidebar was turned on even after to press the New button.
 *Fix that can not display the translation of the brush Fill correctly.
 -- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2014/11/09 17:00
-ChromeApps		- 
-Store app		- 
+WebApp			- 2014/11/12 0:00
+ChromeApps		- 2014/11/13 0:00
+Store app		- 2014/11/13 0:00
 
 
 PaintMeister (1.0.37.66)

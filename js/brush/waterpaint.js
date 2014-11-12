@@ -5,7 +5,10 @@
 */
 PenSet.Add({
 	id : "waterpaint",
-	name : "水彩",
+	name : {
+		"ja":"水彩",
+		"en":"Water paint"
+	},
 	element : null,
 	parent : null,
 	setFolder : "brush",
@@ -33,6 +36,16 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		//---水彩の筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
+		temppressure = temppressure * 0.8;
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.lineWidth = parentElement.current["size"];

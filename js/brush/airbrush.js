@@ -5,7 +5,10 @@
 */
 PenSet.Add({
 	id : "airbrush",
-	name : "エアブラシ",
+	name : {
+		"ja" :"エアブラシ",
+		"en" :"Air brush"
+	},
 	element : null,
 	parent : null,
 	setFolder : "brush",
@@ -32,6 +35,16 @@ PenSet.Add({
 		return current;
 	},
 	prepare : function (event, context, pressure2){
+		var tempcontext = context;
+		var temppressure = pressure2;
+		//---Editable begin
+		//---エアブラシの筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
+		temppressure = temppressure * 0.5;
+		//---Editable end
+		return {
+			"pressure" : temppressure,
+			"context" : tempcontext
+		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.lineWidth = parentElement.current["size"];

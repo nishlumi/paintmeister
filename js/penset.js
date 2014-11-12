@@ -80,7 +80,7 @@ function call_parentEvent(removeLabel) {
 			context.shadowBlur = 0;
 			context.lineCap = "round";
 			
-			this.updateInfo(_T("brush_fill"),context.lineWidth);
+			this.updateInfo(_T("brush_fillpen"),context.lineWidth);
 			this.sizebar.value = this.current["size"];
 			this.pentype = PenType.fill;
 		},
@@ -139,10 +139,10 @@ function call_parentEvent(removeLabel) {
 				}else{
 					context.lineWidth = (this.sizebar.value * pres) * 2 + (pres * 0.5);
 				}
-				//console.log(context.lineWidth);
 				this.lastpressure = pres;
 				//document.getElementById("log").innerHTML = "pressure off:" + this.lastpressure;
 			}
+			//console.log("this.lastpressure="+this.lastpressure);
 			this.parent.elementParameter["lastpressure"] = this.lastpressure;
 			if (this.current["mode"] in this.items) {
 				var retobj = this.items[this.current["mode"]].prepare(event, context, this.parent.elementParameter["lastpressure"]);
@@ -158,8 +158,15 @@ function call_parentEvent(removeLabel) {
 					}
 				}
 			}
+			//console.log("pres="+pres);
+			//console.log(this.parent.elementParameter["lastpressure"]);
 		},
 		drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
+			if (this.parent.discomplete_count.cnt > 0) {
+				this.parent.discomplete_count.cnt--;
+				return;
+			}
+			
 			var hairStX = 0;
 			var hairStY = 0;
 			var hairX = 0;
@@ -170,16 +177,19 @@ function call_parentEvent(removeLabel) {
 			if (this.current["mode"] == "fillpen" && this.current["pentype"] == PenType.fill){
 				context.fillRect(0,0,parentElement["canvas"].width,parentElement["canvas"].height);
 			}else{
-				if (this.current["mode"] in this.items) {
-					this.items[this.current["mode"]].drawMain(context,startX,startY,offsetX,offsetY,event,parentElement);
-				}else{
-					context.beginPath();
-					context.moveTo(startX, startY);
-					context.lineTo(offsetX, offsetY);
-					context.stroke();
+				try {
+					if (this.current["mode"] in this.items) {
+						this.items[this.current["mode"]].drawMain(context,startX,startY,offsetX,offsetY,event,parentElement);
+					}else{
+						context.beginPath();
+						context.moveTo(startX, startY);
+						context.lineTo(offsetX, offsetY);
+						context.stroke();
+					}
+				}catch(e){
 				}
 			}
-			context.closePath();
+			//context.closePath();
 		},
 		hiddenMenu : function (evt){
 			document.getElementById("menupanel").style.display = "none";
