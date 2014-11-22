@@ -2,6 +2,20 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.40.80)
+*Adjust correction of brush(Lines of brush will be smooth: Pencil, Pen, Neon-pen, Ink brush pen and Calligraphy)
+*Improved Air brush, Watercolor paint
+*Fix that do not show preview when past clip-area is one.
+*Fix that name of button to operate layer was not changed, when user changed layer name.
+*Fix misspeling of English translation
+*It give priority to English for brush name.(If specified locale not exists, use English by default)
+*(WebApp)Add new locale: Esperanto
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/11/22 12:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.40.73)
 **Add the mode to select.(select some area, can do following operation: copy, cut, make clip area.)
 **Add to clip the canvas.(instead of mask. And it save 10 old clip areas.)
