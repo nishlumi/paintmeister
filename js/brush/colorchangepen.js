@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "colorchangepen",
 	name : {
 		"ja":"色替え",
-		"en":"Color change"
+		"en":"Color change",
+		"eo":"Kolorŝanĝo"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":"#000000",
 			"pressure":false,
-			"complete":false
+			"complete":false,
+			"delay" : 0,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-atop";
 		context.globalAlpha = 1.0;
@@ -46,8 +49,13 @@ PenSet.Add({
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.beginPath();
-		context.moveTo(startX, startY);
-		context.lineTo(offsetX, offsetY);
+		if (parentElement["pointHistory"] && parentElement["pointHistory"].length == 0) {
+			context.moveTo(startX, startY);
+			context.lineTo(offsetX, offsetY);
+		}else{
+			context.moveTo(parentElement["pointHistory"][0].x, parentElement["pointHistory"][0].y);
+			context.quadraticCurveTo(startX, startY, offsetX, offsetY);
+		}
 		context.stroke();
 	},
 	initialize : function(parentelement,ownelement){

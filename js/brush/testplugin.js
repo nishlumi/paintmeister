@@ -15,7 +15,8 @@ PenSet.Add({
 	id : "testbru",
 	name : {
 		"ja" : "V字格子ペン",
-		"en" : "V-shaped grid pen"
+		"en" : "V-shaped grid pen",
+		"eo" : "V-forma krada plumo"
 	},
 	element : null,
 	parent : null,
@@ -34,6 +35,8 @@ PenSet.Add({
 			color - 現在のブラシの色
 			pressure - 筆圧を使うかどうか
 			complete - 描画の自動補正処理を使うかどうか
+			delay - 描画を何サブパス分遅延させるか
+			delay_assist - 遅延させつつ、補助的に描画を進めるかどうか
 
 	*/
 	set : function (context,parentElement) {
@@ -43,7 +46,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":this.parent.colorpicker.value,
 			"pressure":true,
-			"complete":true
+			"complete":true,
+			"delay" : 0,
+			"delay_assist" : false
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -92,6 +97,7 @@ PenSet.Add({
 			lastpressure - 補正された最終的な筆圧感度
 			current - 現在選択中のペンの情報（set()で設定したparent.currentの内容）
 			keyCode - document.body.onkeydownで取得されたキーコード
+			pointHistory- 過去の描画位置（サブパス）（delayで指定した数だけ保持）
 	*/
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		//---Editable begin

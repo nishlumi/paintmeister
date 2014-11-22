@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "airbrush",
 	name : {
 		"ja" :"エアブラシ",
-		"en" :"Air brush"
+		"en" :"Air brush",
+		"eo" :"Aerbroso"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":true,
-			"complete":true
+			"complete":true,
+			"delay" : 0,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -65,59 +68,46 @@ PenSet.Add({
 		var shadowarr = [];
 		var compoarr = [];
 		var caparr = [];
-		//---テスト的にエアブラシの毛先は5点+全体を覆う1点とする
+        var Xdir = -1, Ydir = -1;
+        if (startX > offsetX) {
+            Xdir = 1;
+        } else if (startX == offsetX) {
+            Xdir = 0;
+        }
+        if (startY > offsetY) {
+            Ydir = 1;
+        } else if (startY == offsetY) {
+            Ydir = 0;
+        }
 		
-		compoarr.push("source-over");
-		StXarr.push(startX);
-		StYarr.push(startY);
-		Xarr.push(offsetX);
-		Yarr.push(offsetY);
-		alparr.push(0.05 * hairpressure * 2);
-		widarr.push(parentElement.current["size"]*1.0);
-		shadowarr.push(0);
-		caparr.push("round");
-		
-		compoarr.push("source-over");
-		StXarr.push(startX);
-		StYarr.push(startY);
-		Xarr.push(offsetX);
-		Yarr.push(offsetY);
-		alparr.push(0.08 * hairpressure * 2);
-		widarr.push(parentElement.current["size"]*0.5);
-		shadowarr.push(0);
-		caparr.push("round");
-		
-		compoarr.push("source-over");
-		StXarr.push(startX);
-		StYarr.push(startY);
-		Xarr.push(offsetX);
-		Yarr.push(offsetY);
-		alparr.push(0.065 * hairpressure * 2);
-		widarr.push(parentElement.current["size"]*0.8);
-		shadowarr.push(0);
-		caparr.push("round");
-		
-		compoarr.push("source-over");
-		StXarr.push(startX);
-		StYarr.push(startY);
-		Xarr.push(offsetX);
-		Yarr.push(offsetY);
-		alparr.push(0.07 * hairpressure * 2);
-		widarr.push(parentElement.current["size"]*1.2);
-		shadowarr.push(0);
-		caparr.push("butt");
-		
-		for (var i = 0; i < StXarr.length; i++) {
-			context.globalCompositeOperation = compoarr[i];
-			context.globalAlpha = alparr[i];
-			context.lineCap = caparr[i];
-			context.lineWidth = widarr[i];
-			context.shadowBlur = shadowarr[i];
+		//---new
+		context.globalCompositeOperation = "";
+		context.globalAlpha = 0.08 * hairpressure * 1;
+		context.lineCap = "round";
+		if (hairpressure < 0.5) {
+			context.lineWidth = parentElement.current["size"] * (hairpressure * 6);
+		}else{
+			context.lineWidth = parentElement.current["size"] * (hairpressure * 2);
+		}
+		context.shadowOffsetX = 5 * Xdir;
+		context.shadowOffsetY = 5 * Ydir;
+		context.shadowBlur = 1;
+		context.beginPath();
+		context.moveTo(startX, startY);
+		context.lineTo(offsetX, offsetY);
+		context.stroke();
+		//---エアブラシ中身
+		context.globalAlpha = 0.015 * hairpressure * 1;
+		context.shadowBlur = 0;
+		context.lineCap = "butt";
+		for (var i = 0; i < 4; i++) {
+			context.lineWidth *= 0.7;
 			context.beginPath();
-			context.moveTo(StXarr[i], StYarr[i]);
-			context.lineTo(Xarr[i], Yarr[i]);
+			context.moveTo(startX, startY);
+			context.lineTo(offsetX, offsetY);
 			context.stroke();
 		}
+		
 		context.globalAlpha = bakalp;
 	},
 	initialize : function(parentelement,ownelement){

@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "fudepen",
 	name : {
 		"ja":"筆ペン",
-		"en":"Ink brush pen"
+		"en":"Ink brush pen",
+		"eo":"Inkbrosa plumo"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parent.colorpicker.value,
 			"pressure":true,
-			"complete":true
+			"complete":true,
+			"delay" : 1,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -77,12 +80,23 @@ PenSet.Add({
 		//毛先上
 		var hairheadcnt = 7 * hairpressure;
 		//---new
+		var ueCPY = 0, shitaCPY = 0;
+		var hairCPX = 0;
+		if (parentElement["pointHistory"].length > 0) {
+			hairCPX = parentElement["pointHistory"][0].x;
+			ueCPY = parentElement["pointHistory"][0].y;
+			shitaCPY = parentElement["pointHistory"][0].y;
+		}
 		var ueStY = startY, shitaStY = startY;
 		var ueY = offsetY, shitaY = offsetY;
 		for (var i = 0; i < hairheadcnt; i++) {
 			//hairX = hairX - (this.context.lineWidth * hairDist);
+			ueCPY = ueCPY - (hairWidth * hairDist*2);
+			shitaCPY = shitaCPY + (hairWidth * hairDist*2);
+			//---
 			ueY = ueY - (hairWidth * hairDist*2);
 			shitaY = shitaY + (hairWidth * hairDist*2);
+			//---
 			//hairStX = hairStX - (this.context.lineWidth * hairDist);
 			ueStY = ueStY - (hairWidth * hairDist*2);
 			shitaStY = shitaStY + (hairWidth * hairDist*2);
@@ -92,14 +106,25 @@ PenSet.Add({
 			console.log(hairStX + ":" + hairStY);
 			console.log(hairX + ":" + hairY);
 			context.beginPath();
-			context.lineWidth = hairWidth * hairpressure * 2;
-			context.moveTo(hairStX,ueStY);
-			context.lineTo(hairX, ueY);
-			context.stroke();
-			context.beginPath();
-			context.lineWidth = hairWidth * hairpressure * 2;
-			context.moveTo(hairStX,shitaStY);
-			context.lineTo(hairX, shitaY);
+			if (parentElement["pointHistory"].length == 0) {
+				context.lineWidth = hairWidth * hairpressure * 2;
+				context.moveTo(hairStX,ueStY);
+				context.lineTo(hairX, ueY);
+				context.stroke();
+				context.beginPath();
+				context.lineWidth = hairWidth * hairpressure * 2;
+				context.moveTo(hairStX,shitaStY);
+				context.lineTo(hairX, shitaY);
+			}else{
+				context.lineWidth = hairWidth * hairpressure * 2;
+				context.moveTo(hairCPX,ueCPY);
+				context.quadraticCurveTo(hairStX,ueStY, hairX, ueY);
+				context.stroke();
+				context.beginPath();
+				context.lineWidth = hairWidth * hairpressure * 2;
+				context.moveTo(hairCPX,shitaCPY);
+				context.quadraticCurveTo(hairStX,shitaStY, hairX, shitaY);
+			}
 			context.stroke();
 		}
 		return;

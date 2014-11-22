@@ -477,6 +477,9 @@ Draw["drawshape_function_end"] = function (event, pos) {
 	var is_executedraw = false;
 	var decidepos = [];
 	var temppres = 0.5;
+	this.elementParameter["current"] = this.pen.current;
+	this.elementParameter["keyCode"] = this.pressedKey;
+	this.elementParameter["pointHistory"] = [];
 	//if (event.shiftKey) {
 	if ((this.drawpoints.length > 0)) { //マウス・ペン
 		/*if (this.drawpoints.length < 2) {

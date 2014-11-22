@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.40.73";
+var appversion = "1.0.40.80";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -338,6 +338,11 @@ var Selectors = function(){
 			"ju_say" : 0
 		},
 		is_discomplete : false,
+		delay : {
+			flag : false,
+			count : 0,
+			poshist : []
+		},
 		selectors : null,
 		cliphist : [],
 		
@@ -529,6 +534,7 @@ var Selectors = function(){
 			document.getElementById("layinfo_name").addEventListener("change", function(event) {
 				var val = event.target.value;
 				Draw.getSelectedLayer().title = val;
+				document.getElementById("info_layer").textContent = val;
 			},false);
 			document.getElementById("layinfo_name").addEventListener("keydown", function(event) {
 				event.stopPropagation();
@@ -551,7 +557,9 @@ var Selectors = function(){
 				document.getElementById("layinfo_clearclip").disabled = "disabled";
 			},false);
 			document.getElementById("layinfo_call_cliphist").addEventListener("click", function(event) {
-				console.log(parseInt($("#layinfo_cliphistory").val()));
+				var val = parseInt($("#layinfo_cliphistory").val());
+				console.log(val);
+				if (isNaN(val)) return;
 				var o = Draw.getCliphist(parseInt($("#layinfo_cliphistory").val()));
 				console.log(o);
 				Draw.currentLayer.ClearClip(true);
@@ -562,8 +570,13 @@ var Selectors = function(){
 				document.getElementById("layinfo_clearclip").disabled = "";
 			},false);
 			document.getElementById("layinfo_cliphistory").addEventListener("change", function(event) {
-				var o = Draw.getCliphist(parseInt($("#layinfo_cliphistory").val()));
-				document.getElementById("img_clipthumb").src = o.curfrom;
+				var val = parseInt($("#layinfo_cliphistory").val());
+				if (isNaN(val)) {
+					document.getElementById("img_clipthumb").src = "";
+				}else{
+					var o = Draw.getCliphist(val);
+					document.getElementById("img_clipthumb").src = o.curfrom;
+				}
 			},false);
 			//---サイドバー関係-==============================================================
 			//---スポイトツールボタン
@@ -1258,8 +1271,8 @@ var Selectors = function(){
 			//---メインのキャンバスだけは直接クリアのみ
 			Draw.context.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 			Draw.layer[0].setup_other();
-			Draw.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
-			Draw.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			Draw.opecontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
+			Draw.opeselcontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
 			/*for (var i = 0; i < Draw.undohist.length; i++) {
 				delete Draw.undohist[i];
 			}*/
@@ -1715,6 +1728,7 @@ var Selectors = function(){
 			}
 			this.elementParameter["current"] = this.pen.current;
 			this.elementParameter["keyCode"] = this.pressedKey;
+			this.elementParameter["pointHistory"] = [];
 			if (this.pen.current["pentype"] == PenType.fill) {
 				this.pen.drawMain(this.context,this.startX,this.startY,1,1,event,this.elementParameter);
 				this.drawing = false;
@@ -1730,6 +1744,7 @@ var Selectors = function(){
 				}else{
 					this.pen.prepare(event,this.context,null);
 					this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+					//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
 				}
 			}
 		},
@@ -1866,7 +1881,7 @@ var Selectors = function(){
 				console.log("saPres=" + saPres);
 				console.log("size_sa=" + size_sa);*/
 				//--距離が3以下の場合は意図的にパス（点）を減らして線の感知を少しだけ鈍らせて補正する
-				if (this.is_discomplete) {
+				/*if (this.is_discomplete) {
 					//if (this.discomplete_count.cnt <= 0) {
 						this.is_discomplete = false;
 					//}
@@ -1887,7 +1902,7 @@ var Selectors = function(){
 					this.discomplete_count.offsety = 0;
 					this.discomplete_count.ju_say = 0;
 				}else{
-					if ((1.0 <= ju_saX <= 2.0) && (ju_saY == 0)){
+					if ((1.0 <= ju_saX <= 2.0) && (ju_saY <= 1.0)){
 						if (!this.is_discomplete && (this.discomplete_count.dir != "x")) {
 							this.discomplete_count.cnt = 1;
 							this.discomplete_count.dir = "x";
@@ -1899,7 +1914,7 @@ var Selectors = function(){
 							this.discomplete_count.offsety = offsetY;
 							this.discomplete_count.ju_say = ju_saY;
 						}
-					}else if ((1.0 <= ju_saY <= 2.0) && (ju_saX == 0)) {
+					}else if ((1.0 <= ju_saY <= 2.0) && (ju_saX <= 1.0)) {
 						if (!this.is_discomplete && (this.discomplete_count.dir != "y")) {
 							this.discomplete_count.cnt = 1;
 							this.discomplete_count.dir = "y";
@@ -1912,103 +1927,140 @@ var Selectors = function(){
 							this.discomplete_count.ju_say = ju_saY;
 						}
 					}
+				}*/
+				if (this.delay.flag) {
+					if (this.delay.count < 1) {
+						this.elementParameter["pointHistory"] = [];
+						//console.log("---" + this.delay.count + "nd delay.");
+						for (var i = 0; i < this.delay.poshist.length; i++) {
+							//console.log("delay position=" + this.delay.poshist[i].x + "x" + this.delay.poshist[i].y);
+							this.elementParameter["pointHistory"].push(this.delay.poshist[i]);
+						}
+						//---コピーしたら消す
+						this.delay.poshist.splice(0,this.delay.poshist.length);
+						this.delay.flag = false;
+						this.delay.count = 0;
+					}
+				}else{
+					if (this.pen.current["delay"] > 0) {
+						this.delay.flag = true;
+						//console.log("---1st delay start");
+						this.delay.count = this.pen.current["delay"];
+						//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
+					}
 				}
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
 				if (this.pen.current["complete"]) {
-					if ((!this.is_discomplete) && (ju_distance > size_sa)) {
-					//if ((ju_saX > this.pen.current["size"]*size_sa) || (ju_saY > this.pen.current["size"]*size_sa)){
-						//---補完算出開始
-						var completeCount = 0;
-						/*if (ju_saX > ju_saY) {
-							completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*size_sa));
-						}else{
-							completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*size_sa));
-						}*/
-						completeCount = Math.ceil(ju_distance / (this.pen.current["size"]*size_sa));
-						//completeCount = 5;
-						//console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
-						var cplarr = [];
-						var prevpos = {"x":this.startX,"y":this.startY};
-						var prevpres = this.startPressure;
-						for (var c = 0; c < completeCount; c++) {
-							var bigsa;
-							var littlesa;
-							var bigpoint;
-							var littlepoint;
-							var isbigX = false;
-							var pos = {"x":0,"y":0};
-							var keisu = 0;
-							var movepoint = 0;
-							var tempPressure = 0;
-							
-							pos.x = prevpos.x + (ju_saX / completeCount * pmX);
-							pos.y = prevpos.y + (ju_saY / completeCount * pmY);
-							tempPressure = prevpres + (ju_saPres / (completeCount*2) * pmPres);
+					if ((!this.delay.flag)){
+						if (  (ju_distance > size_sa)) {
+						//if ((!this.is_discomplete) && (ju_distance > size_sa)) {
+						//if ((ju_saX > this.pen.current["size"]*size_sa) || (ju_saY > this.pen.current["size"]*size_sa)){
+							//---補完算出開始
+							var completeCount = 0;
 							/*if (ju_saX > ju_saY) {
-								bigsa = ju_saX;
-								littlesa = ju_saY;
-								bigpoint = prevpos.x;
-								littlepoint = prevpos.y;
-								isbigX = true;
-								
-								pos.x = prevpos.x + (this.pen.current["size"]/4 * pmX);
-								keisu = pos.x / prevpos.x;
-								movepoint = ju_saY / completeCount; //littlesa - (littlesa * keisu);
-								pos.y = prevpos.y + (movepoint * pmY);
+								completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*size_sa));
 							}else{
-								bigsa = ju_saY;
-								littlesa = ju_saX;
-								bigpoint = prevpos.x;
-								littlepoint = prevpos.y;
-								isbigX = false;
-								
-								pos.y = prevpos.y + (this.pen.current["size"]/4 * pmY);
-								keisu = pos.y / prevpos.y;
-								movepoint = ju_saX / completeCount; //littlesa - (littlesa * keisu);
-								pos.x = prevpos.x + (movepoint * pmX);
+								completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*size_sa));
 							}*/
-							/*console.log("prevpos=" + prevpos.x + "x" + prevpos.y);
-							console.log("<>pos=" + pos.x + "x" + pos.y);
-							console.log("keisu=" + keisu);*/
-							//if (c == completeCount-1) {
-								if ((saX > 0) && (pos.x > offsetX)) pos.x = offsetX;
-								if ((saX < 0) && (pos.x < offsetX)) pos.x = offsetX;
-								if ((saY > 0) && (pos.y > offsetY)) pos.y = offsetY;
-								if ((saY < 0) && (pos.y < offsetY)) pos.y = offsetY;
+							completeCount = Math.ceil(ju_distance / (this.pen.current["size"]*size_sa));
+							//completeCount = 5;
+							//console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
+							var cplarr = [];
+							var prevpos = {"x":this.startX,"y":this.startY};
+							var prevpres = this.startPressure;
+							for (var c = 0; c < completeCount; c++) {
+								var bigsa;
+								var littlesa;
+								var bigpoint;
+								var littlepoint;
+								var isbigX = false;
+								var pos = {"x":0,"y":0};
+								var keisu = 0;
+								var movepoint = 0;
+								var tempPressure = 0;
+								
+								pos.x = prevpos.x + (ju_saX / completeCount * pmX);
+								pos.y = prevpos.y + (ju_saY / completeCount * pmY);
+								tempPressure = prevpres + (ju_saPres / (completeCount*2) * pmPres);
+								/*if (ju_saX > ju_saY) {
+									bigsa = ju_saX;
+									littlesa = ju_saY;
+									bigpoint = prevpos.x;
+									littlepoint = prevpos.y;
+									isbigX = true;
+									
+									pos.x = prevpos.x + (this.pen.current["size"]/4 * pmX);
+									keisu = pos.x / prevpos.x;
+									movepoint = ju_saY / completeCount; //littlesa - (littlesa * keisu);
+									pos.y = prevpos.y + (movepoint * pmY);
+								}else{
+									bigsa = ju_saY;
+									littlesa = ju_saX;
+									bigpoint = prevpos.x;
+									littlepoint = prevpos.y;
+									isbigX = false;
+									
+									pos.y = prevpos.y + (this.pen.current["size"]/4 * pmY);
+									keisu = pos.y / prevpos.y;
+									movepoint = ju_saX / completeCount; //littlesa - (littlesa * keisu);
+									pos.x = prevpos.x + (movepoint * pmX);
+								}*/
+								/*console.log("prevpos=" + prevpos.x + "x" + prevpos.y);
+								console.log("<>pos=" + pos.x + "x" + pos.y);
+								console.log("keisu=" + keisu);*/
+								//if (c == completeCount-1) {
+									if ((saX > 0) && (pos.x > offsetX)) pos.x = offsetX;
+									if ((saX < 0) && (pos.x < offsetX)) pos.x = offsetX;
+									if ((saY > 0) && (pos.y > offsetY)) pos.y = offsetY;
+									if ((saY < 0) && (pos.y < offsetY)) pos.y = offsetY;
+								//}
+								//cplarr.push(pos);
+								
+								//pen pressure calc
+								//console.log("tempPressure=" + tempPressure);
+								this.pen.prepare(event,this.context,tempPressure);
+								this.pen.drawMain(this.context,
+									prevpos.x,prevpos.y,
+									pos.x,pos.y,
+									event,this.elementParameter
+								);
+								console.log("draw: assist");
+								/*console.log("no." + c + ":" + 
+									Math.round(prevpos.x) + "x" + Math.round(prevpos.y) + 
+									" -> " + Math.round(pos.x) + "x" + Math.round(pos.y));
+									*/
+								prevpos = pos;
+								prevpres = tempPressure;
+							}
+							//if ((prevpos.x != offsetX || prevpos.y != offsetY)) {
+							/*	this.pen.drawMain(this.context,
+									prevpos.x,prevpos.y,
+									offsetX,offsetY
+								);*/
 							//}
-							//cplarr.push(pos);
-							
+						}else{
 							//pen pressure calc
-							//console.log("tempPressure=" + tempPressure);
-							this.pen.prepare(event,this.context,tempPressure);
-							this.pen.drawMain(this.context,
-								prevpos.x,prevpos.y,
-								pos.x,pos.y,
-								event,this.elementParameter
-							);
-							/*console.log("no." + c + ":" + 
-								Math.round(prevpos.x) + "x" + Math.round(prevpos.y) + 
-								" -> " + Math.round(pos.x) + "x" + Math.round(pos.y));
-								*/
-							prevpos = pos;
-							prevpres = tempPressure;
+							this.pen.prepare(event,this.context,null);
+							this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+							//console.log("draw: no assist");
 						}
-						//if ((prevpos.x != offsetX || prevpos.y != offsetY)) {
-						/*	this.pen.drawMain(this.context,
-								prevpos.x,prevpos.y,
-								offsetX,offsetY
-							);*/
-						//}
 					}else{
-						//pen pressure calc
-						this.pen.prepare(event,this.context,null);
-						this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+						if (this.pen.current.delay_assist == true) {
+							this.pen.prepare(event,this.context,null);
+							this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+						}
 					}
 				}else{
 					//pen pressure calc
 					this.pen.prepare(event,this.context,null);
 					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+					//console.log("draw: normal");
 				}
+			}
+			if (this.delay.count > 0) {
+				this.delay.count--;
+				this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
+				//console.log("delay push="+this.delay.poshist.length);
 			}
 			//if (!this.is_discomplete) {
 				this.startX = offsetX;
@@ -2049,6 +2101,10 @@ var Selectors = function(){
 				this.discomplete_count.starty = 0;
 				this.discomplete_count.offsety = 0;
 				this.discomplete_count.ju_say = 0;
+				this.delay.poshist.splice(0,this.delay.poshist.length);
+				this.delay.flag = false;
+				this.delay.count = 0;
+				
 			}
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 			//document.getElementById("log3").innerHTML = event.tiltX;
@@ -2109,6 +2165,9 @@ var Selectors = function(){
 				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 				//---save undo
 				this.undo_function_end();
+				this.delay.poshist.splice(0,this.delay.poshist.length);
+				this.delay.flag = false;
+				this.delay.count = 0;
 			}
 			//this.drawing = false;
 			this.focusing = false;

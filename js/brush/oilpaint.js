@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "oilpaint",
 	name : {
 		"ja":"油彩",
-		"en":"Oil paint"
+		"en":"Oil paint",
+		"eo":"Oleopentrado"
 	},
 	element : null,
 	parent : null,

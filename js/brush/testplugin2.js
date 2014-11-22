@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "testbru2",
 	name : {
 		"ja":"草ペン",
-		"en":"Glass pen"
+		"en":"Grass pen",
+		"eo":"Herbema plumo"
 	},
 	element : null,
 	parentElement : null,

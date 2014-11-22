@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta http-equiv="Pragma" content="no-cache">
 	<meta http-equiv="Cache-Control" content="no-cache">
+	<meta http-equiv="Expires" content="0">
 	<title>PaintMeister - canvas draw tool for Windows8.1 with Pressure</title>
 
 	<link rel="shortcut icon" href="images/paintm-16.ico"/>
@@ -175,7 +176,7 @@
 		<label><input type="checkbox" id="layinfo_clip" class="layinfo_ui"  disabled><span id="lab_layinfo_clip">クリップ領域ON</span></label>
 		<button id="layinfo_clearclip" class="flatbutton uibutton" title="現在のレイヤーのクリップ領域を削除します" disabled>クリップ領域をクリア</button>
 		<span id="lab_layinfo_cliphistory">過去のクリップ領域: </span>
-		<select id="layinfo_cliphistory" disabled></select><img src="" id="img_clipthumb" alt="clip area" class="clipthumb"/>
+		<select id="layinfo_cliphistory" disabled><option value="">---</option></select><img src="" id="img_clipthumb" alt="clip area" class="clipthumb"/>
 		<button id="layinfo_call_cliphist" class="flatbutton uibutton" title="選択した過去のクリップ領域を再適用します" disabled>再適用</button>
 	</div>
 </div>
@@ -267,5 +268,7 @@
 <script src="js/main_modes.js"></script>
 <script src="js/filectrl.js"></script>
 <script src="js/paintm.js"></script>
+
+
 </body>
 </html>

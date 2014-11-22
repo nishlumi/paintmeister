@@ -475,7 +475,7 @@ var PluginManager = {
 				def.resolve(true);
 			}
 			return def;
-		})
+		});
 		console.log(window.innerWidth + "/" + window.innerHeight);
 	},false);
 })();

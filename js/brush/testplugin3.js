@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "testbru3",
 	name : {
 		"ja":"色替え+ぼかし",
-		"en":"Color change + Blur"
+		"en":"Color change + Blur",
+		"eo":"Kolorŝanĝo + Nebuli
 	},
 	element : null,
 	parent : null,

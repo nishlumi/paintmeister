@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "neonpen",
 	name : {
 		"ja":"ネオンペン",
-		"en":"Neon pen"
+		"en":"Neon pen",
+		"eo":"Neonplumo"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,8 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":true,
-			"complete":true
+			"complete":true,
+			"delay" : 1
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 0.85;
@@ -46,8 +48,13 @@ PenSet.Add({
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.beginPath();
-		context.moveTo(startX, startY);
-		context.lineTo(offsetX, offsetY);
+		if (parentElement["pointHistory"].length == 0) {
+			context.moveTo(startX, startY);
+			context.lineTo(offsetX, offsetY);
+		}else{
+			context.moveTo(parentElement["pointHistory"][0].x, parentElement["pointHistory"][0].y);
+			context.quadraticCurveTo(startX, startY, offsetX, offsetY);
+		}
 		context.stroke();
 	},
 	initialize : function(parentelement,ownelement){

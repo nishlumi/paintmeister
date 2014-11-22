@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "directpaint",
 	name : {
 		"ja":"ベタ塗り",
-		"en":"Solid paint"
+		"en":"Solid paint",
+		"eo":"Solida plenigo"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":false,
-			"complete":false
+			"complete":false,
+			"delay" : 1,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -46,8 +49,13 @@ PenSet.Add({
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		context.beginPath();
-		context.moveTo(startX, startY);
-		context.lineTo(offsetX, offsetY);
+		if (parentElement["pointHistory"] && parentElement["pointHistory"].length == 0) {
+			context.moveTo(startX, startY);
+			context.lineTo(offsetX, offsetY);
+		}else{
+			context.moveTo(parentElement["pointHistory"][0].x, parentElement["pointHistory"][0].y);
+			context.quadraticCurveTo(startX, startY, offsetX, offsetY);
+		}
 		context.stroke();
 	},
 	initialize : function(parentelement,ownelement){

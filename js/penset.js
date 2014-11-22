@@ -228,11 +228,25 @@ function call_parentEvent(removeLabel) {
 				this.defaults[item.id] = item.defaults;
 				//プラグインブラシの画面要素生成
 				var li = document.createElement("div");
-				li.id = item.id;
-				li.title = item.name[curLocale.name];
 				var img = document.createElement("img");
+				var span = document.createElement("span");
+				li.id = item.id;
 				img.id = "img_" + item.id;
-				img.title = item.name[curLocale.name];
+				span.id = "sp_" + item.id;
+				if (item.name[curLocale.name]) {
+					li.title = item.name[curLocale.name];
+					img.title = item.name[curLocale.name];
+					span.title = item.name[curLocale.name];
+					span.innerHTML = item.name[curLocale.name];
+				}else{
+					//---ロケールがない場合はenを優先
+					li.title = item.name["en"];
+					img.title = item.name["en"];
+					span.title = item.name["en"];
+					span.innerHTML = item.name["en"];
+				}
+				
+				//---li element and img image
 				if (item.setFolder == "special") {
 					li.className = "item1st item1st-special";
 					img.src = "images/brush_special.png";
@@ -252,12 +266,10 @@ function call_parentEvent(removeLabel) {
 				img.addEventListener("click",function(event) {
 					call_parentEvent("img_");
 				},false);
-				var span = document.createElement("span");
-				span.id = "sp_" + item.id;
-				span.title = item.name[curLocale.name];
-				span.innerHTML = item.name[curLocale.name];
 				//span.style.marginTop = "1px";
 				li.appendChild(span);
+				
+				//---span label
 				span.addEventListener("click",function(event) {
 					call_parentEvent("sp_");
 				},false);
@@ -272,7 +284,13 @@ function call_parentEvent(removeLabel) {
 					var it = PenSet.items[event.target.id];
 					if (it) {
 						PenSet.current = it.set(Draw.context,o);
-						PenSet.updateInfo(it.name[curLocale.name],Draw.context.lineWidth);
+						var brushname = "";
+						if (it.name[curLocale.name]) {
+							brushname = it.name[curLocale.name];
+						}else{
+							brushname = it.name["en"];
+						}
+						PenSet.updateInfo(brushname,Draw.context.lineWidth);
 						PenSet.sizebar.value = PenSet.current["size"];
 						PenSet.hiddenMenu(event);
 						PenSet.parent.last.pen = {

@@ -12,8 +12,8 @@ PaintMeister (1.0.40.80)
 ・(WebApp)エスペラントの翻訳を追加。
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/11/22 12:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/11/22 17:00:00
+Store app		- 2014/11/22 17:00:00
 
 
 PaintMeister (1.0.40.73)

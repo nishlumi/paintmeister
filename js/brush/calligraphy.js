@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "calligraphy",
 	name : {
 		"ja":"カリグラフィ",
-		"en":"Calligraphy"
+		"en":"Calligraphy",
+		"eo":"Kaligrafio"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":true,
-			"complete":false
+			"complete":false,
+			"delay" : 1,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -64,7 +67,64 @@ PenSet.Add({
 		hairY = offsetY;
 		hairDist = 0.5;
 		hair_outblur = context.shadowBlur;
+		var ueCPX = 0, shitaCPX = 0;
+		if (parentElement["pointHistory"].length > 0) {
+			ueCPX = parentElement["pointHistory"][0].x;
+			ueCPY = parentElement["pointHistory"][0].y;
+			shitaCPX = parentElement["pointHistory"][0].x;
+			shitaCPY = parentElement["pointHistory"][0].y;
+		}
+		var ueStX = startX, shitaStX = startX;
+		var ueStY = startY, shitaStY = startY;
+		var ueX = offsetX, shitaX = offsetX;
+		var ueY = offsetY, shitaY = offsetY;
 		//---毛先は細かく複数
+		for (var i = 0; i < 5; i++) {
+			ueCPX = ueCPX + (hairWidth * 1);
+			ueCPY = ueCPY - (hairWidth * 1);
+			ueStX = ueStX + (hairWidth * 1);
+			ueStY = ueStY - (hairWidth * 1);
+			ueX = ueX + (hairWidth * 1);
+			ueY = ueY - (hairWidth * 1);
+			
+			shitaCPX = shitaCPX - (hairWidth * 1);
+			shitaCPY = shitaCPY + (hairWidth * 1);
+			shitaStX = shitaStX - (hairWidth * 1);
+			shitaStY = shitaStY + (hairWidth * 1);
+			shitaX = shitaX - (hairWidth * 1);
+			shitaY = shitaY + (hairWidth * 1);
+			if (i == 5) context.shadowBlur = 1;
+			context.lineWidth = hairWidth;
+			console.log("ueCP=" + ueCPX + "x" + ueCPY);
+			console.log("shitaCP=" + shitaCPX + "x" + shitaCPY);
+			console.log("ueSt=" + ueStX + "x" + ueCPY);
+			console.log("shitaSt=" + shitaStX + "x" + shitaStY);
+			console.log("ue  =" + ueX + "x" + ueY);
+			console.log("shita  =" + shitaX + "x" + shitaY);
+			if (parentElement["pointHistory"].length == 0) {
+				context.beginPath();
+				context.moveTo(ueStX,ueStY);
+				context.lineTo(ueX, ueY);
+				context.stroke();
+				context.beginPath();
+				context.moveTo(shitaStX,shitaStY);
+				context.lineTo(shitaX, shitaY);
+				context.stroke();
+			}else{
+				context.beginPath();
+				context.moveTo(ueCPX,ueCPY);
+				context.quadraticCurveTo(ueStX,ueStY, ueX, ueY);
+				context.stroke();
+				context.beginPath();
+				context.moveTo(shitaCPX,shitaCPY);
+				context.quadraticCurveTo(shitaStX,shitaStY, shitaX, shitaY);
+				context.stroke();
+			}
+			context.closePath();
+		}
+		return;
+		
+		//---old
 		//毛先上
 		for (var i = 0; i < 5; i++) {
 			hairX = hairX + (hairWidth * 1);

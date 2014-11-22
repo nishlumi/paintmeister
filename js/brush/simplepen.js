@@ -7,7 +7,8 @@ PenSet.Add({
 	id : "simplepen",
 	name : {
 		"ja":"ペン",
-		"en":"Pen"
+		"en":"Pen",
+		"eo":"Plumo"
 	},
 	element : null,
 	parent : null,
@@ -20,7 +21,9 @@ PenSet.Add({
 			"size":this.defaults[0],
 			"color":parentElement.colorpicker,
 			"pressure":true,
-			"complete":true
+			"complete":true,
+			"delay" : 1,
+			"delay_assist" : true
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -57,9 +60,15 @@ PenSet.Add({
 		context.lineWidth = parentElement.current["size"] * hairpressure;
 		
 		context.beginPath();
-		context.moveTo(startX, startY);
-		context.lineTo(offsetX, offsetY);
+		if (parentElement["pointHistory"].length == 0) {
+			context.moveTo(startX, startY);
+			context.lineTo(offsetX, offsetY);
+		}else{
+			context.moveTo(parentElement["pointHistory"][0].x, parentElement["pointHistory"][0].y);
+			context.quadraticCurveTo(startX, startY, offsetX, offsetY);
+		}
 		context.stroke();
+		
 	},
 	initialize : function(parentelement,ownelement){
 		this.parent = parentelement;
