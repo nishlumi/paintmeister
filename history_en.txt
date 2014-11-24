@@ -2,16 +2,6 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
-PaintMeister (1.0.40.82)
-*Fix that object is left, even if an user cancel selection mode when paste after copy and cut
-*(Store App)Fix that the application terminated after turned a task of Windows.
--- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2014/11/24 22:00:00
-ChromeApps		- 
-Store app		- 
-
-
-
 PaintMeister (1.0.40.80)
 *Adjust correction of brush(Lines of brush will be smooth: Pencil, Pen, Neon-pen, Ink brush pen and Calligraphy)
 *Improved Air brush, Watercolor paint
