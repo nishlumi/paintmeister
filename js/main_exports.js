@@ -15,7 +15,7 @@ Draw["prepareSaveImage"] = function(){
 	}
 }
 Draw["prepareSaveProject"] = function (){
-	var def = $.Deferred();
+	//var def = $.Deferred();
 	var rawdatas = [];
 	var projectdata = [];
 	var fnldata = "";
@@ -66,12 +66,20 @@ Draw["prepareSaveProject"] = function (){
 		}
 		projectdata.push(r);
 	}
-	def.resolve(projectdata.join("\t"));
-	return def.promise();
-	//return projectdata.join("\t");
+	//def.resolve(projectdata.join("\t"));
+	//return def.promise();
+	return projectdata;
+}
+Draw["displayFromProject"] = function (filename) {
+    document.getElementById("basepanel").style.display = "block";
+    document.getElementById("openedProjName").innerText = " - " + filename;
+    this.filename = filename;
+    this.progresspanel.style.display = "none";
+    document.getElementById("progressicon").className = "";
+
 }
 Draw["loadProject"] = function(data){
-	var projectdata = String(data).split("\t");
+	var projectdata = (data instanceof Array ? data : String(data).split("\t"));
 	var CST_width = 4
 	var CST_height = 5;
 	var CST_layerCount = 10;

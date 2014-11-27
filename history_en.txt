@@ -4,11 +4,11 @@ paintmeister Update history
 
 PaintMeister (1.0.40.82)
 *Fix that object is left, even if an user cancel selection mode when paste after copy and cut
-*(Store App)Fix that the application terminated after turned a task of Windows.
+*(Store App)Fix that the application terminated after turned a task of Windows.(Interim support)
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/11/24 22:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/11/27 23:00:00
+Store app		- 2014/11/27 23:00:00
 
 
 

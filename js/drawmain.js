@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.40.80";
+var appversion = "1.0.40.82";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -691,6 +691,8 @@ var Selectors = function(){
 					document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
 					Draw.is_selecting = false;
 					Draw.select_clipboard = new Selector();
+					Draw.opeselcontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
+					Draw.opecontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
 				}
 			},false);
 			var sel_seltype_clicking = function(event) {

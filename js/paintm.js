@@ -85,11 +85,7 @@ function loadProjectFile(files){
 			//document.getElementById("progressbar").value = 3;
 			console.log(files[0]);
 			if (Draw.loadProject(reader.result)) {
-				document.getElementById("basepanel").style.display = "block";
-				document.getElementById("openedProjName").innerText = " - " + files[0].name;
-				Draw.filename = files[0].name;
-				Draw.progresspanel.style.display = "none";
-				document.getElementById("progressicon").className = "";
+				Draw.displayFromProject(files[0].name);
 			}else{
 				//alert("有効なPaintMeisterプロジェクトファイルではありません！");
 				alert(_T("loadProjectFile_msg2"));
@@ -416,8 +412,10 @@ var PluginManager = {
 
 				}, false);
 				document.body.addEventListener(touchend, function(event) {
-					if (!Draw.focusing) {
-						Draw.drawing = false;
+					if (Draw["focusing"]) {
+						if (!Draw.focusing) {
+							Draw.drawing = false;
+						}
 					}
 				}, false);
 				$("#colorpicker").on(touchstart, function(event) {
@@ -439,8 +437,11 @@ var PluginManager = {
 				}, false);
 				document.body.addEventListener(touchend, function(event) {
 					console.log("document.body touchend");
-					if (!Draw.focusing)
-						Draw.drawing = false;
+					if (Draw["focusing"]) {
+						if (!Draw.focusing) {
+							Draw.drawing = false;
+						}
+					}
 				}, false);
 				window.addEventListener("resize",function(event){
 					console.log("width=" + event.target.innerWidth);
