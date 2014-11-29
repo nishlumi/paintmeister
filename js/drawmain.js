@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.40.82";
+var appversion = "1.0.40.83";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z

@@ -6,8 +6,8 @@ PaintMeister (1.0.40.83)
 *Fix that can not load project file.
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/11/29 23:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/11/29 23:50:00
+Store app		- 2014/11/29 23:50:00
 
 
 PaintMeister (1.0.40.82)

@@ -79,7 +79,7 @@ Draw["displayFromProject"] = function (filename) {
 
 }
 Draw["loadProject"] = function(data){
-	var projectdata = (data instanceof Array ? data : String(data).split("\t"));
+	var projectdata = (typeof(data) == "string" ? String(data).split("\t") : data);
 	var CST_width = 4
 	var CST_height = 5;
 	var CST_layerCount = 10;
