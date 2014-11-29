@@ -2,6 +2,14 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
+PaintMeister (1.0.40.83)
+・プロジェクトファイルがロードできなくなるバグを修正。
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/11/29 23:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.40.82)
 ・コピー・切り取り・貼り付け時、選択モードと操作をやめても貼り付け中の描画が残ってしまうバグを修正。
 ・(Store App)Windowsのタスク切り替えに時間を置くとアプリが終了してしまう問題を修正。（暫定対応）
@@ -9,7 +17,6 @@ PaintMeister (1.0.40.82)
 WebApp			- 2014/11/24 22:00:00
 ChromeApps		- 2014/11/27 23:00:00
 Store app		- 2014/11/27 23:00:00
-
 
 
 PaintMeister (1.0.40.80)

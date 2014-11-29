@@ -2,6 +2,14 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.40.83)
+*Fix that can not load project file.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/11/29 23:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.40.82)
 *Fix that object is left, even if an user cancel selection mode when paste after copy and cut
 *(Store App)Fix that the application terminated after turned a task of Windows.(Interim support)
@@ -9,7 +17,6 @@ PaintMeister (1.0.40.82)
 WebApp			- 2014/11/24 22:00:00
 ChromeApps		- 2014/11/27 23:00:00
 Store app		- 2014/11/27 23:00:00
-
 
 
 PaintMeister (1.0.40.80)
