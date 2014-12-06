@@ -2,6 +2,19 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.42.87)
+**Support virtual palmrest.(can be drawing with confidence with a pen and touch, even put your hand on the touch screen)
+**Adjust correction of brush(hand shake correction). Add an option of correction level for brush to main menu.
+*Support drag&drop .pmpf file to initial top page.
+*Change that the mode after paste will the move mode and the mode after fix pasting will the box select mode.
+*Fix that it can not be pinch in/out when touch the finger again, release one of finger after pinch in/out.
+*Fix that unintended line is drawn, when try to draw a line after pinch in/out. 
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/12/06 15:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.40.83)
 *Fix that can not load project file.
 -- ISHII Eiju <lumidina@gmail.com> 
