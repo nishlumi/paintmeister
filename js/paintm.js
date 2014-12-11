@@ -396,28 +396,38 @@ var PluginManager = {
 				document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight-50) / 100) * 50) + "px";
 				//---キャンバス外からタッチしたまま入ったときのための描画制御
 				var touchstart = 'touchstart';
+				var touchmove = 'touchmove';
 				var touchend = 'touchend';
 				var touchleave = 'touchleave';
 				if (window.PointerEvent){
 					touchstart = "pointerdown";
+					touchmove = 'pointermove';
 					touchend = "pointerup";
 					touchleave = 'pointerleave';
 				}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
 					touchstart = 'MSPointerDown';
+					touchmove = 'MSPointerMove';
 					touchend = 'MSPointerUp';
 					touchleave = 'MSPointerLeave';
 				}
-				document.body.addEventListener(touchstart, function(event) {
-					//Draw.drawing = true;
-
-				}, false);
-				document.body.addEventListener(touchend, function(event) {
-					if (Draw["focusing"]) {
+				function operate_move(event) {
+					if (PalmRest.touching) {
+						PalmRest.move(event);
+					}
+				}
+				function operate_endleave(event){
+					if ("focusing" in Draw) {
 						if (!Draw.focusing) {
 							Draw.drawing = false;
 						}
 					}
-				}, false);
+				}
+				//---PointerEvent向け
+				document.body.addEventListener(touchstart, function(event) {}, false);
+				document.body.addEventListener(touchmove,function(event){}, false);
+				document.body.addEventListener(touchend, operate_endleave, false);
+				document.body.addEventListener(touchleave, operate_endleave, false);
+				//カラーピッカーでPointerEvent向け
 				$("#colorpicker").on(touchstart, function(event) {
 					$("#pickerpanel").show();
 				});
@@ -427,22 +437,25 @@ var PluginManager = {
 				});
 				
 				touchstart = 'mousedown';
+				touchmove = 'mousemove';
 				touchend = 'mouseup';
 				touchleave = 'mouseleave';
+				//---マウスイベント向け
+				document.body.addEventListener(touchstart, function(event) {}, false);
+				document.body.addEventListener(touchmove, function(event) {}, false);
+				document.body.addEventListener(touchend, operate_endleave, false);
+				document.body.addEventListener(touchleave, operate_endleave, false);
+				$("#colorpicker").on(touchstart, function(event) {
+					$("#pickerpanel").show();
+				});
+				$("#pickerpanel").on(touchleave, function(event) {
+					$("#pickerpanel").hide();
+			    	event.preventDefault();
+				});
+				//---その他グローバルなイベント
 				document.body.oncontextmenu = function(event) {
 					return false;
 				}
-				document.body.addEventListener(touchstart, function(event) {
-					//Draw.drawing = true;
-				}, false);
-				document.body.addEventListener(touchend, function(event) {
-					console.log("document.body touchend");
-					if (Draw["focusing"]) {
-						if (!Draw.focusing) {
-							Draw.drawing = false;
-						}
-					}
-				}, false);
 				window.addEventListener("resize",function(event){
 					console.log("width=" + event.target.innerWidth);
 					console.log("height=" + event.target.innerHeight);
@@ -452,13 +465,6 @@ var PluginManager = {
 					document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
 					Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
 				}, false);
-				$("#colorpicker").on(touchstart, function(event) {
-					$("#pickerpanel").show();
-				});
-				$("#pickerpanel").on(touchleave, function(event) {
-					$("#pickerpanel").hide();
-			    	event.preventDefault();
-				});
 				def.resolve(true);
 			});
 			return def;

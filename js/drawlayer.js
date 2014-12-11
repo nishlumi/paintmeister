@@ -243,12 +243,12 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 			console.log("browser:other PC browsers");
 		}else{
 			//---toucheventあるはずなのでまずはセット
-			//configEvent(touch);
+			/*configEvent(touch);
 			touch.start = 'mousedown';
 			touch.move = 'mousemove';
 			touch.end = 'mouseup';
 			touch.leave = 'mouseleave';
-			touch.enter = 'mouseenter';
+			touch.enter = 'mouseenter';*/
 			console.log("browser:other PC browsers with touch");
 		}
 		if (navigator.userAgent.indexOf("Firefox") > -1) {

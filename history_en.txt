@@ -12,8 +12,8 @@ PaintMeister (1.0.42.88)
 *Fix that unintended line is drawn, when try to draw a line after pinch in/out. 
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/12/06 15:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/12/11 17:00:00
+Store app		- 2014/12/11 17:00:00
 
 
 PaintMeister (1.0.40.83)

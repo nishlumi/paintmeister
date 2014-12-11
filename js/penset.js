@@ -31,6 +31,7 @@ function call_parentEvent(removeLabel) {
 		},
 		items : [],
 		lastpressure : 0.5,
+		correction_level : 3,
 
 		updateInfo : function(panname,pensize){
 			document.getElementById("info_pen_mode").textContent = panname;

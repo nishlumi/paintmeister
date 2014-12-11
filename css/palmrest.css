@@ -1,0 +1,61 @@
+div.guard_canvas {
+	-webkit-touch-action:none;
+	-ms-touch-action:none;
+	touch-action:none;
+	
+	width : 5%;
+	height : calc(2.5rem + 6px);
+	opacity : 0.50;
+}
+div.guard_color_none {
+	background-color: #DADADA;
+}
+div.guard_color_red {
+	background-color: #FF8585;
+}
+div.guard_color_blue {
+	background-color: #8585FF;
+}
+div.guard_color_green {
+	background-color: #85FF85;
+}
+div.guard_color_yellow {
+	background-color: #FFFF85;
+}
+div.guard_on {
+	z-index : 900;
+	display : block;
+}
+div.guard_off {
+	z-index : 1;
+	display : none;
+}
+div.lguard {
+	position : absolute;
+	bottom : 0.5rem;
+	left : 0px;
+}
+div.rguard {
+	position : absolute;
+	bottom : 0.5rem;
+	right : 0px;
+}
+.guard_operate_button {
+	width : 2.5rem;
+	height : 2.5rem;
+	border : 3px double #545454;
+	background-color: #FFAAAA;
+}
+.guard_left_btn {
+	background-color: #FFAAAA;
+	position : absolute;
+	top : 0px;
+	right : 0px;
+}
+.guard_right_btn {
+	background-color: #AAAAFF;
+	position : absolute;
+	top : 0px;
+	left : 0px;
+	
+}

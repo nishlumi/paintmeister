@@ -86,7 +86,6 @@
 }
 
 
-
 /*===============================================================
   UI parts and button area
 */
@@ -348,7 +347,11 @@
 	background-color : #91d780;
 }*/
 
-
+/* ======================================initial panel=== */
+div.dragover_indicate {
+	border : 3px dashed #858585;
+	background-color : #D9D9D9;
+}
 /* ======================================panel=== */
 #ctrlpanel {
 	display : none;
@@ -396,7 +399,7 @@
 #menupanel {
 	display : none;
 	width : 95%;
-	height : 40%;
+	height : 50%;
 	position : absolute;
 	top : 3rem;
 	left : 0;
@@ -431,7 +434,13 @@
 	height : 50%;
 	display : none;
 }
-
+#txt_correction_level {
+	width : 10rem;
+}
+#sel_color_palmrest {
+	height : 2rem;
+	font-size : 120%;
+}
 #colorpicker {
 	height : 27px;
 	width : 10%;

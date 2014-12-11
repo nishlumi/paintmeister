@@ -11,9 +11,9 @@ PaintMeister (1.0.42.88)
 ・ピンチイン・ピンチアウト後に片方の指を離し、もう一度つけるとピンチイン・ピンチアウトにならないバグを修正。
 ・ピンチイン・ピンチアウト後に線を描こうとすると、意図しない線が描かれるバグを修正。
 -- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2014/12/06 15:00:00
-ChromeApps		- 
-Store app		- 
+WebApp			- 2014/12/11 17:00:00
+ChromeApps		- 2014/12/11 17:00:00
+Store app		- 2014/12/11 17:00:00
 
 
 PaintMeister (1.0.40.83)

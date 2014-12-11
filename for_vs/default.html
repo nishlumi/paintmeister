@@ -11,6 +11,7 @@
     <script src="//Microsoft.WinJS.2.0/js/ui.js"></script>
 
     <!-- PaintMeister 参照 -->
+    <link href="css/palmrest.css" rel="stylesheet" />
     <link rel="stylesheet" href="/js/farbtastic/farbtastic.css">
     <link rel="stylesheet" href="/css/jquery-ui.min.css">
     <link href="/css/default.css" rel="stylesheet" />
@@ -137,6 +138,24 @@
                 <label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">No.2 <span id="lab_pltloc2"></label></span><br />
                 <span id="lab_sv_palettevalue" title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：</span><input type="text" id="sv_palettevalue" size="50" />
             </div>
+            <div style="margin-top:0.5rem">
+                <hr />
+                <label id="lab_correction_level" title="ブラシの補正レベルを指定します"><span id="correction_level_msg">ブラシの補正レベル：</span> 0 <input type="range" id="txt_correction_level" min="0" max="10" value="3"> 10</label> = <span id="val_correction_level" title="現在の補正値"></span>
+            </div>
+            <div style="margin-top:0.5rem;">
+                <hr />
+                <label id="lab_enable_palmrest" title="タッチ端末などで手の甲を置いた時に誤作動を起こさないよう、仮想のパームレストを使用します。左右のパームレストを好きな位置まで手動で動かせます。"><input type="checkbox" id="chk_enable_palmrest"><span id="enable_palmrest_msg">パームレストを使う</span></label>
+                <label id="lab_color_palmrest" style="margin-left:1rem;" title="パームレストがどこにあるか判別できるように色を付けます。">
+                    <span id="color_palmrest_msg">パームレストに色を付ける</span>
+                    <select id="sel_color_palmrest" disabled>
+                        <option value="none" id="sel_color_palmrest_0" selected>薄いグレー</option>
+                        <option value="red" id="sel_color_palmrest_1">赤</option>
+                        <option value="blue" id="sel_color_palmrest_2">青</option>
+                        <option value="green" id="sel_color_palmrest_3">緑</option>
+                        <option value="yellow" id="sel_color_palmrest_4">黄色</option>
+                    </select>
+                </label>
+            </div>
             <div style="display:none;"><span id="lab_plugin">プラグイン管理:</span> <button id="btn_man_plugin" class="statbutton2">開く</button></div>
             <fieldset style="display:none;">
                 <legend><label title="絵を描く時間を計る、もしくは時間制限付きで絵を描くようにします"><input type="checkbox" id="chk_use_timer"><span id="lab_chk_use_timer">タイマー機能を使用する</span></label></legend>
@@ -179,7 +198,7 @@
             <label><input type="checkbox" id="layinfo_clip" class="layinfo_ui" disabled><span id="lab_layinfo_clip">クリップ領域ON</span></label>
             <button id="layinfo_clearclip" class="flatbutton uibutton" title="現在のレイヤーのクリップ領域を削除します" disabled>クリップ領域をクリア</button>
             <span id="lab_layinfo_cliphistory">過去のクリップ領域: </span>
-            <select id="layinfo_cliphistory" disabled></select><img src="" id="img_clipthumb" alt="clip area" class="clipthumb" />
+            <select id="layinfo_cliphistory" disabled><option value="">---</option></select><img src="" id="img_clipthumb" alt="clip area" class="clipthumb" />
             <button id="layinfo_call_cliphist" class="flatbutton uibutton" title="選択した過去のクリップ領域を再適用します" disabled>再適用</button>
         </div>
     </div>
@@ -199,6 +218,8 @@
 
         </ul>
     </div>
+    <div id="dlg_lguard"></div>
+    <div id="dlg_rguard"></div>
 
     <div id="pickerpanel"></div>
     <div id="progresspanel">
@@ -298,10 +319,12 @@
     <script src="/js/drawlayer.js"></script>
     <script src="/js/colorpalette.js"></script>
     <script src="/js/penset.js"></script>
+    <script src="js/palmrest.js"></script>
     <script src="/js/drawmain.js"></script>
     <script src="js/main_exports.js"></script>
     <script src="js/main_layers.js"></script>
     <script src="js/main_modes.js"></script>
+    <script src="js/main_correct.js"></script>
     <script src="/js/default.js"></script>
     <script src="/js/rgbcolor.js"></script>
 

@@ -23,7 +23,7 @@ PenSet.Add({
 			"pressure":true,
 			"complete":true,
 			"delay" : 1,
-			"delay_assist" : true
+			"delay_assist" : false
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -32,7 +32,7 @@ PenSet.Add({
 		context.shadowColor = parentElement.colorpicker;
 		context.shadowOffsetX = 0;
 		context.shadowOffsetY = 0;
-		context.shadowBlur = 1;
+		context.shadowBlur = 2;
 		context.lineCap = "round";
 		context.lineJoin = "round";
 		

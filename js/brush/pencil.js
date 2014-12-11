@@ -86,6 +86,7 @@ PenSet.Add({
         }
         var ispointhist = false;
         var pointhist = [];
+        //console.log("parentElement[pointHistory].length="+parentElement["pointHistory"].length);
         if (parentElement["pointHistory"].length == 0) {
         	ispointhist = true;
         }else{
@@ -102,8 +103,8 @@ PenSet.Add({
         StYarr.push(startY);// + ((cursize * 0.15) * Ydir)); //- (cursize * 0.09));
         Xarr.push(offsetX);// + ((cursize * 0.15) * Xdir)); //+ (cursize * 0.05));
         Yarr.push(offsetY);// + ((cursize * 0.15) * Ydir)); // (cursize * 0.09));
-        CXarr.push(pointhist);// + ((cursize * 0.15) * Xdir));
-        CYarr.push(pointhist);// + ((cursize * 0.15) * Ydir));
+        //CXarr.push(pointhist[0].x);// + ((cursize * 0.15) * Xdir));
+        //CYarr.push(pointhist[0].y);// + ((cursize * 0.15) * Ydir));
         if (hairpressure > 0.3) {
             alparr.push(0.8 * hairpressure * 1);
             widarr.push(cursize * 0.9);
@@ -121,8 +122,8 @@ PenSet.Add({
         StYarr.push(startY);// + ((cursize * 0.25) * Ydir)); //+ + (cursize * 0.085));
         Xarr.push(offsetX);// + ((cursize * 0.25) * Xdir)); //+ - (cursize * 0.06));
         Yarr.push(offsetY);// + ((cursize * 0.25) * Ydir)); //+ + (cursize * 0.085));
-        CXarr.push(pointhist[0].x);// + ((cursize * 0.25) * Xdir));
-        CYarr.push(pointhist[0].y);// + ((cursize * 0.25) * Ydir));
+        //CXarr.push(pointhist[0].x);// + ((cursize * 0.25) * Xdir));
+        //CYarr.push(pointhist[0].y);// + ((cursize * 0.25) * Ydir));
         if (hairpressure > 0.5) {
             alparr.push(0.9 * hairpressure * 1);
             widarr.push(cursize * 0.5);
@@ -140,8 +141,8 @@ PenSet.Add({
         StYarr.push(startY);
         Xarr.push(offsetX);
         Yarr.push(offsetY);
-        CXarr.push(pointhist[0].x);
-        CYarr.push(pointhist[0].y);
+        //CXarr.push(pointhist[0].x);
+        //CYarr.push(pointhist[0].y);
         if (hairpressure > 0.5) {
 	        alparr.push(1 * (hairpressure * 2));
 	        widarr.push(cursize * 0.9);
@@ -177,11 +178,11 @@ PenSet.Add({
 				//context.bezierCurveTo(pointhist[1].x, pointhist[1].y, StXarr[i], StYarr[i], Xarr[i], Yarr[i]);
 				//context.quadraticCurveTo(pointhist[1].x, pointhist[1].y, StXarr[i], StYarr[i]);
 				//context.quadraticCurveTo(StXarr[i], StYarr[i], Xarr[i], Yarr[i]);
-				console.log("1～3=" +
+				/*console.log("1～3=" +
 					pointhist[0].x + "x" + pointhist[0].y + " -> " +
 					StXarr[i] + "x" + StYarr[i] + " -> " +
 					Xarr[i] + "x" + Yarr[i] + " ." 
-				);
+				);*/
 			}
             context.stroke();
         }

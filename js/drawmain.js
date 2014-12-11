@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.40.83";
+var appversion = "1.0.42.88";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -280,7 +280,8 @@ var Selectors = function(){
 				"divide" : 5,
 				"max" : 99,
 			},
-			"cliphistory" : 10
+			"cliphistory" : 10,
+			"smooth_correction" : 3,
 		},
 		last : {
 			"pen" : null,
@@ -341,10 +342,15 @@ var Selectors = function(){
 		delay : {
 			flag : false,
 			count : 0,
+			smooth : 0,
 			poshist : []
 		},
 		selectors : null,
 		cliphist : [],
+		palmrest : {
+			"left" : null,
+			"right": null
+		},
 		
 		initialize : function() {
 			this.pen = PenSet;
@@ -631,31 +637,31 @@ var Selectors = function(){
 					Draw.drawpoints.splice(0,Draw.drawpoints.length);
 				}
 			},false);
-			var sidebar_radio_clicking = function(event, parent) {
-				if (event.target.className == "sidebar_radiobutton sidebar_radio_off") { //オンにする
+			var sidebar_radio_clicking = function(element, parent) {
+				if (element.className == "sidebar_radiobutton sidebar_radio_off") { //オンにする
 					var elm = document.querySelectorAll(".sidebar_radiobutton");
 					for (var obj in elm) {
 						if ((elm[obj]["id"]) && (elm[obj].id.indexOf(parent) > -1)) {
 							elm[obj].className = "sidebar_radiobutton sidebar_radio_off";
 						}
 					}
-					event.target.className = "sidebar_radiobutton sidebar_radio_on";
+					element.className = "sidebar_radiobutton sidebar_radio_on";
 				}else{ //オフにする
 					var elm = document.querySelectorAll(".sidebar_radiobutton");
 					for (var obj in elm) {
 						if (elm[obj].className.indexOf("sidebar_radio_on")) {
-							if (elm[obj].id == event.target.id) {
+							if (elm[obj].id == element.id) {
 								return;
 							}
 						}
 					}
 					if ((elm[obj]["id"]) && (elm[obj].id.indexOf(parent) > -1)) {
-						event.target.className = "sidebar_radiobutton sidebar_radio_off";
+						element.className = "sidebar_radiobutton sidebar_radio_off";
 					}
 				}
 			};
 			var chk_shapes_clicking = function(event) {
-				sidebar_radio_clicking(event,"chk_shapes_");
+				sidebar_radio_clicking(event.target,"chk_shapes_");
 				if (event.target.className == "sidebar_radiobutton sidebar_radio_on") {
 					Draw.drawing_type = String(event.target.id).replace("chk_shapes_","");
 				}
@@ -704,7 +710,7 @@ var Selectors = function(){
 						return false;
 					}
 				}*/
-				sidebar_radio_clicking(event,"sel_seltype_");
+				sidebar_radio_clicking(event.target,"sel_seltype_");
 				if (event.target.className == "sidebar_radiobutton sidebar_radio_on") {
 					Draw.select_type = String(event.target.id).replace("sel_seltype_","");
 				}
@@ -881,7 +887,25 @@ var Selectors = function(){
 				loadProjectFile(files);
 
 			},false);
-			
+			document.getElementById("initialsetup").addEventListener("dragover", function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "copy";
+				document.getElementById("initialsetup").className = "dragover_indicate";
+			},false);
+			document.getElementById("initialsetup").addEventListener("dragleave", function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				document.getElementById("initialsetup").className = "";
+			},false);
+			document.getElementById("initialsetup").addEventListener("drop", function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				document.getElementById("initialsetup").className = "";
+				var files = event.dataTransfer.files;
+				loadProjectFile(files);
+			},false);
+			//---メインパネルオプション関係
 			document.getElementById("sv_palettevalue").addEventListener("keydown", function(event) {
 				event.stopPropagation();
 			},false);
@@ -909,6 +933,42 @@ var Selectors = function(){
 					document.getElementById("sv_palettevalue").disabled = dis;
 				}
 			},false);
+			document.getElementById("txt_correction_level").addEventListener("change", function(event) {
+				document.getElementById("val_correction_level").innerHTML = event.target.value;
+				Draw.pen.correction_level = event.target.value;
+			},false);
+			document.getElementById("chk_enable_palmrest").addEventListener("click", function(event) {
+				var val = event.target.checked;
+				Draw.palmrest.left.enable(val);
+				Draw.palmrest.right.enable(val);
+				
+				var disa = "";
+				if (val) {
+				}else{
+					disa = "disabled";
+				}
+				document.getElementById("sel_color_palmrest").disabled = disa;
+			}, false);
+			document.getElementById("sel_color_palmrest").addEventListener("change", function(event) {
+				var val = $("#"+event.target.id).val();
+				console.log(val);
+				Draw.palmrest.left.setColor(val);
+				Draw.palmrest.right.setColor(val);
+				/*
+				var glstyle = document.getElementById("dlg_lguard").className;
+				var grstyle = document.getElementById("dlg_rguard").className;
+
+				if (val) {
+					glstyle = glstyle.replace("guard_nocolor","guard_coloring");
+					grstyle = grstyle.replace("guard_nocolor","guard_coloring");
+				}else{
+					glstyle = glstyle.replace("guard_coloring","guard_nocolor");
+					grstyle = grstyle.replace("guard_coloring","guard_nocolor");
+				}
+				document.getElementById("dlg_lguard").className = glstyle;
+				document.getElementById("dlg_rguard").className = grstyle;*/
+			}, false);
+
 			document.getElementById("btn_man_plugin").addEventListener("click", function(event) {
 				if (document.getElementById("dlg_plugin").style.display == "none") {
 					Draw.turnMenuPanel("dlg_plugin",null,true);
@@ -1044,6 +1104,11 @@ var Selectors = function(){
 			var dat = AppStorage.get("sv_colorpalette0",null);
 			document.getElementById("sv_palettevalue").value = dat;
 			this.drawpoints = [];
+			
+			this.palmrest.left = new PalmRest(document.getElementById("dlg_lguard"),"left");
+			this.palmrest.right = new PalmRest(document.getElementById("dlg_rguard"),"right");
+			this.pen.correction_level = parseInt(document.getElementById("txt_correction_level").value);
+			document.getElementById("val_correction_level").textContent = this.pen.correction_level;
 		},
 		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
@@ -1124,6 +1189,18 @@ var Selectors = function(){
 			did("sv_colorpalette_msg").textContent = _T("sv_colorpalette_msg");
 			did("lab_sv_palettevalue").title = _T("lab_sv_palettevalue_title");
 			did("lab_sv_palettevalue").textContent = _T("lab_sv_palettevalue");
+			did("lab_correction_level").title = _T("lab_correction_level_title");
+			did("correction_level_msg").textContent = _T("correction_level_msg");
+			did("val_correction_level").title = _T("val_correction_level_title");
+			did("lab_enable_palmrest").title = _T("lab_enable_palmrest_title");
+			did("enable_palmrest_msg").textContent = _T("enable_palmrest_msg");
+			did("lab_color_palmrest").title = _T("lab_color_palmrest_title");
+			did("color_palmrest_msg").textContent = _T("color_palmrest_msg");
+			did("sel_color_palmrest_0").textContent = _T("sel_color_palmrest_0");
+			did("sel_color_palmrest_1").textContent = _T("sel_color_palmrest_1");
+			did("sel_color_palmrest_2").textContent = _T("sel_color_palmrest_2");
+			did("sel_color_palmrest_3").textContent = _T("sel_color_palmrest_3");
+			did("sel_color_palmrest_4").textContent = _T("sel_color_palmrest_4");
 
 			//canvas info panel
 			did("lab_magni").textContent = _T("lab_magni_title");
@@ -1318,6 +1395,9 @@ var Selectors = function(){
 			}
 			if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
 				document.getElementById("chk_enable_handpres").click();
+			}
+			if (Draw.palmrest.left.isEnable || Draw.palmrest.right.isEnable) {
+				document.getElementById("chk_enable_palmrest").click();
 			}
 			Draw.clearBody();
 			Draw.is_spoiting = false;
@@ -1576,7 +1656,7 @@ var Selectors = function(){
 		touchStart : function(event) {
 			this.drawing = true;
 			this.focusing = true;
-			
+			//console.log(event);
 			var pos  = calculatePosition("touchstart",event,this.context.canvas,{
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
@@ -1585,12 +1665,17 @@ var Selectors = function(){
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
 			this.draw_linehist.splice(0,this.draw_linehist.length);
-			this.draw_linehist.push(pos);
+			this.draw_linehist.push({"x":pos.x, "y":pos.y, "pressure":event.pressure});
 			//---PenSetに安全に受け渡す用の値セット
 			this.elementParameter["canvas"] = {
 				"width":this.canvassize[0],
 				"height":this.canvassize[1]
 			};
+			this.delay.poshist.splice(0,this.delay.poshist.length);
+			this.delay.poshist = [];
+			this.delay.flag = false;
+			this.delay.count = 0;
+			
 			//console.log("startPressure=" + this.startPressure);
 			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
@@ -1631,7 +1716,7 @@ var Selectors = function(){
 					"id" : event.pointerId,
 					"pos" : pos
 				};
-				
+				console.log("primary touch=" + event.pointerId + "=" + pos.x + "x" + pos.y);
 			}else if (event.pointerType == "touch"){
 				/*if (this.is_drawing_line) {
 					this.drawpoints.push(pos);
@@ -1642,6 +1727,7 @@ var Selectors = function(){
 						"pos" : pos
 					};
 				}
+				console.log("secondary touch=" + event.pointerId + "=" + pos.x + "x" + pos.y);
 				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
 					this.is_scaling = true;
 					this.drawing = false;
@@ -1693,10 +1779,6 @@ var Selectors = function(){
 			if ((event.ctrlKey) || (this.vCtrl_for_scroll)) {
 				var cp = document.getElementById("basepanel");
 				this.scale_pos["begin"] = pos;
-				//console.log("scrollTop="+cp.scrollTop);
-				//console.log("scrollLeft="+cp.scrollLeft);
-				//console.log("scrollWidth="+cp.scrollWidth);
-				//console.log("scrollHeight="+cp.scrollHeight);
 				this.is_scrolling = true;
 				isundo = false;
 				this.drawing = false;
@@ -1744,6 +1826,14 @@ var Selectors = function(){
 							event,this.elementParameter);
 					}*/
 				}else{
+					/*console.log("________________________");
+					console.log("start=" + this.startX + "	" + this.startY + "	" + event.pressure);
+					console.log("this.draw_linehist=");
+					console.log(this.draw_linehist);
+					console.log("this.elementParameter[pointHistory]=");
+					console.log(this.elementParameter["pointHistory"]);
+					console.log("this.delay.poshist=");
+					console.log(this.delay.poshist);*/
 					this.pen.prepare(event,this.context,null);
 					this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
 					//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
@@ -1751,6 +1841,11 @@ var Selectors = function(){
 			}
 		},
 		
+		realDrawMain : function (context,temppres,startX,startY,offsetX,offsetY,evt,param) {
+			Draw.pen.prepare(evt,context,temppres);
+			Draw.pen.drawMain(context,startX,startY,offsetX,offsetY,evt,param);
+			return {x:offsetX,y:offsetY};
+		},
 		touchMove : function(event) {
 			var offsetX = 0;
 			var offsetY = 0;
@@ -1775,11 +1870,10 @@ var Selectors = function(){
 					};
 				}
 			}
-
+			
 			offsetX = pos.x;
 			offsetY = pos.y;
 			offsetPressure = event.pressure;
-			this.draw_linehist.push(pos);
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
@@ -1856,15 +1950,28 @@ var Selectors = function(){
 			//console.log("move, event.button=");
 				this.elementParameter["keyCode"] = this.pressedKey;
 				//---筆ごとの描画開始
-				document.getElementById("log").textContent = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 				//---補完判定・処理開始
-				var distance = Math.sqrt(
-					(offsetX - this.startX) * (offsetX - this.startX)
-					+ (offsetY - this.startY) * (offsetY - this.startY)
-				);
-				var saX = offsetX - this.startX;
-				var saY = offsetY - this.startY;
-				var saPres = offsetPressure - this.startPressure;
+				var distance = 0;
+				var saX = 0;
+				var saY = 0;
+				var saPres = 0;
+				if (this.delay.poshist.length > 0) {
+					distance = Math.sqrt(
+						(offsetX - this.delay.poshist[0].x) * (offsetX - this.delay.poshist[0].x)
+						+ (offsetY - this.delay.poshist[0].y) * (offsetY - this.delay.poshist[0].y)
+					);
+					saX = offsetX - this.delay.poshist[0].x;
+					saY = offsetY - this.delay.poshist[0].y;
+					saPres = offsetPressure - this.delay.poshist[0].pressure;
+				}else{
+					distance = Math.sqrt(
+						(offsetX - this.startX) * (offsetX - this.startX)
+						+ (offsetY - this.startY) * (offsetY - this.startY)
+					);
+					saX = offsetX - this.startX;
+					saY = offsetY - this.startY;
+					saPres = offsetPressure - this.startPressure;
+				}
 				var ju_saX = Math.abs(saX);
 				var ju_saY = Math.abs(saY);
 				var ju_distance = Math.abs(distance);
@@ -1874,72 +1981,44 @@ var Selectors = function(){
 				var pmPres = (saPres < 0 ? -1 : 1); //+-基準値
 				var size_sa = parseInt(document.getElementById("pensize").max) - this.pen.current["size"] + 1;
 				size_sa = size_sa / 4;
-				/*console.log("=====");
-				console.log("start=" + this.startX + "x" + this.startY);
-				console.log("offset=" + offsetX + "x" + offsetY);
-				console.log("sa=" + saX + "x" + saY);
+				/*console.log("====>");
+				console.log("start=" + this.startX + "	" + this.startY + "	" + this.startPressure);
+				console.log("offset=" + offsetX + "	" + offsetY + "	" + offsetPressure);
+				console.log("sa=" + ju_saX + "x" + ju_saY);
 				console.log("distance=" + distance);
 				console.log("pm=" + pmX + "x" + pmY);
 				console.log("saPres=" + saPres);
-				console.log("size_sa=" + size_sa);*/
-				//--距離が3以下の場合は意図的にパス（点）を減らして線の感知を少しだけ鈍らせて補正する
-				/*if (this.is_discomplete) {
-					//if (this.discomplete_count.cnt <= 0) {
-						this.is_discomplete = false;
-					//}
-					if ((this.discomplete_count.dir == "x") && (0.5 <= ju_saY <= 2.5)) {
-						this.startX = this.discomplete_count.startx;
-					}else if ((this.discomplete_count.dir == "y") && (0.5 <= ju_saX <= 2.5)) {
-						this.startY = this.discomplete_count.starty;
-					}else{
-						this.pen.prepare(event,this.context,null);
-						this.pen.drawMain(this.context,
-							this.discomplete_count.startx,this.discomplete_count.starty,
-							this.discomplete_count.offsetx,this.discomplete_count.offsety,event,this.elementParameter);
+				console.log("size_sa=" + size_sa);
+				console.log("<====");*/
+				
+				//---大元を平均値算出補正
+				if (this.pen.correction_level > 0) {
+					var sum = {x:offsetX, y:offsetY, pres:offsetPressure};
+					//console.log(this.draw_linehist);
+					var realpluscnt = 1;
+					for (var i = this.draw_linehist.length-1; i >= 0; i--) {
+						if (i < (this.draw_linehist.length - (this.pen.correction_level-1))) break;
+						sum.x += this.draw_linehist[i].x;
+						sum.y += this.draw_linehist[i].y;
+						sum.pres += this.draw_linehist[i].pressure;
+						realpluscnt++;
 					}
-					this.discomplete_count.startx = 0;
-					this.discomplete_count.offsetx = 0;
-					this.discomplete_count.ju_sax = 0;
-					this.discomplete_count.starty = 0;
-					this.discomplete_count.offsety = 0;
-					this.discomplete_count.ju_say = 0;
-				}else{
-					if ((1.0 <= ju_saX <= 2.0) && (ju_saY <= 1.0)){
-						if (!this.is_discomplete && (this.discomplete_count.dir != "x")) {
-							this.discomplete_count.cnt = 1;
-							this.discomplete_count.dir = "x";
-							this.is_discomplete = true;
-							this.discomplete_count.startx = this.startX;
-							this.discomplete_count.offsetx = offsetX;
-							this.discomplete_count.ju_sax = ju_saX;
-							this.discomplete_count.starty = this.startY;
-							this.discomplete_count.offsety = offsetY;
-							this.discomplete_count.ju_say = ju_saY;
-						}
-					}else if ((1.0 <= ju_saY <= 2.0) && (ju_saX <= 1.0)) {
-						if (!this.is_discomplete && (this.discomplete_count.dir != "y")) {
-							this.discomplete_count.cnt = 1;
-							this.discomplete_count.dir = "y";
-							this.is_discomplete = true;
-							this.discomplete_count.startx = this.startX;
-							this.discomplete_count.offsetx = offsetX;
-							this.discomplete_count.ju_sax = ju_saX;
-							this.discomplete_count.starty = this.startY;
-							this.discomplete_count.offsety = offsetY;
-							this.discomplete_count.ju_say = ju_saY;
-						}
+					if (realpluscnt > this.pen.correction_level) {
+						realpluscnt = this.pen.correction_level;
 					}
-				}*/
+					offsetX = sum.x / realpluscnt;
+					offsetY = sum.y / realpluscnt;
+					//offsetPressure = sum.pres / realpluscnt;
+				}
+				
 				if (this.delay.flag) {
 					if (this.delay.count < 1) {
 						this.elementParameter["pointHistory"] = [];
 						//console.log("---" + this.delay.count + "nd delay.");
-						for (var i = 0; i < this.delay.poshist.length; i++) {
-							//console.log("delay position=" + this.delay.poshist[i].x + "x" + this.delay.poshist[i].y);
-							this.elementParameter["pointHistory"].push(this.delay.poshist[i]);
-						}
+						this.elementParameter["pointHistory"] = this.elementParameter["pointHistory"].concat(this.delay.poshist);
 						//---コピーしたら消す
 						this.delay.poshist.splice(0,this.delay.poshist.length);
+						this.delay.poshist = [];
 						this.delay.flag = false;
 						this.delay.count = 0;
 					}
@@ -1948,114 +2027,48 @@ var Selectors = function(){
 						this.delay.flag = true;
 						//console.log("---1st delay start");
 						this.delay.count = this.pen.current["delay"];
+						this.delay.poshist = [];
 						//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
 					}
 				}
 				//---距離が一定を超えた＆補完有効フラグがtrueのブラシのみ自動補正
+				var ret = null;
 				if (this.pen.current["complete"]) {
 					if ((!this.delay.flag)){
 						if (  (ju_distance > size_sa)) {
 						//if ((!this.is_discomplete) && (ju_distance > size_sa)) {
 						//if ((ju_saX > this.pen.current["size"]*size_sa) || (ju_saY > this.pen.current["size"]*size_sa)){
 							//---補完算出開始
-							var completeCount = 0;
-							/*if (ju_saX > ju_saY) {
-								completeCount = Math.ceil(ju_saX / (this.pen.current["size"]*size_sa));
-							}else{
-								completeCount = Math.ceil(ju_saY / (this.pen.current["size"]*size_sa));
-							}*/
-							completeCount = Math.ceil(ju_distance / (this.pen.current["size"]*size_sa));
-							//completeCount = 5;
-							//console.log("ju_sa=" + ju_saX + "/" + ju_saY + ",completeCount=" + completeCount);
-							var cplarr = [];
-							var prevpos = {"x":this.startX,"y":this.startY};
-							var prevpres = this.startPressure;
-							for (var c = 0; c < completeCount; c++) {
-								var bigsa;
-								var littlesa;
-								var bigpoint;
-								var littlepoint;
-								var isbigX = false;
-								var pos = {"x":0,"y":0};
-								var keisu = 0;
-								var movepoint = 0;
-								var tempPressure = 0;
-								
-								pos.x = prevpos.x + (ju_saX / completeCount * pmX);
-								pos.y = prevpos.y + (ju_saY / completeCount * pmY);
-								tempPressure = prevpres + (ju_saPres / (completeCount*2) * pmPres);
-								/*if (ju_saX > ju_saY) {
-									bigsa = ju_saX;
-									littlesa = ju_saY;
-									bigpoint = prevpos.x;
-									littlepoint = prevpos.y;
-									isbigX = true;
-									
-									pos.x = prevpos.x + (this.pen.current["size"]/4 * pmX);
-									keisu = pos.x / prevpos.x;
-									movepoint = ju_saY / completeCount; //littlesa - (littlesa * keisu);
-									pos.y = prevpos.y + (movepoint * pmY);
-								}else{
-									bigsa = ju_saY;
-									littlesa = ju_saX;
-									bigpoint = prevpos.x;
-									littlepoint = prevpos.y;
-									isbigX = false;
-									
-									pos.y = prevpos.y + (this.pen.current["size"]/4 * pmY);
-									keisu = pos.y / prevpos.y;
-									movepoint = ju_saX / completeCount; //littlesa - (littlesa * keisu);
-									pos.x = prevpos.x + (movepoint * pmX);
-								}*/
-								/*console.log("prevpos=" + prevpos.x + "x" + prevpos.y);
-								console.log("<>pos=" + pos.x + "x" + pos.y);
-								console.log("keisu=" + keisu);*/
-								//if (c == completeCount-1) {
-									if ((saX > 0) && (pos.x > offsetX)) pos.x = offsetX;
-									if ((saX < 0) && (pos.x < offsetX)) pos.x = offsetX;
-									if ((saY > 0) && (pos.y > offsetY)) pos.y = offsetY;
-									if ((saY < 0) && (pos.y < offsetY)) pos.y = offsetY;
-								//}
-								//cplarr.push(pos);
-								
-								//pen pressure calc
-								//console.log("tempPressure=" + tempPressure);
-								this.pen.prepare(event,this.context,tempPressure);
-								this.pen.drawMain(this.context,
-									prevpos.x,prevpos.y,
-									pos.x,pos.y,
-									event,this.elementParameter
-								);
-								console.log("draw: assist");
-								/*console.log("no." + c + ":" + 
-									Math.round(prevpos.x) + "x" + Math.round(prevpos.y) + 
-									" -> " + Math.round(pos.x) + "x" + Math.round(pos.y));
-									*/
-								prevpos = pos;
-								prevpres = tempPressure;
-							}
-							//if ((prevpos.x != offsetX || prevpos.y != offsetY)) {
-							/*	this.pen.drawMain(this.context,
-									prevpos.x,prevpos.y,
-									offsetX,offsetY
-								);*/
-							//}
+							//console.log("---correct_main---");
+							//console.log(this.elementParameter["pointHistory"]);
+							ret = this.correct_main(event,{
+								"prev": {"x" : (this.elementParameter["pointHistory"].length > 0 ? 
+									this.elementParameter["pointHistory"][0].x : -1),
+										 "y" : (this.elementParameter["pointHistory"].length > 0 ? 
+									this.elementParameter["pointHistory"][0].y : -1)},
+								"start"  : {"x" : this.startX, "y" : this.startY},
+								"offset" : {"x" : offsetX, "y" : offsetY},
+							},{
+								"prev"  : (this.elementParameter["pointHistory"].length > 0 ? 
+									this.elementParameter["pointHistory"][0].pressure : -1),
+								"start" : this.startPressure,
+								"offset": offsetPressure
+							});
+							this.draw_linehist = this.draw_linehist.concat(ret.pos);
+							this.elementParameter["pointHistoryLast"] = ret.pos[ret.pos.length-1];
 						}else{
 							//pen pressure calc
-							this.pen.prepare(event,this.context,null);
-							this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+							this.realDrawMain(this.context,offsetPressure,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 							//console.log("draw: no assist");
 						}
 					}else{
 						if (this.pen.current.delay_assist == true) {
-							this.pen.prepare(event,this.context,null);
-							this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+							this.realDrawMain(this.context,offsetPressure,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 						}
 					}
 				}else{
 					//pen pressure calc
-					this.pen.prepare(event,this.context,null);
-					this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+					this.realDrawMain(this.context,offsetPressure,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
 					//console.log("draw: normal");
 				}
 			}
@@ -2063,12 +2076,24 @@ var Selectors = function(){
 				this.delay.count--;
 				this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
 				//console.log("delay push="+this.delay.poshist.length);
+				//console.log(this.startX + "	" + this.startY);
+				//console.log(this.delay.poshist[0]);
 			}
-			//if (!this.is_discomplete) {
-				this.startX = offsetX;
-				this.startY = offsetY;
-			//}
+			//console.log("    start=");
+			//console.log(this.startX + "	" + this.startY + "	" + this.startPressure);
+			if (!ret) {
+				this.elementParameter["pointHistoryLast"] = {
+					"x" : this.startX,
+					"y" : this.startY,
+					"pressure" : this.startPressure
+				};
+			}
+			this.startX = offsetX;
+			this.startY = offsetY;
 			this.startPressure = offsetPressure;
+			//console.log(this.elementParameter["pointHistoryLast"]);
+			this.draw_linehist.push({"x":pos.x, "y":pos.y, "pressure":offsetPressure});
+			this.elementParameter["pointHistory"] = [];
 			event.preventDefault();
 		},
 		touchEnd : function(event) {
@@ -2088,64 +2113,109 @@ var Selectors = function(){
 			if (this.drawing)  {
 				offsetX = pos.x;
 				offsetY = pos.y;
-				//console.log("event.pressure=" + event.pressure);
-				var offsetPressure = event.pressure * 0.001;
+				//console.log("last start pressure="+this.startPressure);
+				//console.log("end=" + offsetX + "	" + offsetY + "	" + event.pressure);
+				if (this.elementParameter["pointHistoryLast"]) {
+					this.elementParameter["pointHistory"].push(this.elementParameter["pointHistoryLast"]);
+				}
+				var offsetPressure = event.pressure * 0;
 				//console.log("offsetPressure=" + offsetPressure);
-				this.pen.prepare(event,this.context,offsetPressure);
-				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+				//this.pen.prepare(event,this.context,offsetPressure);
+				//this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+				this.correct_main(event,{
+					"prev": {"x" : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].x : -1),
+							 "y" : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].y : -1)},
+					"start"  : {"x" : this.startX, "y" : this.startY},
+					"offset" : {"x" : offsetX, "y" : offsetY},
+				},{
+					"prev"  : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].pressure : -1),
+					"start" : this.startPressure,
+					"offset": offsetPressure
+				});
+
 				//---save undo
 				this.undo_function_end();
 				this.drawing = false;
-				this.is_discomplete = false;
-				this.discomplete_count.startx = 0;
-				this.discomplete_count.offsetx = 0;
-				this.discomplete_count.ju_sax = 0;
-				this.discomplete_count.starty = 0;
-				this.discomplete_count.offsety = 0;
-				this.discomplete_count.ju_say = 0;
-				this.delay.poshist.splice(0,this.delay.poshist.length);
-				this.delay.flag = false;
-				this.delay.count = 0;
-				
 			}
 			//	document.getElementById("log").innerHTML = this.startX + "x" + this.startY + " -> " + offsetX + "x" + offsetY;
 			//document.getElementById("log3").innerHTML = event.tiltX;
 			//console.log("end, event.button=");
 			//console.log(event);
+			this.is_scrolling = false;
 			this.is_scaling = false;
 			this.init_scale = this.during_scale;
-			this.touchpoints = {};
-			this.is_scrolling = false;
-			//console.log(this.draw_linehist);
-			var lc = 0, hc = 0;
-			var lx = this.draw_linehist[0].x, ly = this.draw_linehist[0].y, hx = this.draw_linehist[0].x, hy = this.draw_linehist[0].y;
-			for (var i = 0; i < this.draw_linehist.length; i++) {
-				//most low
-				if (lx >= this.draw_linehist[i].x) {
-					lx = this.draw_linehist[i].x;
-					lc = i;
-				}
-				if (ly >= this.draw_linehist[i].y) {
-					ly = this.draw_linehist[i].y;
-				}
-				//most high
-				if (hx <= this.draw_linehist[i].x) {
-					hx = this.draw_linehist[i].x;
-					hc = i;
-				}
-				if (hy <= this.draw_linehist[i].y) {
-					hy = this.draw_linehist[i].y;
-				}
-				
+			if (this.touchpoints["1"] && (event.pointerId == this.touchpoints["1"].id)) {
+				this.touchpoints["1"] = null;
+				delete this.touchpoints["1"];
+				//一点目の指を離したのだから、2点目の指の位置を1点目に移し替え
+				this.touchpoints["1"] = this.touchpoints["2"];
 			}
-			console.log("low count="+lc);
-			console.log("lx="+lx);
-			console.log("ly="+ly);
-			console.log("high count="+hc);
-			console.log("hx="+hx);
-			console.log("hy="+hy);
+			if (this.touchpoints["11"] && (event.pointerId == this.touchpoints["11"].id)) {
+				this.touchpoints["11"] = null;
+				delete this.touchpoints["11"];
+				//一点目の指を離したのだから、2点目の指の位置を1点目に移し替え
+				this.touchpoints["11"] = this.touchpoints["21"];
+			}
+			if (this.touchpoints["2"] && (event.pointerId == this.touchpoints["2"].id)){
+				this.touchpoints["2"] = null;
+				delete this.touchpoints["2"];
+			}
+			if (this.touchpoints["21"] && (event.pointerId == this.touchpoints["21"].id)){
+				this.touchpoints["21"] = null;
+				delete this.touchpoints["21"];
+			}
+			this.is_discomplete = false;
+			this.discomplete_count.startx = 0;
+			this.discomplete_count.offsetx = 0;
+			this.discomplete_count.ju_sax = 0;
+			this.discomplete_count.starty = 0;
+			this.discomplete_count.offsety = 0;
+			this.discomplete_count.ju_say = 0;
+			this.delay.poshist.splice(0,this.delay.poshist.length);
+			this.delay.poshist = [];
+			this.delay.flag = false;
+			this.delay.count = 0;
+			//this.touchpoints = {};
+			
+			//console.log(this.draw_linehist);
+			
+			var lc = 0, hc = 0;
+			if (this.draw_linehist.length > 0) {
+				var lx = this.draw_linehist[0].x, ly = this.draw_linehist[0].y, hx = this.draw_linehist[0].x, hy = this.draw_linehist[0].y;
+				for (var i = 0; i < this.draw_linehist.length; i++) {
+					//most low
+					if (lx >= this.draw_linehist[i].x) {
+						lx = this.draw_linehist[i].x;
+						lc = i;
+					}
+					if (ly >= this.draw_linehist[i].y) {
+						ly = this.draw_linehist[i].y;
+					}
+					//most high
+					if (hx <= this.draw_linehist[i].x) {
+						hx = this.draw_linehist[i].x;
+						hc = i;
+					}
+					if (hy <= this.draw_linehist[i].y) {
+						hy = this.draw_linehist[i].y;
+					}
+					
+				}
+				/*console.log("low count="+lc);
+				console.log("lx="+lx);
+				console.log("ly="+ly);
+				console.log("high count="+hc);
+				console.log("hx="+hx);
+				console.log("hy="+hy);*/
+			}
 			event.preventDefault();
 			console.log("canvas touch end");
+			this.draw_linehist = [];
+			this.elementParameter["pointHistory"] = [];
+			this.elementParameter["pointHistoryLast"] = null;
 		},
 		touchLeave : function(event){
 			var pos  = calculatePosition("touchmove",event,this.context.canvas,{
@@ -2162,16 +2232,68 @@ var Selectors = function(){
 			if (this.drawing)  {
 				offsetX = pos.x;
 				offsetY = pos.y;
-				var offsetPressure = event.pressure * 0.001;
-				this.pen.prepare(event,this.context,offsetPressure);
-				this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+				if (this.elementParameter["pointHistoryLast"]) {
+					this.elementParameter["pointHistory"].push(this.elementParameter["pointHistoryLast"]);
+				}
+				console.log("leave pos=" + pos.x + "	" + pos.y);
+				console.log(this.elementParameter["pointHistory"]);
+				var offsetPressure = event.pressure * 0;
+				//this.pen.prepare(event,this.context,offsetPressure);
+				//this.pen.drawMain(this.context,this.startX,this.startY,offsetX,offsetY,event,this.elementParameter);
+					
+				this.correct_main(event,{
+					"prev": {"x" : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].x : -1),
+							 "y" : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].y : -1)},
+					"start"  : {"x" : this.startX, "y" : this.startY},
+					"offset" : {"x" : offsetX, "y" : offsetY},
+				},{
+					"prev"  : (this.elementParameter["pointHistory"].length > 0 ? 
+						this.elementParameter["pointHistory"][0].pressure : -1),
+					"start" : this.startPressure,
+					"offset": offsetPressure
+				});
 				//---save undo
 				this.undo_function_end();
-				this.delay.poshist.splice(0,this.delay.poshist.length);
-				this.delay.flag = false;
-				this.delay.count = 0;
+				
+				//this.drawing = false;
+				this.startX = offsetX;
+				this.startY = offsetY;
 			}
-			//this.drawing = false;
+			if (this.touchpoints["1"] && (event.pointerId == this.touchpoints["1"].id)) {
+				this.touchpoints["1"] = null;
+				delete this.touchpoints["1"];
+			}
+			if (this.touchpoints["11"] && (event.pointerId == this.touchpoints["11"].id)) {
+				this.touchpoints["11"] = null;
+				delete this.touchpoints["11"];
+			}
+			if (this.touchpoints["2"] && (event.pointerId == this.touchpoints["2"].id)){
+				this.touchpoints["2"] = null;
+				delete this.touchpoints["2"];
+			}
+			if (this.touchpoints["21"] && (event.pointerId == this.touchpoints["21"].id)){
+				this.touchpoints["21"] = null;
+				delete this.touchpoints["21"];
+			}
+			this.is_discomplete = false;
+			this.discomplete_count.startx = 0;
+			this.discomplete_count.offsetx = 0;
+			this.discomplete_count.ju_sax = 0;
+			this.discomplete_count.starty = 0;
+			this.discomplete_count.offsety = 0;
+			this.discomplete_count.ju_say = 0;
+			for (var i = 0; i < this.delay.poshist.length; i++) {
+				delete this.delay.poshist[i];
+			}
+			this.delay.poshist.splice(0,this.delay.poshist.length);
+			this.delay.poshist = [];
+			this.delay.flag = false;
+			this.delay.count = 0;
+			this.draw_linehist = [];
+			this.elementParameter["pointHistory"] = [];
+			this.elementParameter["pointHistoryLast"] = null;
 			this.focusing = false;
 			console.log("canvas touch leave");
 		},
@@ -2180,6 +2302,7 @@ var Selectors = function(){
 			//console.log(event);
 			this.focusing = true;
 			if (this.drawing) {
+				//this.drawing = false;
 				var pos  = calculatePosition("touchmove",event,this.context.canvas,{
 					"offset" : this.offset,
 					"canvasspace":this.canvasspace

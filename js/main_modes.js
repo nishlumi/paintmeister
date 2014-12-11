@@ -209,6 +209,8 @@ Draw["select_function_execute"] = function(event) {
 			if (this.selectors.items.length > 0) this.selectors.remove(this.selectors.items[0].id);
 			document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title"); //"貼り付け";
 			document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
+			var selmove = document.getElementById("sel_seltype_box");
+			selmove.click();
 		}else{
 			//---貼り付け開始
 			o.status = selectionStatus.paste_begin;
@@ -220,6 +222,8 @@ Draw["select_function_execute"] = function(event) {
 			this.opeselcontext.drawImage(this.canvas,0,0);
 			document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title2"); //"貼り付けの確定";
 			document.getElementById("sel_operationtype_paste").innerHTML = "&#9745";
+			var selmove = document.getElementById("sel_seltype_move");
+			selmove.click();
 		}
 	}else if (this.select_operation == "clip") {
 		//---クリップ領域作成
