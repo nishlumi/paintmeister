@@ -2,9 +2,10 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
-PaintMeister (1.0.42.87)
+PaintMeister (1.0.42.88)
 **Support virtual palmrest.(can be drawing with confidence with a pen and touch, even put your hand on the touch screen)
 **Adjust correction of brush(hand shake correction). Add an option of correction level for brush to main menu.
+*The line has to be drawn correctly to the end, when extending out to draw a line on the canvas.
 *Support drag&drop .pmpf file to initial top page.
 *Change that the mode after paste will the move mode and the mode after fix pasting will the box select mode.
 *Fix that it can not be pinch in/out when touch the finger again, release one of finger after pinch in/out.
