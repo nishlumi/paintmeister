@@ -2,6 +2,16 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.44.89)
+**PaintMeister Project file has thumbnail data.
+**Show preview window when an user drag and drop or open multiple files, a folder.
+*(WebApp/ChromeApps)Can drag and drop for chrome user only.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/12/20 15:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.42.88)
 **Support virtual palmrest.(can be drawing with confidence with a pen and touch, even put your hand on the touch screen)
 **Adjust correction of brush(hand shake correction). Add an option of correction level for brush to main menu.
