@@ -2,14 +2,31 @@ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.48.95)
+**Support to insert a text.(can do from "draw shapes". can move freely like the selection)
+**Improved Color palette: 20 colors per one palette, a total of 5 palettes.
+**Show all 5 color palettes when click neighbor question mark (remove the options from menu panel)
+**Can create until 20 layers.
+*Support Copy and Cut when the mode is free select.
+*Improved timing to draw fill-pen.
+*Improved Fill-pen.Can fill selection area only.
+*Fix that error happens when click(touch) "Eraser" or "Fill-pen", etc button.
+*Fix that could not display correctly a range of selection and to draw shapes.
+*Adjust UI: side-bar, above area of screen, and size of layer panel
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2014/12/31 13:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.44.89)
 **PaintMeister Project file has thumbnail data.
 **Show preview window when an user drag and drop or open multiple files, a folder.
 *(WebApp/ChromeApps)Can drag and drop for chrome user only.
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2014/12/20 15:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2014/12/23 11:00:00
+Store app		- 2014/12/23 11:00:00
 
 
 PaintMeister (1.0.42.88)
