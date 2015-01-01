@@ -43,7 +43,7 @@ PenSet.Add({
 		var temppressure = pressure2;
 		//---Editable begin
 		//---ペンの筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
-		temppressure = temppressure * 0.8;
+		temppressure = temppressure * 0.6;
 		//---Editable end
 		return {
 			"pressure" : temppressure,

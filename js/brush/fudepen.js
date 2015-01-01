@@ -51,6 +51,7 @@ PenSet.Add({
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
 		var hairpressure = parentElement.lastpressure  ? parentElement.lastpressure : 1 ;
+		
 		if (hairpressure == 0) {
 			hairpressure = 0.001;
 		}else if (hairpressure == undefined) {
@@ -77,8 +78,6 @@ PenSet.Add({
 		hairWidth = context.lineWidth;
 		hairDist = 0.3;
 		//---毛先は中心と、上下3つ
-		//毛先上
-		var hairheadcnt = 7 * hairpressure;
 		//---new
 		var ueCPY = 0, shitaCPY = 0;
 		var hairCPX = 0;
@@ -86,7 +85,10 @@ PenSet.Add({
 			hairCPX = parentElement["pointHistory"][0].x;
 			ueCPY = parentElement["pointHistory"][0].y;
 			shitaCPY = parentElement["pointHistory"][0].y;
+			hairpressure = parentElement["pointHistory"][0].pressure;
 		}
+		//毛先上
+		var hairheadcnt = 7 * hairpressure;
 		var ueStY = startY, shitaStY = startY;
 		var ueY = offsetY, shitaY = offsetY;
 		for (var i = 0; i < hairheadcnt; i++) {

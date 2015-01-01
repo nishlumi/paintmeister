@@ -52,8 +52,8 @@
 		<span>60</span> : <strong id="lab_pensize"></strong>
 		<div id="colorpalette">
 			<input type="text" id="colorpicker" readonly name="c1" value="#e4521e" class="color {hash:true}" title="色の選択"/>
-			<span id="explain_palette" class="explain_panel explain_palette" title="カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">?</span>
-			<table id="palettepanel" border="1"><tbody><tr id="palettepanel_line"></tr></tbody></table>
+			<span id="explain_palette" class="explain_panel explain_palette" title="当ボタン、 タッチあるいはマウスを当てる＝カラーパレットをすべて表示、カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">?</span>
+			<table id="palettepanel" border="1"><tbody id="palettepanel_body"></tbody></table>
 		</div>
 	</div>
 	<!--</td></tr>
@@ -82,12 +82,14 @@
 			<div id="chk_shapes_box" class="sidebar_radiobutton sidebar_radio_off" title="四角">&#9744;</div>
 			<div id="chk_shapes_circle" class="sidebar_radiobutton sidebar_radio_off" title="丸">&#9675;</div>
 			<div id="chk_shapes_triangle" class="sidebar_radiobutton sidebar_radio_off" title="三角">&#9651;</div>
+			<div id="chk_shapes_html" class="sidebar_radiobutton sidebar_radio_off" title="テキスト">&#9000;</div>
 		</div>
 		<div id="box_select">
 			-<span id="lab_seltype" title="選択の種類">type</span><br/>
 			<div id="sel_seltype_box" class="sidebar_radiobutton sidebar_radio_on" title="短形選択">&#9744;</div>
 			<div id="sel_seltype_free" class="sidebar_radiobutton sidebar_radio_off" title="自由選択">&#9729;</div>
 			<div id="sel_seltype_move" class="sidebar_radiobutton sidebar_radio_off" title="移動">&#10021;</div>
+			<div id="sel_seltype_tempdraw" class="sidebar_radiobutton sidebar_radio_off" title="一時的にペン使用">&#9999;</div>
 			-<span id="lab_operationtype" title="操作の種類">&#9988;&#10063;</span><br/>
 			<div id="sel_operationtype_clip" class="button uibutton-mid flatbutton" title="クリップ領域作成">&#9626;</div>
 			<div id="sel_operationtype_copy" class="button uibutton-mid flatbutton2" title="コピー">&#10063;</div>
@@ -104,12 +106,14 @@
 <span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
 <span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
 <label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
-<button id="btn_makecanvas" class="button flatbutton">作成</button>
+<button id="btn_makecanvas" class="button uibutton-large1 flatbutton">作成</button>
 </fieldset>
 <br/>
 <fieldset><legend id="lab_loadproject">プロジェクトファイルを開く</legend>
-<span id="lab_fileloc">ファイルの場所：</span><input type="file" id="fl_projpath" size="150" />
-<button id="btn_openfile" class="button flatbutton">開く</button>
+<span id="lab_fileloc">ファイルの場所：</span><input type="file" id="fl_projpath" size="150" multiple />
+ <span id="area_projdir"><span id="lab_dirloc">フォルダの場所：</span><input type="file" id="fl_projdir" size="150" webkitdirectory directory /><br/></span>
+<button id="btn_openfile" class="button uibutton-large1 flatbutton">開く</button>
+<button id="btn_openfolder" class="button1half uibutton-large1 flatbutton" style="display:none">フォルダから開く</button>
 </fieldset>
 </div>
 <div id="basepanel" class="base-panel">
@@ -131,10 +135,13 @@
 		<br />
 		<label id="lab_sv_colorpalette" title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked><span id="sv_colorpalette_msg">カラーパレットを保存する</span></label><br/>
 		<div>
-		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>No.0 <span id="lab_pltloc0"></span></label><br/>
+		<!--<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc0" value="0" checked>No.0 <span id="lab_pltloc0"></span></label><br/>
 		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc1" value="1">No.1 <span id="lab_pltloc1"></span></label><br/>
 		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc2" value="2">No.2 <span id="lab_pltloc2"></label></span><br/>
-		<span id="lab_sv_palettevalue" title="選択中のパレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます">保存・読み込み用：</span><input type="text" id="sv_palettevalue" size="50"/>
+		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc3" value="3">No.3 <span id="lab_pltloc3"></label></span><br/>
+		<label><input type="radio" name="sv_paletteloc" id="rad_paletteloc4" value="4">No.4 <span id="lab_pltloc4"></label></span><br/>-->
+		<span id="lab_sv_palettevalue" title="パレットの色がCSSのカラー表現でこちらに表示されます。ここを書き換えることで外部に保管した色も読み込めます。">保存・読み込み用：</span>
+		<textarea id="sv_palettevalue" wrap="off" title="1パレット20色までです。パレット間は改行で、色はカンマで区切って下さい"></textarea>
 		</div>
 		<div style="margin-top:0.5rem">
 			<hr/>
@@ -217,13 +224,42 @@
 </div>
 <div id="dlg_lguard"></div>
 <div id="dlg_rguard"></div>
-
+<div id="dlg_filelist"><div id="dlg_filelist_header_area"><button id="dlg_filelist_close" class="button2 uibutton-mini2">&#10005;</button> <strong id="dlg_filelist_header"> </strong></div>
+<div id="lst_filelist"><ul></ul></div>
+</div>
 <div id="pickerpanel"></div>
 <div id="progresspanel">
 <span id="lab_progress">読み込んでいます...</span><br/>
 <div id="progressicon"></div>
 <!--<progress max="100" id="progressbar">読み込んでいます...</progress>-->
 <button id="prg_btn_cancel" class="button2" style="display:none;">キャンセル</button>
+</div>
+<div id="dlg_htmlbox">
+	<div id="dlg_htmlbox_header_area">
+		<button id="dlg_htmlbox_close" class="button2 uibutton-mini2">&#10005;</button> <strong id="dlg_htmlbox_header">挿入するテキストを入力してください</strong>
+	</div>
+	<div id="dlg_htmlbox_main">
+	<span id="lab_htmlbox_css">書式(CSS):</span> <input type="text" id="inp_htmlbox_css" size="30"/><br/>
+	<span id="lab_htmlbox_align">揃え位置:</span> <select id="sel_htmlbox_align" class="sel_htmlbox">
+		<option value="start">start</option>
+		<option value="end">end</option>
+		<option value="left">left</option>
+		<option value="right">right</option>
+		<option value="center">center</option>
+	</select>
+	<span id="lab_htmlbox_baseline">ベースライン:</span> <select id="sel_htmlbox_baseline" class="sel_htmlbox">
+		<option value="top">start</option>
+		<option value="middle">middle</option>
+		<option value="bottom">bottom</option>
+		<option value="alphabetic ">alphabetic</option>
+		<option value="ideographic">ideographic</option>
+		<option value="hanging">hanging</option>
+	</select><br/>
+	<input type="text" id="inp_htmlbox_src">
+	</div>
+	<div id="dlg_htmlbox_footer_area">
+		<button id="btn_insert_htmlbox" class="button flatbutton2 uibutton-mini2">挿入</button>
+	</div>
 </div>
 <div id="dlg_plugin">
 	<table style="height:100%;"><tbody>

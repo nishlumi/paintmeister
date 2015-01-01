@@ -20,7 +20,9 @@
 	position : relative;
 	left : 600px;
 }
-
+#area_projdir {
+	visibility : hidden;
+}
 /*===============================================================
   Core UI parts, important define
 */
@@ -36,11 +38,12 @@
 	text-align : center;*/
 	border: 2px solid #808080;
 	position : relative;
-	/*top : 4rem;*/
-	z-index : 1;
+	/*top : 6rem;*/
+	/*z-index : 1;*/
 	/*margin-bottom : 1rem;*/
 }
 #canvaspanel .main-canvas{
+	-moz-touch-action:none;
 	-webkit-touch-action:none;
 	-ms-touch-action:none;
 	touch-action:none;
@@ -49,7 +52,7 @@
 	position : absolute;
 	top : 0px;
 	left : 0px;
-	z-index : 1;
+	/*z-index : 1;*/
 	cursor : crosshair;
 
 }
@@ -57,6 +60,7 @@
 	/*background-image: url('../images/work_area_background.png');
 	background-repeat: repeat;*/
 	background-color: transparent;
+	-moz-touch-action:none;
 	-ms-touch-action:none;
 	-webkit-touch-action:none;
 	touch-action:none;
@@ -64,7 +68,7 @@
 	position : absolute;
 	top : 0;
 	left : 0;
-	z-index : 1;
+	/*z-index : 1;*/
 	cursor : crosshair;
 }
 
@@ -75,13 +79,14 @@
 }
 .operate-canvas {
 	background-color: transparent;
+	-moz-touch-action:none;
 	-webkit-touch-action:none;
 	-ms-touch-action:none;
 	touch-action:none;
 	position : absolute;
 	top : 0;
 	left : 0;
-	z-index : 998;
+	/*z-index : 998;*/
 
 }
 
@@ -141,16 +146,35 @@
 	height : 3rem;
 	
 }
+.uibutton-mini {
+	text-align : center;
+	/*vertical-align : middle;*/
+	height : 1.5rem;
+	
+}
+.uibutton-mini2 {
+	text-align : center;
+	/*vertical-align : middle;*/
+	height : 2rem;
+	
+}
 .uibutton-mid {
 	text-align : center;
-	padding-top : 50%;
+	padding-top : 10%;
 	font-size : 150%;
 	cursor : default;
+	height : 2.5rem;
+}
+.uibutton-large1 {
+	text-align : center;
+	/*vertical-align : middle;*/
+	height : 3rem;
+	
 }
 
 .button {
 	width : 100%;
-	height : 3rem;
+	/*height : 3rem;*/
 	overflow : hidden;
 	/*background-color : #c4fab3;
 	border : 0;*/
@@ -166,7 +190,13 @@
 .button2:active {
 	background-color : #91d780;
 }
-
+.button1half {
+	width : 49%;
+	/*height : 3rem;*/
+	overflow : hidden;
+	/*background-color : #c4fab3;
+	border : 0;*/
+}
 .statbutton {
 	width : 45%; /*60px;*/
 	height : 40px;
@@ -234,20 +264,26 @@
 #prespanel {
 	float : left;
 	width : 45px;
-	height : 70%;
-	margin-top:6rem; 
+	height : calc(100%); /*70%;*/
+	margin-top:0;
 	display : none;
 	background-color : #999999;
 	color : #FFFFFF;
-	position : relative;
-	top : 0;
+	position : absolute;
+	top : 4rem;
 	left : 0;
+	padding-top:6rem;
 	overflow : visible, hidden;
+	z-index : 2;
 }
 #pres_main {
+	position : absolute;
+	top:0;
+	left:0;
 	width : 45px;
 	height : 100%;
 	display : inline-block;
+	padding-top : 2rem;
 }
 #pres_sub {
 	width : 55px;
@@ -258,6 +294,7 @@
 	display : none;
 	background-color : #BBBBBB;
 	color : #353535;
+	padding-top : 2rem;
 }
 #chk_enable_handpres {
 	font-size : 120%;
@@ -358,12 +395,21 @@ div.dragover_indicate {
 	margin-top : 0px;
 	margin-left : 0px;
 	position:fixed;
-	width:100%;
+	top : 0;
+	left : 0;
+	width: 100%;
+	height : 6rem;
+	z-index : 3;
 }
 #info_panel {
 	margin : 0;
 	padding :0;
 	width : 100%;
+	padding-top : 0.25rem;
+	padding-left : 0.25rem;
+}
+#info_currentpos {
+	color : #FAFAFA;
 }
 #sysbtn_panel {
 	float : left;
@@ -390,11 +436,15 @@ div.dragover_indicate {
 	background-color : #d3c9c5;
 }
 .button-panel{
-	width : 85%;
+	width : 100%;
+	height : 4rem;
+	padding-left : 0.25rem;
 	/*margin-left:1em; 
 	margin-top:10px; 
 	margin-right:10em; 
 	margin-bottom:3px;*/
+	background-color : #999999;
+
 }
 #menupanel {
 	display : none;
@@ -434,6 +484,15 @@ div.dragover_indicate {
 	height : 50%;
 	display : none;
 }
+#sv_palettevalue {
+	width : 80%;
+	height: 6rem;
+	overflow : auto;
+	background-color : #FFFFFF;
+	border : 1px solid black;
+	font-family : monospace;
+	font-size : 80%;
+}
 #txt_correction_level {
 	width : 10rem;
 }
@@ -441,8 +500,9 @@ div.dragover_indicate {
 	height : 2rem;
 	font-size : 120%;
 }
+/* =======================================color picker=== */
 #colorpicker {
-	height : 27px;
+	height : 1.5rem;
 	width : 10%;
 	float:left;
 }
@@ -460,21 +520,57 @@ div.dragover_indicate {
 	width : 80%;
 	border-collapse:collapse;
 }
+#palettepanel_body {
+	width : 100%;
+}
+.palette_line {
+	display : none;
+	width : 100%;
+	margin-bottom : 0.5rem;
+}
+.palette_emptyline {
+	width : 100%;
+	height : 1rem;
+	display : none;
+}
+.palette_empty_td {
+	/*width : 100%;*/
+	background-color : #999999;
+	opacity : 0.0;
+	border : 0;
+}
 .palette_button {
-	width : 5%;
-	height : 27px;
+	width : 5%; 
+	height : 1.5rem;
 	border : 1px solid #808080;
+	padding-left : 0;
+	padding-right : 0;
 	background-color : #FFFFFF;
 	text-align : center;
 }
+#pickerpanel{
+	position : absolute;
+	top : calc(32px + 3rem + 2px);
+	left : 1%;
+	/*border:1px solid gray;*/
+	background-color : #B6BBE4;
+	width : 200px;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+	opacity : 0.85;
+	z-index : 999;
+}
+
+/* =======================================layer panel=== */
 #dlg_layer {
 	display : none;
-	width : 75%;
+	width : 95%;
 	height : 30%;
 	overflow : hidden;
 	position : absolute;
 	top : 3rem;
-	left : calc(20%);
+	left : 0;
 	padding: 0.5rem 0.5rem;
 	background-color : #B6BBE4;
 	-moz-border-radius : 3px;
@@ -543,6 +639,7 @@ img.clipthumb {
 	border : 0;
 	vertical-align : middle;
 }
+/* =======================================brush panel=== */
 #dlg_pen_mode {
 	display : none;
 	width : 50%;
@@ -608,6 +705,7 @@ img.floatIcon {
 #dlg_pen_mode div > div.item1st-special:hover {
 	background-color : #C2883B;
 }
+/* =======================================canvas panel=== */
 #dlg_canvasinfo {
 	display : none;
 	width : 32%;
@@ -631,7 +729,7 @@ td.magni_element {
 	background-color : #F0EEC6;
 	cursor : default;
 	text-align : center;
-	height : 1.2rem;
+	height : 1.5rem;
 }
 td.magni_element:hover {
 	background-color : #D8CCA4;
@@ -650,20 +748,7 @@ td.magni_strong:hover {
 td.magni_strong:active {
 	background-color : #A29617;
 }
-
-#pickerpanel{
-	position : absolute;
-	top : calc(32px + 3rem + 2px);
-	left : 1%;
-	/*border:1px solid gray;*/
-	background-color : #B6BBE4;
-	width : 200px;
-	-moz-border-radius : 3px;
-	-webkit-border-radius : 3px;
-	border-radius : 3px;
-	opacity : 0.85;
-	z-index : 999;
-}
+/* =======================================progress panel=== */
 #progresspanel {
 	position:absolute;
 	top:0;
@@ -682,6 +767,137 @@ td.magni_strong:active {
 	border-radius:40px 40px 40px 40px;
 	border : dashed 2px black;
 }
+/* =======================================filelist dialog=== */
+#dlg_filelist {
+	display : none;
+	width : 50%;
+	height : 50%;
+	position : absolute;
+	top : 25%;
+	left : 25%;
+	background-color : #B6BBE4;
+	padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+	z-index : 10;
+	opacity : 0.85;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+}
+#dlg_filelist_header_area {
+	position : absolute;
+	top : 0;
+	left : 0;
+	width : 100%;
+	height : 2rem;
+	background-color : #00BCD4;
+}
+#lst_filelist {
+	position : absolute;
+	top : 2rem;
+	left : 0;
+	width : 100%;
+	height : 95%;
+	overflow : auto;
+}
+#dlg_filelist ul {
+	list-style : none;
+	width : 100%;
+	padding-left : 5px;
+}
+.dlg_filelist_disabled {
+	background-color : #8388B1;
+}
+li.fl_item {
+	width : 240px;
+	height : 170px;
+	text-align : center;
+	display: inline-block;
+	margin-left : 1rem;
+	margin-right : 1rem;
+	cursor : default;
+}
+li.fl_item figcaption {
+	cursor : default;
+}
+li.fl_item img {
+	vertical-align : middle;
+}
+li.fl_item:hover {
+	
+	background-color : #8388B1;
+	opacity : 0.3;
+}
+li.fl_item_disabled {
+	background-color : #8388B1;
+}
+/* =======================================htmlbox dialog=== */
+#dlg_htmlbox {
+	display : none;
+	width : 30%;
+	height : 30%;
+	position : absolute;
+	top : 15%;
+	left : 15%;
+	background-color : #B6BBE4;
+	padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+	z-index : 10;
+	opacity : 0.85;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+}
+@media screen and (min-width :720px) {
+	#dlg_htmlbox {
+		display : none;
+		width : 50%;
+		height : 30%;
+		position : absolute;
+		top : 15%;
+		left : 15%;
+		background-color : #B6BBE4;
+		padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+		z-index : 10;
+		opacity : 0.85;
+		-moz-border-radius : 3px;
+		-webkit-border-radius : 3px;
+		border-radius : 3px;
+	}
+}
+#dlg_htmlbox_header_area {
+	position : absolute;
+	top : 0;
+	left : 0;
+	width : 100%;
+	height : 2rem;
+	background-color : #00BCD4;
+}
+#dlg_htmlbox_main {
+	margin-top : 3rem;
+	width : 100%;
+	height : 70%;
+}
+#dlg_htmlbox_footer_area {
+	position : absolute;
+	bottom : 0;
+	left : 0;
+	width : 100%;
+	height : 3rem;
+}
+#inp_htmlbox_css {
+	width : 70%;
+}
+#inp_htmlbox_src {
+	border : 1px inset gray;
+	background-color : #FFFFFF;
+	width : 100%;
+	height : 2.5rem;
+	font-size : 150%;
+}
+.sel_htmlbox {
+	height : 2rem;
+	font-size : 120%;
+}
+/* =======================================plugin dialog=== */
 #dlg_plugin {
 	display : none;
 	width : 75%;
@@ -721,7 +937,7 @@ fieldset.pluginset {
 	width : 2rem;
 	height : 1.5rem;
 }
-
+/* =======================================animation=== */
 @-webkit-keyframes waitprogress {
 	0% { transform:rotate(0deg); }
 	25% { transform:rotate(45deg); }

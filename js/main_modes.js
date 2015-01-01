@@ -39,6 +39,7 @@ Draw["clearCliphist"] = function () {
 }
 //---the functions for select mode--------------------------------------------------------------------
 Draw["select_function_start"] = function (event,pos){
+	if (this.select_type == "tempdraw") return;
 	if (this.select_type == "move") {
 		//if (this.selectors.items.length < 1) return;
 		var o = this.select_clipboard; //this.selectors.items[0];
@@ -65,10 +66,12 @@ Draw["select_function_start"] = function (event,pos){
 	this.selectors.add(o);
 }
 Draw["select_function_move"] = function (event, pos) {
+	if (this.select_type == "tempdraw") return;
 	if ((this.select_clipboard) && (this.select_clipboard.status == selectionStatus.pasting)) {
 		if (this.select_clipboard.selectType == selectionType.move) {
 			this.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
 			this.opeselcontext.drawImage(this.canvas,pos.x-(this.select_clipboard.w*0.5),pos.y-(this.select_clipboard.h*0.5));
+			
 			//this.select_clipboard.oldx = this.select_clipboard.x;
 			//this.select_clipboard.oldy = this.select_clipboard.y;
 			this.select_clipboard.destx = pos.x;
@@ -107,6 +110,7 @@ Draw["select_function_move"] = function (event, pos) {
 }
 Draw["select_function_end"] = function (event, pos) {
 	var o;
+	if (this.select_type == "tempdraw") return;
 	if (this.select_type == "move") {
 		o = this.select_clipboard; //this.selectors.items[0];
 		
@@ -135,6 +139,10 @@ Draw["select_function_end"] = function (event, pos) {
 		o.w = (o.destx - o.x) * o.directionx;
 		o.h = (o.desty - o.y) * o.directiony;
 		var ang = o.calculateAngle();
+		o.addPoint(o.x, o.y);
+		o.addPoint(o.x+o.w, o.y);
+		o.addPoint(pos.x, pos.y);
+		o.addPoint(o.x, o.y+o.h);
 		
 		this.opecontext.strokeRect(ang.lt.x,ang.lt.y, ang.rb.x, ang.rb.y);
 	}else if (this.select_type == "free") {
@@ -148,8 +156,11 @@ Draw["select_function_end"] = function (event, pos) {
 		o.addPoint(pos.x,pos.y);
 	}
 	o.status = selectionStatus.end;
+	//---本来のキャンバスにもサブパスをセット
+	o.setToContext();
 }
 Draw["select_function_execute"] = function(event) {
+	if (this.select_type == "tempdraw") return;
 	if ((this.select_operation == "copy") || (this.select_operation == "cut")) { //--コピー・切り取り時
 		var o = this.selectors.items[0];
 		this.select_clipboard.copyFrom(o);
@@ -160,12 +171,22 @@ Draw["select_function_execute"] = function(event) {
 			this.select_clipboard.cutfrom = this.context;
 		}
 		var imgdata;
+		var tmpcan = document.createElement("canvas");
+		//tmpcan.style.display = "none";
+		tmpcan.style.position = "absolute";
+		tmpcan.style.top = "0px";
+		tmpcan.style.left = "0px;" 
+		tmpcan.id = "tmpcan";
+		document.body.appendChild(tmpcan);
 		if (this.select_type == "box") {
 			this.select_clipboard.selectType = selectionType.box;
 			var ang = o.calculateAngle();
+			ang.rb.x = ang.lt.x + o.w;
+			ang.rb.y = ang.lt.y + o.h;
 			imgdata = this.context.getImageData(ang.lt.x,ang.lt.y, o.w,o.h);
 			this.select_clipboard.oldx = ang.lt.x;
 			this.select_clipboard.oldy = ang.lt.y;
+			console.log(ang);
 		}else if (this.select_type == "free") {
 			this.select_clipboard.selectType = selectionType.free;
 			//---将来のために一応セットまでしておく
@@ -176,20 +197,49 @@ Draw["select_function_execute"] = function(event) {
 			this.select_clipboard.oldy = ang.lt.y;
 			console.log(ang);
 		}
-		this.canvas.width = imgdata.width;
-		this.canvas.height = imgdata.height;
+		tmpcan.width = imgdata.width;
+		tmpcan.height = imgdata.height;
+		var tmpcancon = tmpcan.getContext("2d");
+		//console.log(tmpcan);
+		tmpcancon.putImageData(imgdata,0,0);
+		//---クリップボード代わりにダミーキャンバスにコピー退避
+		//   クリップエリア適用も兼ねて、1回目はオリジナルのキャンバス含めたコピー描画
+		this.canvas.width = this.context.canvas.width; //imgdata.width;
+		this.canvas.height = this.context.canvas.height; //imgdata.height;
 		this.canvas.globalAlpha = this.context.globalAlpha;
 		this.canvas.globalCompositeOperation = this.context.globalCompositeOperation;
 		this.context.save();
-		//---クリップボード代わりにダミーキャンバスにコピー退避
-		this.canvas.getContext("2d").clearRect(0,0,this.canvas.width,this.canvas.height);
-		this.canvas.getContext("2d").putImageData(imgdata,0,0);
+		var can2d = this.canvas.getContext("2d");
+		if (this.select_type == "free") {
+			//---選択モードが自由の場合はクリップエリア設定開始
+			can2d.save();
+			can2d.beginPath();
+			can2d.moveTo(o.points[0].x,o.points[0].y);
+			for (var i = 0; i < o.points.length; i++) {
+				can2d.lineTo(o.points[i].x,o.points[i].y);
+			}
+			can2d.closePath();
+			can2d.clip();
+		}
+		can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
+		//can2d.putImageData(imgdata,0,0);
+		can2d.drawImage(tmpcan,ang.lt.x,ang.lt.y);
+		can2d.restore();
+		$("#tmpcan").remove();
+		//---2回目は本来やるべき、キャンバスサイズを絞ったコピー
+		imgdata = can2d.getImageData(ang.lt.x,ang.lt.y, 
+				ang.rb.x-ang.lt.x, ang.rb.y-ang.lt.y);
+		this.canvas.width = imgdata.width;
+		this.canvas.height = imgdata.height;
+		can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
+		can2d.putImageData(imgdata,0,0);
+		
 		document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton";
 	}else if (this.select_operation == "paste") {
 		var o = this.select_clipboard; //this.selectors.items[0];
 		if ((o.status == selectionStatus.pasting) || (o.status == selectionStatus.paste_begin)) {
 			//---現在のキャンバスに固定
-			var imgdata = this.canvas.getContext("2d").getImageData(0,0,this.canvas.width,this.canvas.height);
+			//var imgdata = this.canvas.getContext("2d").getImageData(0,0,this.canvas.width,this.canvas.height);
 			//this.context.putImageData(imgdata,o.destx,o.desty);
 			//---前の選択キャンバス、操作キャンバスをクリア
 			this.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
@@ -197,11 +247,30 @@ Draw["select_function_execute"] = function(event) {
 			this.undo_function_begin(true);
 			if (o.action == selectActionType.cut) {
 				var ang = o.calculateAngle();
-				o.cutfrom.clearRect(o.oldx,o.oldy, o.w,o.h);
+				if (o.selectType = selectionType.free) {
+					//---選択モードが自由の場合は保存したポイントからパスを設定して手動消しゴムクリア
+					o.cutfrom.save();
+					o.cutfrom.globalCompositeOperation = "destination-out";
+					o.cutfrom.fillStyle = "#000000";
+					
+					o.cutfrom.beginPath();
+					o.cutfrom.moveTo(o.points[0].x,o.points[0].y);
+					for (var i = 0; i < o.points.length; i++) {
+						o.cutfrom.lineTo(o.points[i].x,o.points[i].y);
+					}
+					o.cutfrom.closePath();
+					o.cutfrom.fill();
+					o.cutfrom.restore();
+					
+				}else{
+					o.cutfrom.clearRect(o.oldx,o.oldy, o.w,o.h);
+				}
 			}
 			this.context.globalAlpha = 1.0;
 			this.context.shadowBlur = 0;
+			
 			this.context.drawImage(this.canvas,o.destx,o.desty);
+			
 			//---save undo
 			this.undo_function_end();
 			this.context.restore();
@@ -291,7 +360,7 @@ Draw["drawshape_function_move"] = function (event, pos) {
 			if (this.drawing_type == "line") {
 				this.opecontext.moveTo(this.drawpoints[0].x, this.drawpoints[0].y);
 				this.opecontext.lineTo(pos.x, pos.y);
-			}else if (this.drawing_type == "box") {
+			}else if ((this.drawing_type == "box") || (this.drawing_type == "html")) {
 				var lt = {}, rb = {};
 				if (this.drawpoints[0].x > this.drawpoints[1].x) {
 					lt["x"] = this.drawpoints[1].x;
@@ -389,7 +458,7 @@ Draw["drawshape_function_move"] = function (event, pos) {
 		if (this.drawing_type == "line") {
 			this.opecontext.moveTo(this.touchpoints["1"].pos.x, this.touchpoints["1"].pos.y);
 			this.opecontext.lineTo(this.touchpoints["2"].pos.x, this.touchpoints["2"].pos.y);
-		}else if (this.drawing_type == "box") {
+		}else if ((this.drawing_type == "box") || (this.drawing_type == "html")) {
 			var lt = {}, rb = {};
 			if (this.touchpoints["1"].pos.x > this.touchpoints["2"].pos.x) {
 				lt["x"] = this.touchpoints["2"].pos.x;
@@ -569,6 +638,11 @@ Draw["drawshape_function_end"] = function (event, pos) {
 				decidepos.push(top2nd);
 				decidepos.push(top3rd);
 				decidepos.push(ang_top);
+			}else if (this.drawing_type == "html") {
+				this.variables["sv_drawhtml_pos_begin"] = {x:this.drawpoints[0].x, y:this.drawpoints[0].y};
+				this.variables["sv_drawhtml_pos_end"] = {x:this.drawpoints[1].x, y:this.drawpoints[1].y};
+				$("#inp_htmlbox_src").focus();
+				$("#dlg_htmlbox").css({"display":"block"});
 			}
 		}
 	}else if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
@@ -650,10 +724,14 @@ Draw["drawshape_function_end"] = function (event, pos) {
 				decidepos.push(top2nd);
 				decidepos.push(top3rd);
 				decidepos.push(ang_top);
+			}else if (this.drawing_type == "html") {
+				this.variables["sv_drawhtml_pos_begin"] = {x:this.touchpoints["1"].x, y:this.touchpoints["1"].y};
+				this.variables["sv_drawhtml_pos_end"] = {x:this.touchpoints["2"].x, y:this.touchpoints["2"].y};
+				$("#dlg_htmlbox").css({"display":"block"});
 			}
 		}
 	}
-	if (this.drawing_type != "circle") {
+	if ((this.drawing_type != "circle") && (this.drawing_type != "html")) {
 		//this.pen.prepare(event,this.context,null);
 		for (var i = 1; i < decidepos.length; i++) {
 			this.pen.prepare(event,this.context,temppres);
@@ -684,4 +762,34 @@ Draw["drawshape_function_end"] = function (event, pos) {
 	for (var i = 0; i < this.drawpoints.length; i++) this.drawpoints[i] = null;
 	this.drawpoints.splice(0,this.drawpoints.length);
 	this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+}
+Draw["prepare_drawhtml"] = function(src){
+	//---画面操作
+	document.getElementById("btn_shapes").click();
+	document.getElementById("btn_select").click();
+	document.getElementById("sel_seltype_box").click();
+	this.select_function_start(null,this.variables["sv_drawhtml_pos_begin"]);
+	this.select_function_end(null,this.variables["sv_drawhtml_pos_end"]);
+	
+	//---クリップボードにコピー操作
+	var o = this.selectors.items[0];
+	this.select_clipboard.selectType = selectionType.box;
+	var ang = o.calculateAngle();
+	this.select_clipboard.oldx = ang.lt.x;
+	this.select_clipboard.oldy = ang.lt.y;
+	this.canvas.width = o.w;
+	this.canvas.height = o.h;
+	var can2d = this.canvas.getContext("2d");
+	can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
+	//必要プロパティをメインのコンテキストからコピー
+	can2d.fillStyle = this.context.strokeStyle;
+	can2d.font = document.getElementById("inp_htmlbox_css").value;
+	can2d.textAlign = $("#sel_htmlbox_align").val();
+	can2d.textBaseline = $("#sel_htmlbox_baseline").val();
+	can2d.fillText(src, 0,0,o.w);
+	console.log("src="+src);
+	console.log(can2d);
+	document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton";
+	document.getElementById("sel_operationtype_paste").click();
+
 }

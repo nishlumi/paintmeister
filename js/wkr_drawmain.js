@@ -18,20 +18,21 @@ onmessage = function (evt){
 	var projectdata = [];
 	var fnldata = "";
 	//---Header
-	projectdata.push("paintm");
-	projectdata.push(Draw.appversion);
-	projectdata.push("0");
-	projectdata.push("4");
-	projectdata.push(Draw.canvassize[0]);
-	projectdata.push(Draw.canvassize[1]);
-	projectdata.push("1");
-	projectdata.push("3");
+	projectdata.push("paintm");					//:0
+	projectdata.push(Draw.appversion);			//:1
+	projectdata.push("0");						//:2
+	projectdata.push("4");						//:3
+	projectdata.push(Draw.canvassize[0]);		//:4
+	projectdata.push(Draw.canvassize[1]);		//:5
+	projectdata.push("1");						//:6
+	//projectdata.push("3");						//:7
+	projectdata.push(Draw.thumb);				//:7
 	//Color Mode Data Block
-	projectdata.push("768");
+	projectdata.push("768");					//:8
 	//Image Resource Block
-	projectdata.push(Draw.imagedata.length);
+	projectdata.push(Draw.imagedata.length);	//:9
 	//Image Data
-	projectdata.push(Draw.layer.length);
+	projectdata.push(Draw.layer.length);		//:10
 	for (var obj in Draw.layer) {
 		var r = "";
 		//var con = Draw.layer[obj].canvas.getContext("2d");

@@ -59,11 +59,32 @@ function saveImage() {
 		});
 	}else{
 		//---for Web app
+		console.log("dataURL length=");
+		console.log(Draw.canvas.toDataURL("image/png"));
 		var w = window.open("","_blank");
 		w.document.open();
 		w.document.write("<img src='" + Draw.canvas.toDataURL("image/png") + "'>");
 		w.document.close();
 	}
+}
+function preloadProjectFile(file,options){
+	var def = $.Deferred();
+	var reader = new FileReader();
+	if (String(file.name).indexOf(".pmpf") == -1) {
+		def.reject(false);
+	}else{
+		reader.onload = function(e) {
+			//document.getElementById("progressbar").value = 3;
+			//console.log(file);
+			var ret = Draw.preloadProject(file.name,reader.result);
+			//---1つ読み込んだらサムネイルセットして画面に追加
+			Draw.addToFilelistPanel(file,ret);
+		}
+		reader.onerror = function(e){
+		}
+		reader.readAsText(file);
+	}
+	return def.promise();
 }
 function loadProjectFile(files){
 	var reader = new FileReader();
@@ -243,6 +264,9 @@ var PluginManager = {
 	$(window).on("beforeunload",function(){
 		return "戻る、再読み込みをすると保存していない作業中の絵が消えます。大丈夫ですか？";
 	});
+	document.body.oncontextmenu = function(event) {
+		return false;
+	}
 	window.addEventListener("load",function(){
 		//---ここからストアアプリも共通
 		document.addEventListener("keydown", function(event) {
@@ -308,6 +332,13 @@ var PluginManager = {
 						return;
 					}
 				}
+			}else if (event.keyCode == "85") { // U
+				if (document.getElementById("initialsetup").style.display == "none") {
+					if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+						document.getElementById("sel_seltype_tempdraw").click();
+						return;
+					}
+				}
 			}else if (event.keyCode == "88" && event.ctrlKey) { //Ctrl + X
 				if (document.getElementById("initialsetup").style.display == "none") {
 					if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
@@ -361,6 +392,11 @@ var PluginManager = {
 			Draw.keyLikePres = null;
 			Draw.pressedKey = 0;
 		}, false);
+		if ((navigator.userAgent.indexOf("Chrome") > -1)) {
+			$("#area_projdir").css("visibility","visible");
+		}
+
+		//---メインのオブジェクト類の設定開始
 		Draw.parseURL();
 		setupLocale(Draw.urlparams)
 		.then(function(flag){
@@ -453,9 +489,6 @@ var PluginManager = {
 			    	event.preventDefault();
 				});
 				//---その他グローバルなイベント
-				document.body.oncontextmenu = function(event) {
-					return false;
-				}
 				window.addEventListener("resize",function(event){
 					console.log("width=" + event.target.innerWidth);
 					console.log("height=" + event.target.innerHeight);

@@ -42,7 +42,7 @@ PenSet.Add({
 		var temppressure = pressure2;
 		//---Editable begin
 		//---エアブラシの筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
-		temppressure = temppressure * 0.5;
+		temppressure = temppressure * 0.35;
 		//---Editable end
 		return {
 			"pressure" : temppressure,
@@ -57,7 +57,17 @@ PenSet.Add({
 		}else if (hairpressure == undefined) {
 			hairpressure = 1;
 		}
+		if (hairpressure > 0.5) hairpressure = 0.5;
 		var bakalp = context.globalAlpha;
+		var haircolor = [null,null,null,null];
+		for (var i = 0; i < haircolor.length; i++) {
+			haircolor[i] = new RGBColor(parentElement.current["color"]);
+			/*if (i < 2) {
+				haircolor[i].setR(haircolor[i].r * 1.5);
+				haircolor[i].setG(haircolor[i].g * 1.5);
+				haircolor[i].setB(haircolor[i].b * 1.5);
+			}*/
+		}
 
 		var StXarr = [];
 		var StYarr = [];
@@ -81,27 +91,29 @@ PenSet.Add({
         }
 		
 		//---new
-		context.globalCompositeOperation = "";
-		context.globalAlpha = 0.08 * hairpressure * 1;
+		context.globalCompositeOperation = "source-over";
+		//context.globalAlpha = 0.08 * hairpressure * 1;
+		context.strokeStyle = haircolor[haircolor.length-1].toRGBA(0.08 * hairpressure * 1);
 		context.lineCap = "round";
 		if (hairpressure < 0.5) {
-			context.lineWidth = parentElement.current["size"] * (hairpressure * 6);
+			context.lineWidth = parentElement.current["size"] * (hairpressure * 7);
 		}else{
-			context.lineWidth = parentElement.current["size"] * (hairpressure * 2);
+			context.lineWidth = parentElement.current["size"] * (hairpressure * 6);
 		}
 		context.shadowOffsetX = 5 * Xdir;
 		context.shadowOffsetY = 5 * Ydir;
-		context.shadowBlur = 1;
+		context.shadowBlur = 0;
 		context.beginPath();
 		context.moveTo(startX, startY);
 		context.lineTo(offsetX, offsetY);
 		context.stroke();
 		//---エアブラシ中身
-		context.globalAlpha = 0.015 * hairpressure * 1;
-		context.shadowBlur = 0;
+		//context.globalAlpha = 0.75 * hairpressure * 1;
+		context.shadowBlur = 5;
 		context.lineCap = "butt";
 		for (var i = 0; i < 4; i++) {
-			context.lineWidth *= 0.7;
+			context.strokeStyle = haircolor[i].toRGBA(0.02 * hairpressure * 1);
+			//context.lineWidth *= 0.7;
 			context.beginPath();
 			context.moveTo(startX, startY);
 			context.lineTo(offsetX, offsetY);

@@ -2,13 +2,34 @@
 	レイヤーのz-index一覧
 	canvas:ダミー = 0
 	opecan:操作用 = 5
-	0(base) = 11
-	1(layer1) = 12
-	2 = 13
+	0(base) = 10
+	1(layer1) = 20
+	2 = 30
 	...
-	15 = 16
+	15 = 150
 	opeselcan:操作・選択用 = 6
 */
+function configEvent(canvas,touch) {
+	canvas.addEventListener(touch.start, function(event) {
+		Draw.touchStart(event); // start drawing.
+	}, false);
+	
+	canvas.addEventListener(touch.move, function(event) {
+		Draw.touchMove(event); // continue drawing while dragging the pointer.
+		event.preventDefault();
+	}, false);
+	
+	canvas.addEventListener(touch.end, function(event) {
+		Draw.touchEnd(event); // finish drawing.
+	}, false);
+	canvas.addEventListener(touch.leave, function(event) {
+		Draw.touchLeave(event); // finish drawing.
+	}, false);
+	canvas.addEventListener(touch.enter, function(event) {
+		Draw.touchEnter(event); // finish drawing.
+	}, false);
+}
+
 var DrawLayer = function(parentobj,size,is_main,removable){
 	var own = this;
 	this.name = "lay";
@@ -67,7 +88,11 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 			newcontext.lineJoin = oldcontext.lineJoin;
 		}
 		own.parent.context = newcontext;
+		//---念のためクリップボードのサブパスを再セット
+		own.parent.select_clipboard.setToContext();
 		own.parent.currentLayer = own;
+		//own.parent.configOperationCanvas(own.canvas);
+		
 		document.getElementById("layinfo_opacity").value = own.Alpha;
 		document.getElementById("layinfo_toggle").checked = own.isvisible;
 		document.getElementById("info_layer").textContent = own.title;
@@ -86,6 +111,7 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		}
 	}
 	this.deselect = function (){
+		own.parent.context.beginPath();
 		own.parent.context = null;
 		if (own.isvisible) {
 			own.control.className = "layer_button layer_button_show";
@@ -187,36 +213,16 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		//context.clip();
 	}
 	this.generate_core = function (canvas,ctrl){
-		function configEvent(touch) {
-			canvas.addEventListener(touch.start, function(event) {
-				Draw.touchStart(event); // start drawing.
-			}, false);
-			
-			canvas.addEventListener(touch.move, function(event) {
-				Draw.touchMove(event); // continue drawing while dragging the pointer.
-				event.preventDefault();
-			}, false);
-			
-			canvas.addEventListener(touch.end, function(event) {
-				Draw.touchEnd(event); // finish drawing.
-			}, false);
-			canvas.addEventListener(touch.leave, function(event) {
-				Draw.touchLeave(event); // finish drawing.
-			}, false);
-			canvas.addEventListener(touch.enter, function(event) {
-				Draw.touchEnter(event); // finish drawing.
-			}, false);
-		}
 		//---キャンバスの核となる設定
 		var touch = {
 			start : "touchstart", move : "touchmove", end : "touchend",
 			leave : "touchleave", enter : "touchenter"
 		}
-		var touchstart = 'touchstart';
+		/*var touchstart = 'touchstart';
 		var touchmove = 'touchmove';
 		var touchend = 'touchend';
 		var touchleave = 'touchleave';
-		var touchenter = 'touchenter';
+		var touchenter = 'touchenter';*/
 		if (window.PointerEvent){
 			touch.start = "pointerdown";
 			touch.move = "pointermove";
@@ -233,7 +239,7 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 			console.log("browser:Windows8 + IE10");
 		} else if (document.ontouchstart === undefined) { // for other PC browsers
 			//---toucheventあるはずなのでまずはセット
-			configEvent(touch);
+			//configEvent(touch);
 			//---次に最低限のmouseeventをセット開始
 			touch.start = 'mousedown';
 			touch.move = 'mousemove';
@@ -251,16 +257,16 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 			touch.enter = 'mouseenter';*/
 			console.log("browser:other PC browsers with touch");
 		}
-		if (navigator.userAgent.indexOf("Firefox") > -1) {
-			configEvent(touch);
-		}else{
+		/*if (navigator.userAgent.indexOf("Firefox") > -1) {
+			//configEvent(canvas,touch);
+		}else{*/
 			touch.start = "pointerdown";
 			touch.move = "pointermove";
 			touch.end = "pointerup";
 			touch.leave = 'pointerleave';
 			touch.enter = 'pointerenter';
-			configEvent(touch);
-		}
+			//configEvent(canvas,touch);
+		//}
 		
 		//---ボタンコントロールもイベント設定
 		ctrl.addEventListener("click", function(event) {
@@ -285,7 +291,7 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		own.canvas.className = "main-canvas";
 		own.canvas.width = own.canvassize.w;
 		own.canvas.height = own.canvassize.h;
-		own.canvas.style.zIndex = 10 + laylength+1;
+		own.canvas.style.zIndex = 10 * (laylength+1);
 		document.getElementById("canvaspanel").appendChild(own.canvas);
 		//own.title = "レイヤーNo." + own.canvas.style.zIndex;
 		//own.title = "レイヤーNo." + reallastIndex;

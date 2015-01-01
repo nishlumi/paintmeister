@@ -1,11 +1,33 @@
-Draw["prepareSaveImage"] = function(){
+Draw["prepareSaveImage"] = function(w, h, isthumb){
 	//ダミーのキャンバスから統合した画像を作成
-	Draw.canvas.width = Draw.canvassize[0];
-	Draw.canvas.height = Draw.canvassize[1];
 	var c = Draw.canvas.getContext("2d");
-	c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+	Draw.canvas.width = w;
+	Draw.canvas.height = h;
+	c.clearRect(0,0,w,h);
 	c.fillStyle = "#FFFFFF";
-	c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
+	c.fillRect(0, 0, w, h);
+	var magnrate = 0;
+	var magn = {"x":0,"y":0};
+	if (isthumb) {
+		if (parseInt(Draw.canvassize[0]) > parseInt(Draw.canvassize[1])) {
+			//width is large
+			magnrate = 100 / Draw.canvassize[0];
+			//Draw.canvas.width = 100;
+			Draw.canvas.height = Draw.canvassize[1] * magnrate;
+			c.translate(0,(100-Draw.canvassize[1] * magnrate)*0.5);
+		}else{
+			//height is large
+			magnrate = 100 / Draw.canvassize[1];
+			Draw.canvas.width = Draw.canvassize[0] * magnrate;
+			//Draw.canvas.height = 100;
+			c.translate((100-Draw.canvassize[0] * magnrate)*0.5,0);
+		}
+		c.fillStyle = "#FFFFFF";
+		c.fillRect(0, 0, Draw.canvas.width, Draw.canvas.height);
+		magn.x = magnrate;
+		magn.y = magnrate;
+		c.scale(magn.x,magn.y);
+	}
 	for (var obj in Draw.layer) {
 		if (Draw.layer[obj].isvisible) {
 			c.globalAlpha = Draw.layer[obj].Alpha / 100; //canvas.getContext("2d").globalAlpha;
@@ -15,25 +37,27 @@ Draw["prepareSaveImage"] = function(){
 	}
 }
 Draw["prepareSaveProject"] = function (){
+	//***** Not execute******
 	//var def = $.Deferred();
 	var rawdatas = [];
 	var projectdata = [];
 	var fnldata = "";
 	//---Header
-	projectdata.push("paintm");
-	projectdata.push(appversion);
-	projectdata.push("0");
-	projectdata.push("4");
-	projectdata.push(Draw.canvassize[0]);
-	projectdata.push(Draw.canvassize[1]);
-	projectdata.push("1");
-	projectdata.push("3");
+	projectdata.push("paintm");					//:0
+	projectdata.push(appversion);				//:1
+	projectdata.push("0");						//:2
+	projectdata.push("4");						//:3
+	projectdata.push(Draw.canvassize[0]);		//:4
+	projectdata.push(Draw.canvassize[1]);		//:5
+	projectdata.push("1");						//:6
+	projectdata.push("3");						//:7
+	
 	//Color Mode Data Block
-	projectdata.push("768");
+	projectdata.push("768");					//:8
 	//Image Resource Block
-	projectdata.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length);
+	projectdata.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length);	//:9
 	//Image Data
-	projectdata.push(Draw.layer.length);
+	projectdata.push(Draw.layer.length);		//:10
 	for (var obj in Draw.layer) {
 		var r = "";
 		var con = Draw.layer[obj].canvas.getContext("2d");
@@ -77,6 +101,32 @@ Draw["displayFromProject"] = function (filename) {
     this.progresspanel.style.display = "none";
     document.getElementById("progressicon").className = "";
 
+}
+/*
+* @return {Object} 
+*  ** success
+*   version : バージョン
+* 	width : 幅
+*   height: 高さ
+*   thumbnail : サムネイル（画像データ）
+*  ** error
+*   cd : 1 - 正しいプロジェクトファイルではない
+*/
+Draw["preloadProject"] = function(filename,data){
+	var ret = {};
+	var projectdata = (typeof(data) == "string" ? String(data).split("\t") : data);
+	Draw.filelist[filename] = projectdata;
+	var CST_width = 4
+	var CST_height = 5;
+	if (projectdata[0] != "paintm") {
+		ret["cd"] = 1;
+	}else{
+		ret["version"] = projectdata[1];
+		ret["width"] = projectdata[CST_width];
+		ret["height"] = projectdata[CST_height];
+		ret["thumbnail"] = projectdata[7];
+	}
+	return ret;
 }
 Draw["loadProject"] = function(data){
 	var projectdata = (typeof(data) == "string" ? String(data).split("\t") : data);

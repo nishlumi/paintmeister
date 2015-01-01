@@ -86,6 +86,57 @@ function saveImage(data) {
         }
     });
 }
+function preloadProjectFile(file,options) {
+    var def = $.Deferred();
+    var reader = new FileReader();
+    if (String(file.name).indexOf(".pmpf") == -1) {
+        def.reject(false);
+    } else {
+        reader.onload = function (e) {
+            //document.getElementById("progressbar").value = 3;
+            //console.log(file);
+            var ret = Draw.preloadProject(file.name, reader.result);
+            //---1つ読み込んだらサムネイルセットして画面に追加
+            var f = {};
+            f["name"] = file.name;
+            f["size"] = options.size;
+            f["lastModifiedDate"] = options.lastModifiedDate;
+            Draw.addToFilelistPanel(f, ret);
+        }
+        reader.onerror = function (e) {
+        }
+        reader.readAsText(file);
+    }
+    return def.promise();
+}
+function loadProjectFolder() {
+    var curstate = Windows.UI.ViewManagement.ApplicationView.value;
+    if (curstate === Windows.UI.ViewManagement.ApplicationViewState.snapped &&
+        !Windows.UI.ViewManagement.ApplicationView.tryUnsnap()) {
+        return;
+    }
+    var folpick = new Windows.Storage.Pickers.FolderPicker();
+    folpick.fileTypeFilter.replaceAll([".pmpf"]);
+    folpick.pickSingleFolderAsync().then(function (folder) {
+        console.log(folder.name);
+        console.log(typeof folder);
+        document.getElementById("dlg_filelist_header").textContent = folder.name;
+        $("#dlg_filelist").css({ "display": "block" });
+        folder.getFilesAsync().done(function (files) {
+            //console.log(files);
+            files.forEach(function (file) {
+                //console.log(file);
+                //preloadProjectFile(file);
+                file.getBasicPropertiesAsync().then(function (prop) {
+                    //console.log(prop);
+                    preloadProjectFile(file, { "size": prop.size, "lastModifiedDate": prop.dateModified });
+                });
+            });
+        });
+    });
+
+
+}
 function loadProjectFile(files) {
     var curstate = Windows.UI.ViewManagement.ApplicationView.value;
     if (curstate === Windows.UI.ViewManagement.ApplicationViewState.snapped &&
@@ -96,36 +147,58 @@ function loadProjectFile(files) {
     openpick.viewMode = Windows.Storage.Pickers.PickerViewMode.list;
     openpick.suggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.documentsLibrary;
     openpick.fileTypeFilter.replaceAll([".pmpf"]);
-    openpick.pickSingleFileAsync().then(function (file) {
-        console.log(file);
-        if (file) {
-            console.log(file);
-            var reader = new FileReader();
-            reader.onloadstart = function (e) {
-                document.getElementById("progressicon").className = "get-animestart";
-                Draw.progresspanel.style.display = "block";
-            }
-            reader.onload = function (e) {
-                if (Draw.loadProject(reader.result)) {
-                    document.getElementById("basepanel").style.display = "block";
-                    document.getElementById("openedProjName").innerText = " - " + file.name;
-                    Draw.filename = file.name;
-                    Draw.progresspanel.style.display = "none";
-                    document.getElementById("progressicon").className = "";
-                } else {
+    openpick.pickMultipleFilesAsync().then(function (files) {
+        console.log(files);
+        if (files.size == 1) {
+            var file = files[0];
+            if (file) {
+                console.log(file);
+                var reader = new FileReader();
+                reader.onloadstart = function (e) {
+                    document.getElementById("progressicon").className = "get-animestart";
+                    Draw.progresspanel.style.display = "block";
+                }
+                reader.onload = function (e) {
+                    if (Draw.loadProject(reader.result)) {
+                        Draw.displayFromProject(file.name);
+                        /*document.getElementById("basepanel").style.display = "block";
+                        document.getElementById("openedProjName").innerText = " - " + file.name;
+                        Draw.filename = file.name;
+                        Draw.progresspanel.style.display = "none";
+                        document.getElementById("progressicon").className = "";*/
+                    } else {
+                        //alert("有効なPaintMeisterプロジェクトファイルではありません！");
+                        alert(_T("loadProjectFile_msg2"));
+                    }
+                }
+                reader.onerror = function (e) {
                     //alert("有効なPaintMeisterプロジェクトファイルではありません！");
                     alert(_T("loadProjectFile_msg2"));
                 }
-            }
-            reader.onerror = function (e) {
-                //alert("有効なPaintMeisterプロジェクトファイルではありません！");
-                alert(_T("loadProjectFile_msg2"));
-            }
-            reader.readAsText(file);
+                reader.readAsText(file);
 
-        } else {
-            Draw.progresspanel.style.display = "none";
-            document.getElementById("progressicon").className = "";
+            } else {
+                Draw.progresspanel.style.display = "none";
+                document.getElementById("progressicon").className = "";
+            }
+        } else if (files.size > 1) {
+            document.getElementById("dlg_filelist_header").textContent = _T("initialsetup_drop_msg1", [files.size]);
+            $("#dlg_filelist").css({ "display": "block" });
+            var fs = [];
+            for (var i = 0; i < files.size; i++) {
+                fs.push(files[i]);
+            }
+            
+            //for (var i = 0; i < fs.length; i++) {
+            fs.forEach(function (file) {
+                //var file = fs[i];
+                file.getBasicPropertiesAsync().then(function (prop) {
+                    //console.log(prop);
+                    preloadProjectFile(file, { "size": prop.size, "lastModifiedDate": prop.dateModified });
+                });
+                //preloadProjectFile(files[i]);
+
+            });
         }
     }, function (file) {
         Draw.progresspanel.style.display = "none";
@@ -209,10 +282,33 @@ var AppStorage = {
             } else {
                 // TODO: このアプリケーションは中断状態から再度アクティブ化されました。
                 // ここでアプリケーションの状態を復元します。
+                if (app.sessionState) {
+                    //Draw = app.sessionState["Draw"];
+                    //ColorPalette = app.sessionState["Colorpalette"];
+                    //Draw.context = app.sessionState["can"];
+                    if (Draw.loadProject(app.sessionState["project"])) {
+                        Draw.displayFromProject(app.sessionState["filename"]);
+                    }
+
+                }
             }
             args.setPromise(WinJS.UI.processAll());
         }
     };
+    Windows.UI.WebUI.WebUIApplication.addEventListener("activated", function () {
+
+
+    }, false);
+    Windows.UI.WebUI.WebUIApplication.addEventListener("suspending", function () { 
+        var host = document.body;
+        // Call suspending method on current scenario, if there is one
+        host.winControl && host.winControl.suspending && host.winControl.suspending(eventObject);
+    }, false);
+    Windows.UI.WebUI.WebUIApplication.addEventListener("resuming", function () {
+        if (Draw.loadProject(app.sessionState["project"])) {
+            Draw.displayFromProject(app.sessionState["filename"]);
+        }
+    }, false);
 
     app.oncheckpoint = function (args) {
         // TODO: このアプリケーションは中断しようとしています。ここで中断中に
@@ -221,7 +317,17 @@ var AppStorage = {
         // できます。アプリケーションを中断する前に
         // 非同期操作を完了する必要がある場合は、
         // args.setPromise() を呼び出してください。
+        var obj = new Object();
+        //obj["Draw"] = Draw;
+        //obj["Colorpalette"] = ColorPalette;
+        //obj["can"] = Draw.context;
+        obj = Draw.prepareSaveProject();
+        WinJS.Application.sessionState["project"] = obj;
+        WinJS.Application.sessionState["filename"] = Draw.filename;
     };
+    document.getElementById("btn_openfile").className = "button1half uibutton-large1 flatbutton";
+    document.getElementById("btn_openfolder").style.display = "inline";
+
     //---ここから共通処理貼り付け
     //---ここからストアアプリも共通
     document.addEventListener("keydown", function (event) {
@@ -287,6 +393,13 @@ var AppStorage = {
                     return;
                 }
             }
+        } else if (event.keyCode == "85") { // U
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_seltype_tempdraw").click();
+                    return;
+                }
+            }
         } else if (event.keyCode == "88" && event.ctrlKey) { //Ctrl + X
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
@@ -340,6 +453,11 @@ var AppStorage = {
         Draw.keyLikePres = null;
         Draw.pressedKey = 0;
     }, false);
+    if ((navigator.userAgent.indexOf("Chrome") > -1)) {
+        $("#area_projdir").css("visibility", "visible");
+    }
+
+    //---メインのオブジェクト類の設定開始
     Draw.parseURL();
     setupLocale(Draw.urlparams)
     .then(function (flag) {
@@ -375,26 +493,38 @@ var AppStorage = {
             document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";
             //---キャンバス外からタッチしたまま入ったときのための描画制御
             var touchstart = 'touchstart';
+            var touchmove = 'touchmove';
             var touchend = 'touchend';
             var touchleave = 'touchleave';
             if (window.PointerEvent) {
                 touchstart = "pointerdown";
+                touchmove = 'pointermove';
                 touchend = "pointerup";
                 touchleave = 'pointerleave';
             } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
                 touchstart = 'MSPointerDown';
+                touchmove = 'MSPointerMove';
                 touchend = 'MSPointerUp';
                 touchleave = 'MSPointerLeave';
             }
-            document.body.addEventListener(touchstart, function (event) {
-                //Draw.drawing = true;
-
-            }, false);
-            document.body.addEventListener(touchend, function (event) {
-                if (!Draw.focusing) {
-                    Draw.drawing = false;
+            function operate_move(event) {
+                if (PalmRest.touching) {
+                    PalmRest.move(event);
                 }
-            }, false);
+            }
+            function operate_endleave(event) {
+                if ("focusing" in Draw) {
+                    if (!Draw.focusing) {
+                        Draw.drawing = false;
+                    }
+                }
+            }
+            //---PointerEvent向け
+            document.body.addEventListener(touchstart, function (event) { }, false);
+            document.body.addEventListener(touchmove, function (event) { }, false);
+            document.body.addEventListener(touchend, operate_endleave, false);
+            document.body.addEventListener(touchleave, operate_endleave, false);
+            //カラーピッカーでPointerEvent向け
             $("#colorpicker").on(touchstart, function (event) {
                 $("#pickerpanel").show();
             });
@@ -404,19 +534,22 @@ var AppStorage = {
             });
 
             touchstart = 'mousedown';
+            touchmove = 'mousemove';
             touchend = 'mouseup';
             touchleave = 'mouseleave';
-            document.body.oncontextmenu = function (event) {
-                return false;
-            }
-            document.body.addEventListener(touchstart, function (event) {
-                //Draw.drawing = true;
-            }, false);
-            document.body.addEventListener(touchend, function (event) {
-                console.log("document.body touchend");
-                if (!Draw.focusing)
-                    Draw.drawing = false;
-            }, false);
+            //---マウスイベント向け
+            document.body.addEventListener(touchstart, function (event) { }, false);
+            document.body.addEventListener(touchmove, function (event) { }, false);
+            document.body.addEventListener(touchend, operate_endleave, false);
+            document.body.addEventListener(touchleave, operate_endleave, false);
+            $("#colorpicker").on(touchstart, function (event) {
+                $("#pickerpanel").show();
+            });
+            $("#pickerpanel").on(touchleave, function (event) {
+                $("#pickerpanel").hide();
+                event.preventDefault();
+            });
+            //---その他グローバルなイベント
             window.addEventListener("resize", function (event) {
                 console.log("width=" + event.target.innerWidth);
                 console.log("height=" + event.target.innerHeight);
@@ -426,13 +559,6 @@ var AppStorage = {
                 document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
                 Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
             }, false);
-            $("#colorpicker").on(touchstart, function (event) {
-                $("#pickerpanel").show();
-            });
-            $("#pickerpanel").on(touchleave, function (event) {
-                $("#pickerpanel").hide();
-                event.preventDefault();
-            });
             def.resolve(true);
         });
         return def;
@@ -450,7 +576,7 @@ var AppStorage = {
             def.resolve(true);
         }
         return def;
-    })
+    });
     console.log(window.innerWidth + "/" + window.innerHeight);
 
     app.start();

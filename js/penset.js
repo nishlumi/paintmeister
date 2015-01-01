@@ -176,7 +176,12 @@ function call_parentEvent(removeLabel) {
 			var hairDist = 0;
 			var hair_outblur = 0;
 			if (this.current["mode"] == "fillpen" && this.current["pentype"] == PenType.fill){
-				context.fillRect(0,0,parentElement["canvas"].width,parentElement["canvas"].height);
+				//console.log("points="+this.parent.selectors.items[0].points.length);
+				if ((this.parent.selectors.items.length > 0) && (this.parent.selectors.items[0].points.length > 0)) {
+					context.fill();
+				}else{
+					context.fillRect(0,0,parentElement["canvas"].width,parentElement["canvas"].height);
+				}
 			}else{
 				try {
 					if (this.current["mode"] in this.items) {
@@ -207,7 +212,12 @@ function call_parentEvent(removeLabel) {
 			if (evt.target.tagName.toLowerCase() == "img") {
 				evt.target.style.border = "2px solid #000000";
 			}else{
-				evt.target.querySelector("img").style.border = "2px solid #000000";
+				//渡された要素がspanの場合は親から参照
+				if (evt.target.tagName.toLowerCase() == "span") {
+					evt.target.parentElement.querySelector("img").style.border = "2px solid #000000";
+				}else{
+					evt.target.querySelector("img").style.border = "2px solid #000000";
+				}
 			}
 			//evt.target.innerHTML = "&#10004;" + evt.target.innerText;
 			//console.log(event.target.id);

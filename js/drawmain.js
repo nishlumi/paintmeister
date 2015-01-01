@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.42.88";
+var appversion = "1.0.48.95";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -116,7 +116,8 @@ var UndoBuffer = function (undotype,targetlayer,imagedata) {
 var selectionType = {
 	"box" : 0,
 	"free" : 1,
-	"move" : 2
+	"move" : 2,
+	"tempdraw" : 3
 };
 var selectActionType = {
 	"clip" : 0,
@@ -192,6 +193,18 @@ var Selector = function(id){
 		own.action = selectActionType.clip;
 		own.selectType = selectionType.box;
 	}
+	this.setToContext = function(){
+		if (own.points.length > 0) {
+			Draw.context.beginPath();
+			Draw.context.moveTo(own.points[0].x,own.points[0].y);
+			console.log(own.points[0].x + "x" + own.points[0].y);
+			for (var i = 1; i < own.points.length; i++) {
+				Draw.context.lineTo(own.points[i].x,own.points[i].y);
+				console.log(own.points[i].x + "x" + own.points[i].y);
+			}
+			Draw.context.closePath();
+		}
+	}
 }
 var Selectors = function(){
 	var own = this;
@@ -245,9 +258,10 @@ var Selectors = function(){
 //#################################################################################
 	var Draw = {
 		canvas : null,	//ダミーキャンバス 
-		canvas2: null,
+		canvas2: null,	//クリップ領域など裏操作用
 		opecan : null,	//操作用キャンバス1
 		opeselcan : null, //操作・選択用キャンバス
+		screencan : null,	//実際の画面操作受付用のキャンバス
 		layer : [],
 		layermax : 0,
 		context : null, 
@@ -274,7 +288,7 @@ var Selectors = function(){
 				"size" : [600,400]   //0=w, 1=h
 			},
 			"layer" : {
-				"max" : 15
+				"max" : 20
 			},
 			"undo" : {
 				"divide" : 5,
@@ -282,12 +296,14 @@ var Selectors = function(){
 			},
 			"cliphistory" : 10,
 			"smooth_correction" : 3,
+			"sv_paletteloc_num" : 5,
 		},
 		last : {
 			"pen" : null,
 			"eraser" : null
 		},
-		
+		variables : {
+		},
 		drawing : false,
 		focusing : false,
 		canvassize : [600,400],
@@ -328,6 +344,7 @@ var Selectors = function(){
 		draw_linehist : [],
 		urlparams : {}, //for webapp
 		filename : "",
+		filelist : [],
 		discomplete_count : {
 			"cnt" : 0,
 			"dir" : "x",
@@ -395,7 +412,9 @@ var Selectors = function(){
 					call_createbody
 				);
 			},false);
-			//---メイン画面======================================================================
+			//========================================================================================
+			//---メイン画面
+			//========================================================================================
 			this.sizebar.addEventListener("change", function(event) {
 				document.getElementById("lab_pensize").innerHTML = event.target.value;
 				//Draw.currentpen["size"] = event.target.value;
@@ -420,7 +439,7 @@ var Selectors = function(){
 			},false);
 			this.checkstat.addEventListener("click", function(event) {
 				//ダミーのキャンバスから統合した画像を作成
-				Draw.prepareSaveImage();
+				Draw.prepareSaveImage(Draw.canvassize[0],Draw.canvassize[1],false);
 				/*var d1 = Draw.layer[0].canvas.getContext("2d").getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
 				var strd1 = "";
 				for (var i = 0; i < d1.data.length; i++) {
@@ -430,6 +449,181 @@ var Selectors = function(){
 				//console.log(imgdata);
 				//console.log(Draw.canvas.toDataURL("image/png"));
 				saveImage();
+			},false);
+			document.getElementById("btn_saveproj").addEventListener("click", function(event) {
+				document.getElementById("progressicon").className = "get-animestart";
+				Draw.progresspanel.style.display = "block";
+				
+				//Draw.prepareSaveProject()
+				var wkr = new Worker("js/wkr_drawmain.js");
+				wkr.addEventListener("message",function(evt){
+					saveProject(evt.data);
+				},false);
+				wkr.addEventListener("error",function(evt){
+					//alert("プロジェクトファイルの保存中にエラーが発生しました<br/>"+
+					alert(_T("btn_saveproj_click_msg1")+
+						evt.message + "<br/>" +
+						evt.filename + " , line number=" + evt.lineno + "<br/>"
+					);
+				},false);
+				//=======
+				var pstdata = {};
+				pstdata["appversion"] = appversion;
+				pstdata["canvassize"] = Draw.canvassize;
+				pstdata["imagedata"] = {"length":Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length};
+				Draw.prepareSaveImage(100,100,true);
+				pstdata["thumb"] = Draw.canvas.toDataURL("image/png");
+				pstdata["layer"] = [];
+				for (var obj in Draw.layer) {
+					var lay = {"title": "", "isvisible":true, "Alpha":0, "data":""};
+					var con = Draw.layer[obj].canvas.getContext("2d");
+					var imgd = con.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+					lay.title = Draw.layer[obj].title;
+					lay.isvisible = Draw.layer[obj].isvisible;
+					lay.Alpha = Draw.layer[obj].Alpha;
+					lay.data = imgd.data;
+					pstdata["layer"].push(lay);
+				}
+				document.getElementById("prg_btn_cancel").onclick = function(event) {
+					wkr.terminate();
+					Draw.progresspanel.style.display = "none";
+					document.getElementById("progressicon").className = "";
+				}
+				//=======
+				wkr.postMessage(pstdata);
+				//saveProject(Draw.prepareSaveProject);
+				
+				return;
+				//var bb = new Blob([data],{type:"text/txt"});
+				//download(window.URL.createObjectURL(bb),"sample.txt");
+			},false);
+			document.getElementById("btn_openfile").addEventListener("click", function(event) {
+				console.log(document.getElementById("fl_projpath").value);
+				var files = document.getElementById("fl_projpath").files;
+				if (navigator.userAgent.indexOf("Chrome") > -1) {
+					if (files.length == 0) {
+						//---ファイルが0件の場合はフォルダで選択
+						files = document.getElementById("fl_projdir").files;
+						//document.getElementById("dlg_filelist_header")
+						var path = files[0].webkitRelativePath.split("/")[0];
+						document.getElementById("dlg_filelist_header").textContent = path;
+					}
+					if (chrome.fileSystem) {
+						//---chromeappsで0件の場合はフォルダから選択
+						if (files.length == 0) {
+							chrome.fileSystem.chooseEntry({
+								"type" : "openDirectory"
+							},function(entry){
+								console.log(entry);
+								document.getElementById("dlg_filelist_header").textContent = entry.name;
+								var reader = entry.createReader();
+								reader.readEntries(function(result){
+									if (result.length > 0) {
+										$("#dlg_filelist").css({"display":"block"});
+									}
+									for (var i = 0; i < result.length; i++) {
+										result[i].file(function(f){
+											preloadProjectFile(f);
+										});
+									}
+									
+								});
+							});
+							return;
+						}
+					}
+					//---ここまで来ても0件の場合は終了
+					if (files.length == 0) {
+						document.getElementById("dlg_filelist_header").textContent = "";
+						alert(_T("loadProjectFile_msg1"));
+						return;
+					}
+				}
+				if (files.length == 0) {
+					event.target.value = "";
+				}
+				if (files.length > 1) {
+					//選択ファイルが2件以上の場合はディレクトリの処理開始
+					$("#dlg_filelist").css({"display":"block"});
+					for (var obj in files) {
+						var f = files[obj];
+						preloadProjectFile(f);
+					}
+					return;
+				}
+				//---共通処理、直接開く
+				//   ストアアプリ：この後ファイル選択
+				console.log(files[0]);
+				loadProjectFile(files);
+
+			},false);
+			document.getElementById("btn_openfolder").addEventListener("click", function(event) {
+				loadProjectFolder();
+			},false);
+			document.getElementById("initialsetup").addEventListener("dragover", function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				event.dataTransfer.dropEffect = "copy";
+				document.getElementById("initialsetup").className = "dragover_indicate";
+			},false);
+			document.getElementById("initialsetup").addEventListener("dragenter", function(event) {
+				console.log("drag enter=>");
+				console.log(event);
+			},false);
+			document.getElementById("initialsetup").addEventListener("dragleave", function(event) {
+				document.getElementById("initialsetup").className = "";
+				event.stopPropagation();
+				event.preventDefault();
+			},false);
+			document.getElementById("initialsetup").addEventListener("drop", function(event) {
+				event.stopPropagation();
+				event.preventDefault();
+				document.getElementById("initialsetup").className = "";
+				var files = event.dataTransfer.files;
+				if (files.length > 1) {
+					//n 個のPaintMeisterプロジェクトファイル
+					document.getElementById("dlg_filelist_header").textContent = 
+						_T("initialsetup_drop_msg1",[files.length]);
+					$("#dlg_filelist").css({"display":"block"});
+					for (var obj = 0; obj < files.length; obj++) {
+						var f = files[obj];
+						preloadProjectFile(f);
+					}
+				}else{
+					if (navigator.userAgent.indexOf("Chrome") > -1) {
+						var items = event.dataTransfer.items;
+						if (items.length > 0) {
+							$("#dlg_filelist").css({"display":"block"});
+							//フォルダやフォルダとファイルがドラッグアンドドロップされた場合
+							for (var obj = 0; obj < items.length; obj++) {
+								var ent = items[obj].webkitGetAsEntry();
+								if (ent.isFile) {
+									preloadProjectFile(items[obj].getAsFile());
+								}else if (ent.isDirectory) {
+									document.getElementById("dlg_filelist_header").textContent = 
+										ent.name;
+									ent.createReader().readEntries(function(results){
+										for (var i = 0; i < results.length; i++) {
+											results[i].file(function(f){
+												preloadProjectFile(f);
+											});
+										}
+									});
+								}
+							}
+						}
+					}else{
+						loadProjectFile(files);
+					}
+				}
+			},false);
+			document.getElementById("dlg_filelist_close").addEventListener("click", function(event) {
+				$("#dlg_filelist").css({"display":"none"});
+				$("#dlg_filelist ul > li").remove();
+				//---ドラッグアンドドロップで保持したデータはここですべて破棄
+				Draw.clearFilelist();
+				delete Draw.variables["timeoutid"];
+				delete Draw.variables["oid"];
 			},false);
 			this.undobtn.addEventListener("click", function(event) {
 				if (!Draw.canundo) return;
@@ -507,7 +701,9 @@ var Selectors = function(){
 				);
 				document.getElementById("btn_menu").click();
 			},false);
-			//---レイヤーパネル関係-==============================================================
+			//========================================================================================
+			//---レイヤーパネル関係
+			//========================================================================================
 			this.layer_add.addEventListener("click", function(event) {
 				if (Draw.layer.length == Draw.defaults.layer.max){
 					//alert("これ以上レイヤーを追加することはできません。");
@@ -584,7 +780,9 @@ var Selectors = function(){
 					document.getElementById("img_clipthumb").src = o.curfrom;
 				}
 			},false);
-			//---サイドバー関係-==============================================================
+			//========================================================================================
+			//---サイドバー関係
+			//========================================================================================
 			//---スポイトツールボタン
 			document.getElementById("btn_dropper").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
@@ -636,6 +834,7 @@ var Selectors = function(){
 					Draw.is_drawing_line = false;
 					Draw.drawpoints.splice(0,Draw.drawpoints.length);
 				}
+				
 			},false);
 			var sidebar_radio_clicking = function(element, parent) {
 				if (element.className == "sidebar_radiobutton sidebar_radio_off") { //オンにする
@@ -670,6 +869,20 @@ var Selectors = function(){
 			document.getElementById("chk_shapes_box").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_circle").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_triangle").addEventListener("click", chk_shapes_clicking,false);
+			document.getElementById("chk_shapes_html").addEventListener("click", chk_shapes_clicking,false);
+			document.getElementById("dlg_htmlbox_close").addEventListener("click", function(event){
+				$("#dlg_htmlbox").css({"display":"none"});
+			},false);
+			document.getElementById("btn_insert_htmlbox").addEventListener("click", function(event){
+				$("#dlg_htmlbox").css({"display":"none"});
+				Draw.prepare_drawhtml(document.getElementById("inp_htmlbox_src").value);
+			},false);
+			document.getElementById("inp_htmlbox_css").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+			document.getElementById("inp_htmlbox_src").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
 			//---選択操作ボタン
 			document.getElementById("btn_select").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
@@ -699,7 +912,11 @@ var Selectors = function(){
 					Draw.select_clipboard = new Selector();
 					Draw.opeselcontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
 					Draw.opecontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
+					if ((Draw.select_type != "box") && (Draw.select_type != "free")) {
+						document.getElementById("sel_seltype_box").click();
+					}
 				}
+				
 			},false);
 			var sel_seltype_clicking = function(event) {
 				/*if (Draw.select_operation == "clip") {
@@ -718,12 +935,13 @@ var Selectors = function(){
 			document.getElementById("sel_seltype_box").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_free").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_move").addEventListener("click", sel_seltype_clicking,false);
+			document.getElementById("sel_seltype_tempdraw").addEventListener("click", sel_seltype_clicking,false);
 			var sel_operationtype_clicking = function(event) {
 				if (Draw.select_type == "free") {
 					if ((event.target.id == "sel_operationtype_copy") || (event.target.id == "sel_operationtype_cut")) {
 						//alert("操作の種類がコピー・切り取り時は自由選択はできません");
-						alert(_T("sel_operationtype_clicking_msg1"));
-						return false;
+					//	alert(_T("sel_operationtype_clicking_msg1"));
+					//	return false;
 					}
 				}
 				if (Draw.select_type == "move") {
@@ -772,7 +990,9 @@ var Selectors = function(){
 					Draw.scale(Number(name));
 				}, false);
 			}
+			//========================================================================================
 			//---情報パネル関係
+			//========================================================================================
 			document.getElementById("btn_menu").addEventListener("click", function(event) {
 				if (document.getElementById("menupanel").style.display == "none") { //開く
 					Draw.turnMenuPanel("menupanel","btn_menu",true);
@@ -836,90 +1056,30 @@ var Selectors = function(){
 					//event.target.style.backgroundColor = "#c4fab3";
 				}
 			},false);
-			document.getElementById("btn_saveproj").addEventListener("click", function(event) {
-				document.getElementById("progressicon").className = "get-animestart";
-				Draw.progresspanel.style.display = "block";
-				
-				//Draw.prepareSaveProject()
-				var wkr = new Worker("js/wkr_drawmain.js");
-				wkr.addEventListener("message",function(evt){
-					saveProject(evt.data);
-				},false);
-				wkr.addEventListener("error",function(evt){
-					//alert("プロジェクトファイルの保存中にエラーが発生しました<br/>"+
-					alert(_T("btn_saveproj_click_msg1")+
-						evt.message + "<br/>" +
-						evt.filename + " , line number=" + evt.lineno + "<br/>"
-					);
-				},false);
-				//=======
-				var pstdata = {};
-				pstdata["appversion"] = appversion;
-				pstdata["canvassize"] = Draw.canvassize;
-				pstdata["imagedata"] = {"length":Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length};
-				pstdata["layer"] = [];
-				for (var obj in Draw.layer) {
-					var lay = {"title": "", "isvisible":true, "Alpha":0, "data":""};
-					var con = Draw.layer[obj].canvas.getContext("2d");
-					var imgd = con.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]);
-					lay.title = Draw.layer[obj].title;
-					lay.isvisible = Draw.layer[obj].isvisible;
-					lay.Alpha = Draw.layer[obj].Alpha;
-					lay.data = imgd.data;
-					pstdata["layer"].push(lay);
-				}
-				document.getElementById("prg_btn_cancel").onclick = function(event) {
-					wkr.terminate();
-					Draw.progresspanel.style.display = "none";
-					document.getElementById("progressicon").className = "";
-				}
-				//=======
-				wkr.postMessage(pstdata);
-				//saveProject(Draw.prepareSaveProject);
-				
-				return;
-				//var bb = new Blob([data],{type:"text/txt"});
-				//download(window.URL.createObjectURL(bb),"sample.txt");
-			},false);
-			document.getElementById("btn_openfile").addEventListener("click", function(event) {
-				console.log(document.getElementById("fl_projpath").value);
-				var files = document.getElementById("fl_projpath").files;
-				loadProjectFile(files);
-
-			},false);
-			document.getElementById("initialsetup").addEventListener("dragover", function(event) {
-				event.stopPropagation();
-				event.preventDefault();
-				event.dataTransfer.dropEffect = "copy";
-				document.getElementById("initialsetup").className = "dragover_indicate";
-			},false);
-			document.getElementById("initialsetup").addEventListener("dragleave", function(event) {
-				event.stopPropagation();
-				event.preventDefault();
-				document.getElementById("initialsetup").className = "";
-			},false);
-			document.getElementById("initialsetup").addEventListener("drop", function(event) {
-				event.stopPropagation();
-				event.preventDefault();
-				document.getElementById("initialsetup").className = "";
-				var files = event.dataTransfer.files;
-				loadProjectFile(files);
-			},false);
+			//========================================================================================
 			//---メインパネルオプション関係
+			//========================================================================================
 			document.getElementById("sv_palettevalue").addEventListener("keydown", function(event) {
 				event.stopPropagation();
 			},false);
 			document.getElementById("sv_palettevalue").addEventListener("change", function(event) {
 				var val = event.target.value;
-				var arr = val.split(",");
-				ColorPalette.load(val);
-				var inx = $("input:radio[name=sv_paletteloc]:checked").val();
+				var lines = val.split(/\r\n|\r|\n/);
+				for (var l = 0; l < lines.length; l++) {
+					if (l < 5) {
+						console.log("lines["+l+"]="+lines[l]);
+						var arr = lines[l].split(",");
+						ColorPalette.load(l,val);
+						AppStorage.set("sv_colorpalette"+l,lines[l]);
+					}
+				}
+				/*var inx = $("input:radio[name=sv_paletteloc]:checked").val();
 				for (var i = 1; i < 16; i++) {
 					if (i <= arr.length) {
 						document.getElementById("lab_pltloc" + inx + "_" + (i-1)).style.color = arr[i-1];
 					}
-				}
-				AppStorage.set("sv_colorpalette"+inx,val);
+				}*/
+				//AppStorage.set("sv_colorpalette"+inx,val);
 			},false);
 			document.getElementById("chk_sv_colorpalette").addEventListener("click", function(event) {
 				var dis = "";
@@ -928,7 +1088,7 @@ var Selectors = function(){
 				}else{
 					dis = "disabled";
 				}
-				for (var i = 0; i < 3; i++) {
+				for (var i = 0; i < Draw.defaults.sv_paletteloc_num; i++) {
 					document.getElementById("rad_paletteloc"+i).disabled = dis;
 					document.getElementById("sv_palettevalue").disabled = dis;
 				}
@@ -1024,6 +1184,7 @@ var Selectors = function(){
 			},false);
 			document.getElementById("btn_download_plugin").addEventListener("click", function(event) {
 			},false);
+			
 			//=============================================================================================
 			//---アプリバージョンの設定
 			document.getElementById("appNameAndVer").textContent = appname + " Ver:" + appversion;
@@ -1068,47 +1229,14 @@ var Selectors = function(){
 				}
 			});
 			$("#lay_btns").disableSelection();
-			//---カラーパレットのプレビュー＆イベントセットアップ
-			for (var i = 0; i < 3; i++) {
-				document.getElementById("rad_paletteloc"+i).addEventListener("click", function(event) {
-					var val = event.target.value;
-					//console.log("rad_paletteloc=" + val);
-					var dat = AppStorage.get("sv_colorpalette"+val,null);
-					//console.log("dat="+dat);
-					if (!dat) {
-						var arr = [];
-						for (var i = 0; i < 15; i++) arr.push("#FFFFFF");
-						dat = arr.join(",");
-					}
-					document.getElementById("sv_palettevalue").value = dat;
-					ColorPalette.load(dat);
-				},false);
-				var val = AppStorage.get("sv_colorpalette"+i,null);
-				var arr = "";
-				if (val) {
-					arr = val.split(",");
-				}
-				//プレビューセットアップ
-				for (var j = 0; j < 15; j++) {
-					var span = document.createElement("span");
-					if (arr) {
-						span.style.color = arr[j];
-					}else{
-						span.style.color = "#FFFFFF";
-					}
-					span.innerHTML = "&#9724;";
-					span.id = "lab_pltloc"+ i + "_" + j;
-					document.getElementById("lab_pltloc"+i).appendChild(span);
-				}
-			}
-			var dat = AppStorage.get("sv_colorpalette0",null);
-			document.getElementById("sv_palettevalue").value = dat;
 			this.drawpoints = [];
 			
 			this.palmrest.left = new PalmRest(document.getElementById("dlg_lguard"),"left");
 			this.palmrest.right = new PalmRest(document.getElementById("dlg_rguard"),"right");
 			this.pen.correction_level = parseInt(document.getElementById("txt_correction_level").value);
 			document.getElementById("val_correction_level").textContent = this.pen.correction_level;
+			
+			document.getElementById("inp_htmlbox_css").value = "20px 'sans-serif'";
 		},
 		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
@@ -1136,6 +1264,8 @@ var Selectors = function(){
 			did("lab_loadproject").textContent = _T("lab_loadproject");
 			did("lab_fileloc").textContent = _T("lab_fileloc");
 			did("btn_openfile").textContent = _T("btn_openfile");
+			did("lab_dirloc").textContent = _T("lab_dirloc");
+			did("btn_openfolder").textContent = _T("btn_openfolder");
 			//main panel - menu bar
 			did("btn_menu").textContent = _T("btn_menu");
 			did("btn_menu").title = _T("btn_menu_title");
@@ -1189,6 +1319,7 @@ var Selectors = function(){
 			did("sv_colorpalette_msg").textContent = _T("sv_colorpalette_msg");
 			did("lab_sv_palettevalue").title = _T("lab_sv_palettevalue_title");
 			did("lab_sv_palettevalue").textContent = _T("lab_sv_palettevalue");
+			did("sv_palettevalue").title = _T("sv_palettevalue_title");
 			did("lab_correction_level").title = _T("lab_correction_level_title");
 			did("correction_level_msg").textContent = _T("correction_level_msg");
 			did("val_correction_level").title = _T("val_correction_level_title");
@@ -1236,6 +1367,13 @@ var Selectors = function(){
 			did("lab_progress").textContent = _T("lab_progress");
 			did("prg_btn_cancel").textContent = _T("prg_btn_cancel");
 			
+			//html text box
+			did("dlg_htmlbox_header").textContent = _T("dlg_htmlbox_header");
+			did("lab_htmlbox_css").textContent = _T("lab_htmlbox_css");
+			did("lab_htmlbox_align").textContent = _T("lab_htmlbox_align");
+			did("lab_htmlbox_baseline").textContent = _T("lab_htmlbox_baseline");
+			did("btn_insert_htmlbox").textContent = _T("btn_insert_htmlbox");
+			
 		},
 		createbody : function(wi,he,isshow){
 			document.getElementById("initialsetup").style.display = "none";
@@ -1256,6 +1394,21 @@ var Selectors = function(){
 			document.getElementById("canvaspanel").className = "canvaspanel";
 			document.getElementById("canvaspanel").style.transformOrigin = "left top";
 			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
+			//---画面操作受付用のキャンバス作成
+			Draw.screencan = document.createElement("canvas");
+			Draw.screencan.id = "screencanvas";
+			Draw.screencan.className = "mostbase-canvas";
+			Draw.screencan.width = wi;
+			Draw.screencan.height = he;
+			Draw.screencan.style.zIndex = 950;
+			document.getElementById("canvaspanel").appendChild(Draw.screencan);
+			var touch = {
+				start : "pointerdown", move : "pointermove", end : "pointerup",
+				leave : "pointerleave", enter : "pointerenter"
+			};
+			configEvent(Draw.screencan,touch);
+			
+			//---メインのキャンバスを生成(レイヤー1)
 			var lay = new DrawLayer(Draw,{"w":wi,"h":he},true,true);
 			lay.canvas.className = "mostbase-canvas";
 			Draw.layer.push(lay);
@@ -1286,14 +1439,21 @@ var Selectors = function(){
 			//Draw.canvas2.height = he;
 			Draw.canvas2.style.zIndex = 0;
 			document.body.appendChild(Draw.canvas);
+			
+			var touch = {
+				start : "pointerstart", move : "pointermove", end : "pointerend",
+				leave : "pointerleave", enter : "pointerenter"
+			};
+
 			//---操作用のキャンバスも作成
 			Draw.opecan = document.createElement("canvas");
 			Draw.opecan.id = "opecanvas";
 			Draw.opecan.className = "operate-canvas";
 			Draw.opecan.width = wi;
 			Draw.opecan.height = he;
-			Draw.opecan.style.zIndex = 5;
+			Draw.opecan.style.zIndex = 948;	//5;
 			document.getElementById("canvaspanel").appendChild(Draw.opecan);
+			//configEvent(Draw.opecan,touch);
 			Draw.opecontext = Draw.opecan.getContext("2d");
 			//---操作・選択のキャンバスも作成
 			Draw.opeselcan = document.createElement("canvas");
@@ -1301,9 +1461,11 @@ var Selectors = function(){
 			Draw.opeselcan.className = "operate-canvas";
 			Draw.opeselcan.width = wi;
 			Draw.opeselcan.height = he;
-			Draw.opeselcan.style.zIndex = 6;
+			Draw.opeselcan.style.zIndex = 949;	//6;
 			document.getElementById("canvaspanel").appendChild(Draw.opeselcan);
+			//configEvent(Draw.opeselcan,touch);
 			Draw.opeselcontext = Draw.opeselcan.getContext("2d");
+			
 			if (isshow) {
 				document.getElementById("basepanel").style.display = "block";
 			}
@@ -1312,6 +1474,11 @@ var Selectors = function(){
 			Draw.toggleUndo(false);
 			Draw.toggleRedo(false);
 			document.getElementById("prg_btn_cancel").style.display = "block";
+			
+			var rect = document.getElementById("info_btn_canvassize").getBoundingClientRect();
+			console.log(rect);
+			document.getElementById("dlg_canvasinfo").style.left = rect.left + "px";
+
 			return true;
 		},
 		direct_createbody : function(){
@@ -1373,7 +1540,7 @@ var Selectors = function(){
 			Draw.select_type = "box";
 			Draw_select_operation = "copy";
 			Draw.selectors.clear();
-			Draw.select_clipboard = null;
+			Draw.select_clipboard = new Selector();
 			document.getElementById("layinfo_toggle").checked = true;
 			document.getElementById("layinfo_opacity").value = "100";
 			Draw.layer[0].opacity("100");
@@ -1409,7 +1576,7 @@ var Selectors = function(){
 			Draw.select_type = "box";
 			Draw_select_operation = "copy";
 			Draw.selectors.clear();
-			Draw.select_clipboard = null;
+			Draw.select_clipboard = new Selector();
 			Draw.filename = "";
 			Draw.clearCliphist();
 			document.getElementById("layinfo_cliphistory").disabled = "disabled";
@@ -1419,6 +1586,9 @@ var Selectors = function(){
 			//own.control.remove();
 			document.getElementById("lay_btns").removeChild(document.getElementById(Draw.layer[0].control.id));
 			Draw.layer.splice(0,1);
+			
+			document.getElementById("sel_seltype_box").click();
+			document.getElementById("chk_shapes_line").click();
 			
 			ElementTransform(document.getElementById("basepanel"),"translate(0,0)");
 			document.getElementById("basepanel").style.display = "none";
@@ -1450,6 +1620,91 @@ var Selectors = function(){
 			
 			this.saveSetting();
 		},
+		addToFilelistPanel : function (file, data) {
+			//ファイル一覧にサムネイルセットして画面に追加
+			var li = document.createElement("li");
+			li.id = "li_"+file.name;
+			li.className = "fl_item";
+			//var fig = document.createElement("figure");
+			//var figcap = document.createElement("figcaption");
+			var strong = document.createElement("div");
+			strong.innerHTML = file.name;
+			li.appendChild(strong);
+			if (data.thumbnail.indexOf("base64") > -1) {
+				var img = document.createElement("img");
+				img.id = "img_" + file.name;
+				img.src = data.thumbnail;
+				img.alt = file.name;
+				img.title = file.name + " - " + Math.round(file.size/1024) + " KB";
+				//fig.appendChild(img);
+				li.appendChild(img);
+			}else{
+				var img = document.createElement("img");
+				img.id = "img_" + file.name;
+				img.src = "";
+				img.width = "100";
+				img.height = "100";
+				img.alt = "no thumbnail";
+				img.title = file.name + " - " + Math.round(file.size/1024) + " KB";
+				//fig.appendChild(img);
+				li.appendChild(img);
+			}
+			var sizelabel = document.createElement("span");
+			sizelabel.innerHTML = data.width + " x " + data.height;
+			var timelabel = document.createElement("time");
+			if (file.lastModifiedDate) {
+				var d = new Date(file.lastModifiedDate);
+				timelabel.datetime = d.toISOString();
+				timelabel.title = file.lastModifiedDate;
+				timelabel.innerHTML = d.toLocaleString();
+			}else if (file.dateCreated) {
+				var d = new Date(file.dateCreated);
+				timelabel.datetime = d.toISOString();
+				timelabel.title = file.dateCreated;
+				timelabel.innerHTML = d.toLocaleString();
+			}
+			li.appendChild(document.createElement("br"));
+			li.appendChild(sizelabel);
+			li.appendChild(document.createElement("br"));
+			li.appendChild(timelabel);
+			document.querySelector("#dlg_filelist ul").appendChild(li);
+			
+			function fl_item_clicked(event) {
+				if (Draw.variables["timeoutid"] && (Draw.variables["timeoutid"] != "")) return;
+				var oid = String(event.target.id).replace(/^li_/,"");
+				oid = oid.replace(/^img_/,"");
+				if (oid in Draw.filelist) {
+					document.getElementById("progressicon").className = "get-animestart";
+					Draw.progresspanel.style.display = "block";
+					$("#dlg_filelist ul > li").addClass("fl_item_disabled");
+					$("#dlg_filelist ul").addClass("dlg_filelist_disabled");
+					Draw.variables["oid"] = oid;
+					Draw.variables["timeoutid"] = setTimeout(function(){
+						if (Draw.loadProject(Draw.filelist[Draw.variables.oid])) {
+							$("#dlg_filelist").css({"display":"none"});
+							$("#dlg_filelist ul > li").remove();
+							Draw.displayFromProject(Draw.variables.oid);
+							//---ドラッグアンドドロップで保持したデータはここですべて破棄
+							Draw.clearFilelist();
+						}else{
+							//alert("有効なPaintMeisterプロジェクトファイルではありません！");
+							alert(_T("loadProjectFile_msg2"));
+						}
+						clearTimeout(Draw.variables["timeoutid"]);
+						Draw.variables["timeoutid"] = "";
+					},500);
+				}
+			}
+			document.getElementById("li_"+file.name).addEventListener("click", fl_item_clicked,true);
+			document.getElementById("img_"+file.name).addEventListener("click", fl_item_clicked,true);
+		},
+		clearFilelist : function (){
+			for (var i in Draw.filelist) {
+				Draw.filelist[i].splice(0,Draw.filelist[i].length);
+			}
+			Draw.filelist.splice(0,Draw.filelist.length);
+			Draw.filelist = [];
+		},
 		resizeCanvasMargin : function (winwidth, winheight){
 			var sa = winwidth - this.canvassize[0];
 			var say = winheight - this.canvassize[1];
@@ -1460,6 +1715,15 @@ var Selectors = function(){
 			console.log("left="+space + "/" + spacey);
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(" + this.during_scale + ") "+ "translateX("+space+"px," + spacey + "px)");
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(1.5) translateY(" + spacey + "px)");
+		},
+		configOperationCanvas : function (targetcanvas){
+			if (this.is_selecting || this.is_drawing_line) {
+				this.opecan.style.zIndex = targetcanvas.style.zIndex + 1;
+				this.opeselcan.style.zIndex = targetcanvas.style.zIndex + 2;
+			}else{
+				if (this.opecan) this.opecan.style.zIndex = 5;
+				if (this.opeselcan) this.opeselcan.style.zIndex = 6;
+			}
 		},
 		scale : function (val) {
 			var fnlbi = val / 100;
@@ -1530,6 +1794,7 @@ var Selectors = function(){
 		undo_function_end : function() {
 			//---save undo
 			this.canundo = true;
+			try {
 			this.undohist.push(new UndoBuffer(UndoType.paint,Draw.context.canvas,Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1])));
 			this.undohist[this.undohist.length-1].prev_image = Draw.context.createImageData(Draw.canvassize[0],Draw.canvassize[1]);
 			this.undohist[this.undohist.length-1].prev_image = this.currentLayer.prev_image;
@@ -1542,6 +1807,8 @@ var Selectors = function(){
 				this.undoindex = this.undohist.length-1;
 			}
 			this.toggleUndo(true);
+		}catch(e){
+		}
 		},
 		saveUndo : function(pensize,lowpos,highpos,context){
 			var block = {w:0, h:0};
@@ -1813,10 +2080,11 @@ var Selectors = function(){
 			this.elementParameter["current"] = this.pen.current;
 			this.elementParameter["keyCode"] = this.pressedKey;
 			this.elementParameter["pointHistory"] = [];
-			if (this.pen.current["pentype"] == PenType.fill) {
-				this.pen.drawMain(this.context,this.startX,this.startY,1,1,event,this.elementParameter);
-				this.drawing = false;
-			}else{
+			//if (this.pen.current["pentype"] == PenType.fill) {
+				//this.pen.prepare(event,this.context,null);
+				//this.pen.drawMain(this.context,this.startX,this.startY,1,1,event,this.elementParameter);
+				//this.drawing = false;
+			//}else{
 				if ((this.is_drawing_line) && (this.drawpoints.length > 1)) {
 					/*this.pen.prepare(event,this.context,null);
 					for (var x = 1; x < this.drawpoints.length; x++) {
@@ -1826,19 +2094,21 @@ var Selectors = function(){
 							event,this.elementParameter);
 					}*/
 				}else{
-					/*console.log("________________________");
+					/*cconsole.log("________________________");
 					console.log("start=" + this.startX + "	" + this.startY + "	" + event.pressure);
-					console.log("this.draw_linehist=");
+					onsole.log("this.draw_linehist=");
 					console.log(this.draw_linehist);
 					console.log("this.elementParameter[pointHistory]=");
 					console.log(this.elementParameter["pointHistory"]);
 					console.log("this.delay.poshist=");
 					console.log(this.delay.poshist);*/
 					this.pen.prepare(event,this.context,null);
-					this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+					if (!this.is_selecting || (this.is_selecting && this.select_type == "tempdraw")) {
+						this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+					}
 					//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
 				}
-			}
+			//}
 		},
 		
 		realDrawMain : function (context,temppres,startX,startY,offsetX,offsetY,evt,param) {
@@ -1942,7 +2212,13 @@ var Selectors = function(){
 				}else{
 					this.select_function_move(event,pos);
 				}
-				this.drawing = false;
+				if (this.select_type == "tempdraw"){
+					if (this.pen.current["pentype"] != PenType.fill) {
+						this.drawing = true;
+					}
+				}else{
+					this.drawing = false;
+				}
 			}
 			//通常描画モード
 			if (this.drawing) {
