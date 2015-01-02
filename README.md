@@ -2,7 +2,7 @@ paintmeister
 ============
 
 current version: 
-1.0.0.0
+1.0.48.96
 
 動作環境：  
 Internet Explorer 11 ~  
