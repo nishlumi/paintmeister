@@ -2,7 +2,25 @@
 ============
 * I referred to in () for the platform affected especially.
 
-PaintMeister (1.0.48.95)
+PaintMeister (1.0.52.04)
+**(WebApp/ChromeApps)Beta support the pen pressure for ChromeApps and all browser.
+**Support grid line of the canvas.
+**Support rotation of selected object.
+*(WebApp)Fix deviation of the coordinates in Firefox.
+*Support to draw a dotted line for moving selected object.
+*Change drawing shapes to movable selected object.
+*Change method to draw the circle of drawing shapes.
+*Support vertical writing of insertion of the text.
+*Fix that the inpux box for color picker was read-only.
+*Abolished suppport manual pressure, because support the pen pressure all platform.
+*Change default value of Pencil to 2 points.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/01/10 17:30
+ChromeApps		- 
+Store app		- 
+
+
+PaintMeister (1.0.48.96)
 **Support to insert a text.(can do from "draw shapes". can move freely like the selection)
 **Improved Color palette: 20 colors per one palette, a total of 5 palettes.
 **Show all 5 color palettes when click neighbor question mark (remove the options from menu panel)
