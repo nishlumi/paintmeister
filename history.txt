@@ -15,9 +15,9 @@ PaintMeister (1.0.52.04)
 ・IE以外の筆圧感知対応に伴い、手動筆圧を廃止
 ・鉛筆のデフォルトの太さを2に変更
 -- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2015/01/10 17:30
-ChromeApps		- 
-Store app		- 
+WebApp			- 2015/01/10 21:00
+ChromeApps		- 2015/01/14 01:00
+Store app		- 2015/01/14 01:00
 
 
 PaintMeister (1.0.48.96)

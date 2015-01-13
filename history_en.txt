@@ -15,9 +15,9 @@ PaintMeister (1.0.52.04)
 *Abolished suppport manual pressure, because support the pen pressure all platform.
 *Change default value of Pencil to 2 points.
 -- ISHII Eiju <lumidina@gmail.com> 
-WebApp			- 2015/01/10 17:30
-ChromeApps		- 
-Store app		- 
+WebApp			- 2015/01/10 21:00
+ChromeApps		- 2015/01/14 01:00
+Store app		- 2015/01/14 01:00
 
 
 PaintMeister (1.0.48.96)

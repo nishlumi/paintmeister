@@ -1,6 +1,12 @@
 ﻿// 空白のテンプレートの概要については、次のドキュメントを参照してください:
 // http://go.microsoft.com/fwlink/?LinkId=232509
 var onKeyope = true;
+function wacom() {
+    return null;
+}
+var penAPI;
+var is_checkedAPI;
+
 function alert(message) {
     var msg = new Windows.UI.Popups.MessageDialog(message);
 
@@ -362,7 +368,7 @@ var AppStorage = {
                 Draw.undobtn.click();
                 return;
             }
-        } else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Z
+        } else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Y
             if (document.getElementById("initialsetup").style.display == "none") {
                 Draw.redobtn.click();
                 return;
@@ -394,6 +400,13 @@ var AppStorage = {
                 }
             }
         } else if (event.keyCode == "85") { // U
+            if (document.getElementById("initialsetup").style.display == "none") {
+                if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+                    document.getElementById("sel_seltype_rotate").click();
+                    return;
+                }
+            }
+        } else if (event.keyCode == "73") { // I
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_tempdraw").click();
@@ -440,17 +453,22 @@ var AppStorage = {
                 Draw.keyLikePres += virtual_pressure[event.keyCode];
                 document.getElementById("pres_curline").value =
                     parseInt(document.getElementById("pres_curline").value) + virtual_pressure[event.keyCode];
-            } else {
+            } else if (event.keyCode == "69") { //--E
                 Draw.keyLikePres = virtual_pressure[event.keyCode];
-                document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
-            }
+                document.getElementById("pres_curline").value = virtual_pressure[event.keyCode];
+            }/*else{
+					Draw.keyLikePres = virtual_pressure[event.keyCode];
+					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
+				}*/
             document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
         }
         Draw.pressedKey = event.keyCode;
-        document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
+        //document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
     }, false);
     document.addEventListener("keyup", function (event) {
-        Draw.keyLikePres = null;
+        //手動筆圧を既定の50に戻す
+        Draw.keyLikePres = 50;
+        document.getElementById("pres_curline").value = 50;
         Draw.pressedKey = 0;
     }, false);
     if ((navigator.userAgent.indexOf("Chrome") > -1)) {
@@ -484,7 +502,7 @@ var AppStorage = {
             }, false);
             Draw.initialize();
             ColorPalette.initialize();
-            $("#pickerpanel").hide();
+            $("#pickerpanel,#pickerpanel2").hide();
             $("#colorpicker").on("click", function (event) {
                 $("#pickerpanel").show();
             });
@@ -532,6 +550,10 @@ var AppStorage = {
                 $("#pickerpanel").hide();
                 event.preventDefault();
             });
+            $("#pickerpanel2").on(touchleave, function (event) {
+                $("#pickerpanel2").hide();
+                event.preventDefault();
+            });
 
             touchstart = 'mousedown';
             touchmove = 'mousemove';
@@ -549,6 +571,11 @@ var AppStorage = {
                 $("#pickerpanel").hide();
                 event.preventDefault();
             });
+            $("#pickerpanel2").on(touchleave, function (event) {
+                $("#pickerpanel2").hide();
+                event.preventDefault();
+            });
+
             //---その他グローバルなイベント
             window.addEventListener("resize", function (event) {
                 console.log("width=" + event.target.innerWidth);

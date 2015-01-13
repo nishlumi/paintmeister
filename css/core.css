@@ -264,18 +264,22 @@
 #prespanel {
 	float : left;
 	width : 45px;
-	height : calc(100%); /*70%;*/
+	height : calc(100% - 7.5rem); /*70%;*/
 	margin-top:0;
 	display : none;
-	background-color : #999999;
+	/*background-color : #999999;*/
 	color : #FFFFFF;
 	position : absolute;
 	top : 4rem;
 	left : 0;
-	padding-top:6rem;
-	overflow : visible, hidden;
+	padding-top:0;
+	overflow : hidden;
 	z-index : 2;
+	opacity : 1;
 }
+/*#prespanel:hover{
+	opacity : 1.0;
+}*/
 #pres_main {
 	position : absolute;
 	top:0;
@@ -354,7 +358,7 @@
 }
 .sidebar_radiobutton {
 	width : 30px;
-	height : 36px;
+	height : 32px;
 	font-size : 120%;
 	text-align : center;
 	padding-top : 0.5rem;
@@ -500,6 +504,9 @@ div.dragover_indicate {
 	height : 2rem;
 	font-size : 120%;
 }
+input.text_line_s {
+	width : 3rem;
+}
 /* =======================================color picker=== */
 #colorpicker {
 	height : 1.5rem;
@@ -548,7 +555,7 @@ div.dragover_indicate {
 	background-color : #FFFFFF;
 	text-align : center;
 }
-#pickerpanel{
+#pickerpanel {
 	position : absolute;
 	top : calc(32px + 3rem + 2px);
 	left : 1%;
@@ -561,6 +568,20 @@ div.dragover_indicate {
 	opacity : 0.85;
 	z-index : 999;
 }
+#pickerpanel2 {
+	position : absolute;
+	/*top : calc(32px + 3rem + 2px);
+	left : 1%;
+	border:1px solid gray;*/
+	background-color : #B6BBE4;
+	width : 200px;
+	-moz-border-radius : 3px;
+	-webkit-border-radius : 3px;
+	border-radius : 3px;
+	opacity : 0.85;
+	z-index : 999;
+}
+
 
 /* =======================================layer panel=== */
 #dlg_layer {
@@ -833,11 +854,9 @@ li.fl_item_disabled {
 /* =======================================htmlbox dialog=== */
 #dlg_htmlbox {
 	display : none;
-	width : 30%;
-	height : 30%;
 	position : absolute;
 	top : 15%;
-	left : 15%;
+	left : 0;
 	background-color : #B6BBE4;
 	padding: 0.5rem 0.5rem 0.5rem 0.5rem;
 	z-index : 10;
@@ -846,23 +865,19 @@ li.fl_item_disabled {
 	-webkit-border-radius : 3px;
 	border-radius : 3px;
 }
-@media screen and (min-width :720px) {
-	#dlg_htmlbox {
-		display : none;
-		width : 50%;
-		height : 30%;
-		position : absolute;
-		top : 15%;
-		left : 15%;
-		background-color : #B6BBE4;
-		padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-		z-index : 10;
-		opacity : 0.85;
-		-moz-border-radius : 3px;
-		-webkit-border-radius : 3px;
-		border-radius : 3px;
-	}
+.dlg_fixedbox-x {
+	width : 100%;
 }
+.dlg_fixedbox-y {
+	height : 15rem;
+}
+/*@media screen and ((min-height : 601px)) {
+	.dlg_fixedbox-y {
+		height : 50%;
+	}
+}*/
+
+
 #dlg_htmlbox_header_area {
 	position : absolute;
 	top : 0;
@@ -873,8 +888,8 @@ li.fl_item_disabled {
 }
 #dlg_htmlbox_main {
 	margin-top : 3rem;
-	width : 100%;
-	height : 70%;
+	width : 98%;
+	height : 6rem;
 }
 #dlg_htmlbox_footer_area {
 	position : absolute;
@@ -885,6 +900,7 @@ li.fl_item_disabled {
 }
 #inp_htmlbox_css {
 	width : 70%;
+	height: 1rem;
 }
 #inp_htmlbox_src {
 	border : 1px inset gray;
@@ -894,8 +910,8 @@ li.fl_item_disabled {
 	font-size : 150%;
 }
 .sel_htmlbox {
-	height : 2rem;
-	font-size : 120%;
+	height : 1.5rem;
+	font-size : 110%;
 }
 /* =======================================plugin dialog=== */
 #dlg_plugin {

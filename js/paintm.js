@@ -1,4 +1,10 @@
 var onKeyope = true;
+function wacom() {
+    return document.getElementById('wtPlugin');
+}
+var penAPI;
+var is_checkedAPI;
+
 function alert(message){
 	alertify.set({ 
 		buttonReverse : true,
@@ -268,6 +274,34 @@ var PluginManager = {
 		return false;
 	}
 	window.addEventListener("load",function(){
+		//console.log(wacom());
+		is_checkedAPI = false;
+		if (navigator.userAgent.indexOf("Trident") < 0) {
+			
+		//}else{
+			if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+				var obj = document.createElement("embed");
+				obj.id = "wtPlugin";
+				obj.type = "application/x-wacomtabletplugin";
+				obj.width = "1";
+				obj.height = "1";
+				obj.style.position = "absolute";
+				obj.style.left = "100px";
+				obj.style.top = "100px";
+				document.body.appendChild(obj);
+			}else{
+				var obj = document.createElement("object");
+				obj.id = "wtPlugin";
+				obj.type = "application/x-wacomtabletplugin";
+				obj.width = "1";
+				obj.height = "1";
+				obj.style.position = "absolute";
+				obj.style.left = "100px";
+				obj.style.top = "100px";
+				document.body.appendChild(obj);
+			}
+			penAPI = wacom().penAPI;
+		}
 		//---ここからストアアプリも共通
 		document.addEventListener("keydown", function(event) {
 			if (!onKeyope) return false;
@@ -301,7 +335,7 @@ var PluginManager = {
 					Draw.undobtn.click();
 					return;
 				}
-			}else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Z
+			}else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Y
 				if (document.getElementById("initialsetup").style.display == "none") {
 					Draw.redobtn.click();
 					return;
@@ -333,6 +367,13 @@ var PluginManager = {
 					}
 				}
 			}else if (event.keyCode == "85") { // U
+				if (document.getElementById("initialsetup").style.display == "none") {
+					if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
+						document.getElementById("sel_seltype_rotate").click();
+						return;
+					}
+				}
+			}else if (event.keyCode == "73") { // I
 				if (document.getElementById("initialsetup").style.display == "none") {
 					if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
 						document.getElementById("sel_seltype_tempdraw").click();
@@ -379,17 +420,22 @@ var PluginManager = {
 					Draw.keyLikePres += virtual_pressure[event.keyCode];
 					document.getElementById("pres_curline").value = 
 						parseInt(document.getElementById("pres_curline").value) + virtual_pressure[event.keyCode];
-				}else{
+				}else if (event.keyCode == "69") { //--E
+					Draw.keyLikePres = virtual_pressure[event.keyCode];
+					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode];
+				}/*else{
 					Draw.keyLikePres = virtual_pressure[event.keyCode];
 					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
-				}
+				}*/
 				document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 			}
 			Draw.pressedKey = event.keyCode;
-			document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
+			//document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
 		}, false);
 		document.addEventListener("keyup", function(event) {
-			Draw.keyLikePres = null;
+			//手動筆圧を既定の50に戻す
+			Draw.keyLikePres = 50;
+			document.getElementById("pres_curline").value = 50;
 			Draw.pressedKey = 0;
 		}, false);
 		if ((navigator.userAgent.indexOf("Chrome") > -1)) {
@@ -423,7 +469,7 @@ var PluginManager = {
 				},false);
 				Draw.initialize();
 				ColorPalette.initialize();
-				$("#pickerpanel").hide();
+				$("#pickerpanel,#pickerpanel2").hide();
 				$("#colorpicker").on("click", function(event) {
 					$("#pickerpanel").show();
 				});
@@ -471,6 +517,10 @@ var PluginManager = {
 					$("#pickerpanel").hide();
 			    	event.preventDefault();
 				});
+				$("#pickerpanel2").on(touchleave, function(event) {
+					$("#pickerpanel2").hide();
+			    	event.preventDefault();
+				});
 				
 				touchstart = 'mousedown';
 				touchmove = 'mousemove';
@@ -488,6 +538,11 @@ var PluginManager = {
 					$("#pickerpanel").hide();
 			    	event.preventDefault();
 				});
+				$("#pickerpanel2").on(touchleave, function(event) {
+					$("#pickerpanel2").hide();
+			    	event.preventDefault();
+				});
+				
 				//---その他グローバルなイベント
 				window.addEventListener("resize",function(event){
 					console.log("width=" + event.target.innerWidth);

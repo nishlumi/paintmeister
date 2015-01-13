@@ -92,10 +92,15 @@ function call_parentEvent(removeLabel) {
 		*/
 		prepare : function (event, context, pressure2){
 			var pres = 0;
-			if ((event.pressure) || (event.mozPressure)) {
+			if ((event.pressure) || (event.mozPressure) || (penAPI)) {
 				pres = event.pressure;
-				if (event.mozPressure) pres = event.mozPressure;
-				if (event.pressure == 0) pres = 0.001;
+				//console.log("pres="+pres);
+				if (event.mozPressure !== undefined) pres = event.mozPressure;
+				if (penAPI) {
+					//console.log("penAPI.pressure="+penAPI.pressure);
+					pres = penAPI.pressure;
+				}
+				if (pres == 0) pres = 0.001;
 				if ((pressure2 != null) && (pressure2 > 0)) { //サブの筆圧があれば使用
 					pres = pressure2;
 				}
@@ -103,6 +108,7 @@ function call_parentEvent(removeLabel) {
 					pres = parseInt(document.getElementById("pres_curline").value) / 100;
 					if (pres <= 0) pres = 0.001;
 				}
+				//console.log("after current pres="+pres);
 				if (!this.current["pressure"]) pres = 0.5;
 				if ((this.current["mode"] == "airbrush") || 
 					(this.current["mode"] == "fudepen") || 
@@ -115,6 +121,8 @@ function call_parentEvent(removeLabel) {
 					//document.getElementById("log2").innerHTML = "pressure on:" + context.lineWidth;
 				}
 				this.lastpressure = pres;
+				//console.log(this.current["pressure"]);
+				//console.log("last pres="+pres);
 				//document.getElementById("log").innerHTML =  "pressure on:" + this.lastpressure;
 			}else{
 				if (event.pressure == 0) {

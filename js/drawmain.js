@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.48.95";
+var appversion = "1.0.52.04";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -29,6 +29,7 @@ var virtual_pressure = {
 	//relative
 	'81' : -3, //q
 	'87' : 3, //w
+	'69' : 50, //e
 	'37' : 50, //->
 	'39' : 50 //<-
 };
@@ -37,6 +38,7 @@ var plugin_hostpath = [
 ];
 function calculatePosition(eventtype,event,target,opt) {
 	var pos = {"x" : 0, "y" : 0};
+	var bcrect = event.target.getBoundingClientRect();
 	if (event.offsetX === undefined) {
 		if (event.layerX === undefined) {
 			if (event.type == eventtype) {
@@ -54,7 +56,8 @@ function calculatePosition(eventtype,event,target,opt) {
 	} else {
 		if (navigator.userAgent.indexOf("Firefox") > -1) {
 			
-			pos.x = event.offsetX - opt.offset - event.target.offsetParent.offsetLeft - event.target.offsetParent.offsetParent.offsetLeft - event.target.offsetParent.clientLeft;
+			//pos.x = event.offsetX - opt.offset - event.target.offsetParent.offsetLeft - event.target.offsetParent.offsetParent.offsetLeft - event.target.offsetParent.clientLeft;
+			pos.x = event.clientX - bcrect.x;
 		}else{
 			pos.x = event.offsetX - opt.offset;
 		}
@@ -76,7 +79,8 @@ function calculatePosition(eventtype,event,target,opt) {
 		}
 	} else {
 		if (navigator.userAgent.indexOf("Firefox") > -1) {
-			pos.y = event.offsetY - opt.offset - event.target.offsetParent.clientTop - event.target.offsetParent.offsetTop - event.target.offsetParent.offsetParent.offsetTop;
+			//pos.y = event.offsetY - opt.offset - event.target.offsetParent.clientTop - event.target.offsetParent.offsetTop - event.target.offsetParent.offsetParent.offsetTop;
+			pos.y = event.clientY - bcrect.y;
 		}else{
 			pos.y = event.offsetY - opt.offset;
 		}
@@ -117,7 +121,8 @@ var selectionType = {
 	"box" : 0,
 	"free" : 1,
 	"move" : 2,
-	"tempdraw" : 3
+	"rotate" : 3,
+	"tempdraw" : 4
 };
 var selectActionType = {
 	"clip" : 0,
@@ -128,7 +133,7 @@ var selectActionType = {
 var selectionStatus = {
 	"during" : 0,
 	"end" : 1,
-	"past_begin": 2,
+	"paste_begin": 2,
 	"pasting" : 3,
 	"paste_end" : 4
 }
@@ -148,6 +153,7 @@ var Selector = function(id){
 	this.points = [];
 	this.oldx = 0;
 	this.oldy = 0;
+	this.rotateangle = 0;
 	this.curfrom = null;
 	this.status = selectionStatus.during;
 	this.action = selectActionType.clip;
@@ -187,6 +193,7 @@ var Selector = function(id){
 		own.directiony = orig.directiony;
 		own.oldx = orig.oldx;
 		own.oldy = orig.oldy;
+		own.rotateangle = orig.rotateangle;
 		own.points.splice(0,own.points.length);
 		own.points = own.points.concat(orig.points);
 		own.status = selectionStatus.during;
@@ -259,12 +266,14 @@ var Selectors = function(){
 	var Draw = {
 		canvas : null,	//ダミーキャンバス 
 		canvas2: null,	//クリップ領域など裏操作用
+		gridcan : null, //グリッド用のキャンバス
 		opecan : null,	//操作用キャンバス1
 		opeselcan : null, //操作・選択用キャンバス
 		screencan : null,	//実際の画面操作受付用のキャンバス
 		layer : [],
 		layermax : 0,
 		context : null, 
+		gridcontext : null,
 		opecontext : null,
 		opeselcontext : null,
 		currentLayer : null,
@@ -930,11 +939,13 @@ var Selectors = function(){
 				sidebar_radio_clicking(event.target,"sel_seltype_");
 				if (event.target.className == "sidebar_radiobutton sidebar_radio_on") {
 					Draw.select_type = String(event.target.id).replace("sel_seltype_","");
+					console.log(Draw.select_type);
 				}
 			};
 			document.getElementById("sel_seltype_box").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_free").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_move").addEventListener("click", sel_seltype_clicking,false);
+			document.getElementById("sel_seltype_rotate").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_tempdraw").addEventListener("click", sel_seltype_clicking,false);
 			var sel_operationtype_clicking = function(event) {
 				if (Draw.select_type == "free") {
@@ -1089,7 +1100,7 @@ var Selectors = function(){
 					dis = "disabled";
 				}
 				for (var i = 0; i < Draw.defaults.sv_paletteloc_num; i++) {
-					document.getElementById("rad_paletteloc"+i).disabled = dis;
+					//document.getElementById("rad_paletteloc"+i).disabled = dis;
 					document.getElementById("sv_palettevalue").disabled = dis;
 				}
 			},false);
@@ -1128,6 +1139,59 @@ var Selectors = function(){
 				document.getElementById("dlg_lguard").className = glstyle;
 				document.getElementById("dlg_rguard").className = grstyle;*/
 			}, false);
+			document.getElementById("chk_enable_grid").addEventListener("click", function(event) {
+				var val = event.target.checked;
+				
+				var disa = "";
+				if (val) {
+				}else{
+					disa = "disabled";
+				}
+				document.getElementById("txt_grid_width").disabled = disa;
+				document.getElementById("txt_grid_height").disabled = disa;
+				document.getElementById("txt_grid_color").disabled = disa;
+				Draw.changeGrid(val,
+					parseInt(document.getElementById("txt_grid_width").value),
+					parseInt(document.getElementById("txt_grid_height").value),
+					document.getElementById("txt_grid_color").value
+				);
+			}, false);
+			document.getElementById("txt_grid_color").addEventListener("click", function(event) {
+				var rect = event.target.getBoundingClientRect();
+				$("#pickerpanel2").css({
+					"top" : "calc(" + rect.top + "px + 1rem)",
+					"left" : rect.left + "px"
+				});
+				$("#pickerpanel2").show();
+				Draw.changeGrid(document.getElementById("chk_enable_grid").checked,
+					parseInt(document.getElementById("txt_grid_width").value),
+					parseInt(document.getElementById("txt_grid_height").value),
+					document.getElementById("txt_grid_color").value);
+			},false);
+			document.getElementById("txt_grid_color").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+			document.getElementById("txt_grid_width").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+			document.getElementById("txt_grid_height").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+
+			$("#txt_grid_width,#txt_grid_height").on("change", function(event) {
+				Draw.changeGrid(document.getElementById("chk_enable_grid").checked,
+					parseInt(document.getElementById("txt_grid_width").value),
+					parseInt(document.getElementById("txt_grid_height").value),
+					document.getElementById("txt_grid_color").value);
+			});
+			/*document.getElementById("txt_grid_color").addEventListener("pointerdown", function(event) {
+				var rect = event.target.getBoundingClientRect();
+				$("#pickerpanel2").css({
+					"top" : "calc(" + rect.y + "px + 1rem)",
+					"left" : rect.x + "px"
+				});
+				$("#pickerpanel2").show();
+			},false);*/
 
 			document.getElementById("btn_man_plugin").addEventListener("click", function(event) {
 				if (document.getElementById("dlg_plugin").style.display == "none") {
@@ -1237,6 +1301,9 @@ var Selectors = function(){
 			document.getElementById("val_correction_level").textContent = this.pen.correction_level;
 			
 			document.getElementById("inp_htmlbox_css").value = "20px 'sans-serif'";
+			$("#pickerpanel2").farbtastic("#txt_grid_color",function(color){
+				$("#pickerpanel2").hide();
+			});
 		},
 		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
@@ -1293,11 +1360,14 @@ var Selectors = function(){
 			did("chk_shapes_box").title = _T("chk_shapes_box_title");
 			did("chk_shapes_circle").title = _T("chk_shapes_circle_title");
 			did("chk_shapes_triangle").title = _T("chk_shapes_triangle_title");
+			did("chk_shapes_html").title = _T("chk_shapes_html_title");
 			did("btn_select").title = _T("btn_select_title");
 			did("lab_seltype").title = _T("lab_seltype_title");
 			did("sel_seltype_box").title = _T("sel_seltype_box_title") + "(R)";
 			did("sel_seltype_free").title = _T("sel_seltype_free_title") + "(T)";
 			did("sel_seltype_move").title = _T("sel_seltype_move_title") + "(Y)";
+			did("sel_seltype_rotate").title = _T("sel_seltype_rotate_title") + "(U)";
+			did("sel_seltype_tempdraw").title = _T("sel_seltype_tempdraw_title") + "(I)";
 			did("lab_operationtype").title = _T("lab_operationtype_title");
 			did("sel_operationtype_clip").title = _T("sel_operationtype_clip_title");
 			did("sel_operationtype_copy").title = _T("sel_operationtype_copy_title") + "(Ctrl+C)";
@@ -1332,6 +1402,11 @@ var Selectors = function(){
 			did("sel_color_palmrest_2").textContent = _T("sel_color_palmrest_2");
 			did("sel_color_palmrest_3").textContent = _T("sel_color_palmrest_3");
 			did("sel_color_palmrest_4").textContent = _T("sel_color_palmrest_4");
+			did("lab_enable_grid").textContent = _T("lab_enable_grid");
+			did("lab_grid_width").textContent = _T("lab_grid_width");
+			did("lab_grid_width").title = _T("lab_grid_width_title");
+			did("lab_grid_color").textContent = _T("lab_grid_color");
+			did("lab_grid_color").title = _T("lab_grid_color_title");
 
 			//canvas info panel
 			did("lab_magni").textContent = _T("lab_magni_title");
@@ -1373,6 +1448,8 @@ var Selectors = function(){
 			did("lab_htmlbox_align").textContent = _T("lab_htmlbox_align");
 			did("lab_htmlbox_baseline").textContent = _T("lab_htmlbox_baseline");
 			did("btn_insert_htmlbox").textContent = _T("btn_insert_htmlbox");
+			did("lab_text_vertical").textContent = _T("lab_text_vertical");
+			did("lab_text_vertical").title = _T("lab_text_vertical");
 			
 		},
 		createbody : function(wi,he,isshow){
@@ -1445,6 +1522,16 @@ var Selectors = function(){
 				leave : "pointerleave", enter : "pointerenter"
 			};
 
+			//---グリッド用のキャンバスも作成
+			Draw.gridcan = document.createElement("canvas");
+			Draw.gridcan.id = "gridcanvas";
+			Draw.gridcan.className = "operate-canvas";
+			Draw.gridcan.width = wi;
+			Draw.gridcan.height = he;
+			Draw.gridcan.style.zIndex = 947;	//5;
+			document.getElementById("canvaspanel").appendChild(Draw.gridcan);
+			//configEvent(Draw.opecan,touch);
+			Draw.gridcontext = Draw.gridcan.getContext("2d");
 			//---操作用のキャンバスも作成
 			Draw.opecan = document.createElement("canvas");
 			Draw.opecan.id = "opecanvas";
@@ -1921,6 +2008,22 @@ var Selectors = function(){
 			}
 		},
 		touchStart : function(event) {
+			//Wacom WebPlugin確認
+			if (!is_checkedAPI) {
+				if (navigator.userAgent.indexOf("Trident") > -1) {
+					if (wacom()) {
+						if (wacom().penAPI && (wacom().penAPI.version > 0)){
+							penAPI = wacom().penAPI;
+							is_checkedAPI = true;
+						}else{
+							penAPI = null;
+						}
+					}else{
+						penAPI = null;
+					}
+				}
+			}
+			//メイン処理
 			this.drawing = true;
 			this.focusing = true;
 			//console.log(event);
@@ -1931,6 +2034,13 @@ var Selectors = function(){
 			this.startX = pos.x;
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
+			//console.log("this.startPressure1="+this.startPressure);
+			//if (event.mozPressure) this.startPressure = event.mozPressure;
+			
+			if (penAPI) this.startPressure = penAPI.pressure;
+			//if (this.startPressure == 0) this.startPressure = 0.5;
+			//console.log("this.startPressure2="+this.startPressure);
+			
 			this.draw_linehist.splice(0,this.draw_linehist.length);
 			this.draw_linehist.push({"x":pos.x, "y":pos.y, "pressure":event.pressure});
 			//---PenSetに安全に受け渡す用の値セット
@@ -1947,7 +2057,7 @@ var Selectors = function(){
 			document.getElementById("info_currentpos").textContent = Math.round(this.startX) + "x" + Math.round(this.startY);
 			//document.getElementById("log2").innerHTML = event.button;
 			//---右クリック、スタイラスペンの反対側は消しゴムに設定
-			if ((event.button == 2) || (event.button == 5)) {
+			if ((event.button == 2) || (event.button == 5) || (penAPI && (penAPI.isEraser))) {
 				console.log("this.last.pen.name=" + this.last.pen.name);
 				var svv;
 				if ((this.last.eraser) && (this.pen.current.mode == this.last.eraser.name)) {
@@ -1994,6 +2104,15 @@ var Selectors = function(){
 						"pos" : pos
 					};
 				}
+				//--今後のために3本目のタッチ保持
+				/*if ((this.touchpoints["1"]) && (this.touchpoints["2"])) {
+					if ((event.pointerId != this.touchpoints["1"]["id"]) && (event.pointerId != this.touchpoints["2"]["id"])) {
+						this.touchpoints["3"] = {
+							"id" : event.pointerId,
+							"pos" : pos
+						};
+					}
+				}*/
 				console.log("secondary touch=" + event.pointerId + "=" + pos.x + "x" + pos.y);
 				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
 					this.is_scaling = true;
@@ -2133,7 +2252,7 @@ var Selectors = function(){
 					};
 				}
 			}else if (event.pointerType == "touch"){
-				if (this.touchpoints["1"] && this.touchpoints["2"].id == event.pointerId) {
+				if (this.touchpoints["2"] && this.touchpoints["2"].id == event.pointerId) {
 					this.touchpoints["12"] = {
 						"id" : event.pointerId,
 						"pos" : pos
@@ -2144,6 +2263,9 @@ var Selectors = function(){
 			offsetX = pos.x;
 			offsetY = pos.y;
 			offsetPressure = event.pressure;
+			//if (event.mozPressure) offsetPressure = event.mozPressure;
+			if (penAPI) offsetPressure = penAPI.pressure;
+			//if (offsetPressure == 0) offsetPressure = 0.5;
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
@@ -2206,7 +2328,7 @@ var Selectors = function(){
 			//選択モード
 			if (this.is_selecting) {
 				if (event.pointerType == "touch") {
-					if (this.touchpoints["1"].id == event.pointerId) {
+					if ((this.touchpoints["1"]) && (this.touchpoints["1"].id == event.pointerId)) {
 						this.select_function_move(event,pos);
 					}
 				}else{
@@ -2223,7 +2345,7 @@ var Selectors = function(){
 			//通常描画モード
 			if (this.drawing) {
 				//console.log("offsetPressure=" + offsetPressure);
-			//console.log("move, event.button=");
+				//console.log("move, event.button=");
 				this.elementParameter["keyCode"] = this.pressedKey;
 				//---筆ごとの描画開始
 				//---補完判定・処理開始
@@ -2350,7 +2472,7 @@ var Selectors = function(){
 			}
 			if (this.delay.count > 0) {
 				this.delay.count--;
-				this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
+				this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":offsetPressure});
 				//console.log("delay push="+this.delay.poshist.length);
 				//console.log(this.startX + "	" + this.startY);
 				//console.log(this.delay.poshist[0]);
@@ -2577,6 +2699,7 @@ var Selectors = function(){
 			//console.log("enter, event.button=");
 			//console.log(event);
 			this.focusing = true;
+			//$("#" + Draw.screencan.id).css("cursor","crosshair");
 			if (this.drawing) {
 				//this.drawing = false;
 				var pos  = calculatePosition("touchmove",event,this.context.canvas,{

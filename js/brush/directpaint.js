@@ -22,8 +22,8 @@ PenSet.Add({
 			"color":parentElement.colorpicker,
 			"pressure":false,
 			"complete":false,
-			"delay" : 1,
-			"delay_assist" : true
+			"delay" : 0,
+			"delay_assist" : false
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;

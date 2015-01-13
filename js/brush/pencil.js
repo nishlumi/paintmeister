@@ -13,7 +13,7 @@ PenSet.Add({
     element: null,
     parent: null,
     setFolder: "pen",
-    defaults: [3, "#000000"],
+    defaults: [2, "#000000"],
     set: function (context, parentElement) {
         var current = {
             "mode": this.id,
@@ -22,7 +22,7 @@ PenSet.Add({
             "color": parentElement.colorpicker,
             "pressure": true,
             "complete": true,
-            "delay" : 1,
+            "delay" : 0,
             "delay_assist" : false
         };
         context.globalCompositeOperation = "source-over";
@@ -93,6 +93,7 @@ PenSet.Add({
         	for (var i = 0; i < parentElement["pointHistory"].length; i++) {
         		pointhist.push(parentElement["pointHistory"][i]);
         	}
+			hairpressure = parentElement["pointHistory"][0].pressure;
         	
         }
         //var sax = pointhistX + offsetX * Xdir;

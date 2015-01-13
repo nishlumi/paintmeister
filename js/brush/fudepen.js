@@ -22,8 +22,8 @@ PenSet.Add({
 			"color":parent.colorpicker.value,
 			"pressure":true,
 			"complete":true,
-			"delay" : 1,
-			"delay_assist" : true
+			"delay" : 0,
+			"delay_assist" : false
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
@@ -57,6 +57,9 @@ PenSet.Add({
 		}else if (hairpressure == undefined) {
 			hairpressure = 1;
 		}
+		if (parentElement["pointHistory"].length > 0) {
+			hairpressure = parentElement["pointHistory"][0].pressure;
+		}
 		var hairStX = 0;
 		var hairStY = 0;
 		var hairX = 0;
@@ -69,8 +72,6 @@ PenSet.Add({
 		context.moveTo(startX, startY);
 		context.lineTo(offsetX, offsetY);
 		context.stroke();
-			console.log("startXY="+startX + ":" + startY);
-			console.log("offsetXY="+offsetX + ":" + offsetY);
 		hairStX = startX;
 		hairStY = startY;
 		hairX = offsetX;
@@ -85,7 +86,6 @@ PenSet.Add({
 			hairCPX = parentElement["pointHistory"][0].x;
 			ueCPY = parentElement["pointHistory"][0].y;
 			shitaCPY = parentElement["pointHistory"][0].y;
-			hairpressure = parentElement["pointHistory"][0].pressure;
 		}
 		//毛先上
 		var hairheadcnt = 7 * hairpressure;
@@ -103,10 +103,10 @@ PenSet.Add({
 			ueStY = ueStY - (hairWidth * hairDist*2);
 			shitaStY = shitaStY + (hairWidth * hairDist*2);
 			hairWidth = hairWidth * (hairDist + hairDist);
-			console.log("上:" + i);
-			console.log("calc="+(hairWidth * hairDist*2));
-			console.log(hairStX + ":" + hairStY);
-			console.log(hairX + ":" + hairY);
+			//console.log("上:" + i);
+			//console.log("calc="+(hairWidth * hairDist*2));
+			//console.log(hairStX + ":" + hairStY);
+			//console.log(hairX + ":" + hairY);
 			context.beginPath();
 			if (parentElement["pointHistory"].length == 0) {
 				context.lineWidth = hairWidth * hairpressure * 2;
