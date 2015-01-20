@@ -2,6 +2,22 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.55.10)
+**Support the Concat copy(to copy after to concat contents of same position in selected layer and below layers)
+**Use and change icons for each UI, controls.
+**Change current layer to flick button to operate layer(Lower layer to left, Upper layer to right)
+*Re-improved Air brush
+*(WebApp/ChromeApps)Fix that become invisible canvas when to scale the scale buttons.
+*Fix that displaced coordinates when push immediately fix button after pasting contents of clipboard.
+*Fix that do not to show correctly the color when input to text box color data for color palette.
+*Fix that position of scrollbar for canvas do not fit to window.
+*Fix that do not become correct alignment when horizontal writing of insertion of the text.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/01/21 01:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.52.04)
 **(WebApp/ChromeApps)Beta support the pen pressure for ChromeApps and all browser.
 **Support grid line of the canvas.
