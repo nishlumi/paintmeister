@@ -14,8 +14,8 @@ PaintMeister (1.0.55.10)
 ・テキストの挿入で横書き時に正しい並びにならなかったのを修正。
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/01/21 01:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/01/26 20:00
+Store app		- 2015/01/26 20:00
 
 
 PaintMeister (1.0.52.04)

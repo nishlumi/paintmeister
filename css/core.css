@@ -178,6 +178,11 @@
 	overflow : hidden;
 	/*background-color : #c4fab3;
 	border : 0;*/
+-moz-user-select: none; /* Firefox */
+-webkit-user-select: none; /* SafariÅAChromeÇ»Ç« */
+-ms-user-select: none; /* IE10Ç©ÇÁÇÁÇµÇ¢ */
+user-select: none; /* CSS3 */
+
 }
 .button:active {
 	/*background-color : #91d780;*/
@@ -518,10 +523,20 @@ input.text_line_s {
 	margin-top : 3px;
 }
 .explain_palette {
-	float:left;
-	vertical-align : center;
+	float : left;
+	vertical-align : middle;
+	text-align : center;
 	height : 30px;
-	width : 2%;
+	width : 2rem;
+	font-size  :150%;
+	color : #ebcf4c;
+	cursor : default;
+}
+.explain_palette:hover {
+	color : #f0ecd6;
+}
+.explain_palette:active {
+	color : #a08713;
 }
 #palettepanel {
 	width : 80%;
@@ -636,7 +651,8 @@ input.text_line_s {
 	width : 20%;
 }
 .laycontrol_button {
-	width : 5rem;
+	width : 3.5rem;
+	height : 2rem;
 }
 #lay_preview {
 	width : calc(32px*4);
@@ -913,6 +929,20 @@ li.fl_item_disabled {
 	height : 1.5rem;
 	font-size : 110%;
 }
+.box_radiobutton {
+	display : inline-block;
+	width : 2rem;
+	height: 1.2rem;
+	text-align : center;
+}
+.radio_none {
+	background-color : #566471;
+	color : #DFDFDF;
+}
+.radio_current {
+	background-color : #DFDFDF;
+	color : #566471;
+}
 /* =======================================plugin dialog=== */
 #dlg_plugin {
 	display : none;
@@ -977,4 +1007,157 @@ animation-duration: 4s;
 animation-name : waitprogress;
 animation-fill-mode : forwards;
 animation-iteration-count : infinite;
+}
+
+/* --- web icon setup -- */
+#lab_initialsetup:before {
+	font-family : 'paintmfont';
+	content : "I";
+	font-size : 150%;
+}
+#lab_loadproject:before {
+	font-family : 'paintmfont';
+	content : "m";
+	font-size : 150%;
+}
+#btn_menu:before {
+	font-family : 'paintmfont';
+	content : "A";
+}
+#info_brush_size:before {
+	font-family : 'paintmfont';
+	content : "B";
+}}
+#btn_save:before {
+	font-family : 'paintmfont';
+	content : "l";
+}
+#lab_enable_grid:before {
+	font-family : 'paintmfont';
+	content : "k";
+}
+#lab_magni:before {
+	font-family : 'paintmfont';
+	content : "e";
+	color : #385fa3;
+	font-size : 120%;
+}
+#lab_magni:after {
+	font-family : 'paintmfont';
+	content : "f";
+	color : #c14325;
+	font-size : 120%;
+}
+#explain_palette:before {
+	font-family : 'paintmfont';
+	content : "N";
+
+}
+#lab_explain_layer:before {
+	font-family : 'paintmfont';
+	content : "b";
+	font-size : 150%;
+}
+#lay_add:before {
+	font-family : 'paintmfont';
+	content : "g";
+}
+#lay_del:before {
+	font-family : 'paintmfont';
+	content : "h";
+}
+.layer_viewbtn_visible:before {
+	font-family : 'paintmfont';
+	content : "H";
+	font-size : 150%;
+}
+.layer_viewbtn_invisible:before {
+	font-family : 'paintmfont';
+	content : "G";
+	font-size : 150%;
+}
+
+.layer_lockbtn_lock:before {
+	font-family : 'paintmfont';
+	content : "K";
+	font-size : 150%;
+}
+.layer_lockbtn_unlock:before {
+	font-family : 'paintmfont';
+	content : "L";
+	font-size : 150%;
+}
+#btn_dropper:before {
+	font-family : 'paintmfont';
+	content : "M";
+}
+#btn_freescroll:before {
+	font-family : 'paintmfont';
+	content : "J";
+}
+#btn_shapes:before {
+	font-family : 'paintmfont';
+	content : " c ";
+}
+#chk_shapes_html:before {
+	font-family : 'paintmfont';
+	content : "U";
+}
+#btn_select:before {
+	font-family : 'paintmfont';
+	content : "R";
+}
+#sel_seltype_box:before {
+	font-family : 'paintmfont';
+	content : "S";
+}
+#sel_seltype_free:before {
+	font-family : 'paintmfont';
+	content : "T";
+}
+#sel_seltype_move:before {
+	font-family : 'paintmfont';
+	content : "Z";
+}
+#sel_seltype_rotate:before {
+	font-family : 'paintmfont';
+	content : "a";
+}
+#sel_seltype_tempdraw:before {
+	font-family : 'paintmfont';
+	content : "D";
+}
+#sel_operationtype_copy:before {
+	font-family : 'paintmfont';
+	content : "O";
+}
+#sel_operationtype_cut:before {
+	font-family : 'paintmfont';
+	content : "P";
+}
+.operation_paste:before {
+	font-family : 'paintmfont';
+	content : "i";
+}
+.operation_pastefix:before {
+	font-family : 'paintmfont';
+	content : "j";
+}
+
+#htmlbox_align_left:before {
+	font-family : 'paintmfont';
+	content : "V";
+}
+#htmlbox_align_center:before {
+	font-family : 'paintmfont';
+	content : "W";
+}
+#htmlbox_align_right:before {
+	font-family : 'paintmfont';
+	content : "X";
+}
+#lab_text_vertical:before {
+	font-family : 'paintmfont';
+	content : " Y ";
+	font-size : 150%;
 }

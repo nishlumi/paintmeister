@@ -562,7 +562,7 @@ var PluginManager = {
 			//システムブラシ読み込み
 			var sysbru_pen = ["colorchangepen",
 							"simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
-							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint"];//,"testplugin2","testplugin3"
+							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint","testplugin3","sketchpen"];//,"testplugin2","testplugin3"
 			for (var i = 0; i < sysbru_pen.length; i++) {
 				var sc = document.createElement("script");
 				sc.src = "js/brush/" + sysbru_pen[i] + ".js";

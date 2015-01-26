@@ -60,8 +60,8 @@ Draw["select_function_start"] = function (event,pos){
 		//o.rotateangle = 0;
 		if (o.destx <= 0) o.destx = pos.x;
 		if (o.desty <= 0) o.desty = pos.y;
-		if (o.origdestx <= 0) o.origdestx = pos.x;
-		if (o.origdesty <= 0) o.origdesty = pos.y;
+		if (o.origdestx <= 0) o.origdestx = pos.x + (o.w/2);
+		if (o.origdesty <= 0) o.origdesty = pos.y + (o.h/2);
 		return;
 	}
 	this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
@@ -236,7 +236,7 @@ Draw["select_function_execute"] = function(event) {
 			this.select_clipboard.action = selectActionType.cut;
 			this.select_clipboard.cutfrom = this.context;
 		}
-		var imgdata;
+		var imgdata = null;
 		var tmpcan = document.createElement("canvas");
 		//tmpcan.style.display = "none";
 		tmpcan.style.position = "absolute";
@@ -249,29 +249,67 @@ Draw["select_function_execute"] = function(event) {
 			var ang = o.calculateAngle();
 			ang.rb.x = ang.lt.x + o.w;
 			ang.rb.y = ang.lt.y + o.h;
-			imgdata = this.context.getImageData(ang.lt.x,ang.lt.y, o.w,o.h);
+			if (Draw.variables.copybtn.mode == "concat") {
+				var c = this.canvas.getContext("2d");
+				this.canvas.width = o.w;
+				this.canvas.height = o.h;
+				var uptoindex = this.getSelectedLayerIndex();
+				for (var obj = 0; obj <= uptoindex; obj++) {
+					if (this.layer[obj].isvisible) {
+						c.globalAlpha = this.layer[obj].Alpha / 100;
+						c.globalCompositeOperation = this.layer[obj].CompositeOperation;
+						c.drawImage(this.layer[obj].canvas,
+							ang.lt.x,ang.lt.y, o.w,o.h,
+							0,0, o.w,o.h
+						);
+					}
+				}
+				imgdata = c.getImageData(0,0, o.w, o.h);
+			}else{
+				imgdata = this.context.getImageData(ang.lt.x,ang.lt.y, o.w,o.h);
+			}
 			this.select_clipboard.oldx = ang.lt.x;
 			this.select_clipboard.oldy = ang.lt.y;
 			this.select_clipboard.destx = ang.lt.x;
 			this.select_clipboard.desty = ang.lt.y;
-			this.select_clipboard.origdestx = ang.lt.x;
-			this.select_clipboard.origdesty = ang.lt.y;
+			this.select_clipboard.origdestx = ang.lt.x + (o.w/2);
+			this.select_clipboard.origdesty = ang.lt.y + (o.h/2);
 			//console.log(ang);
 		}else if (this.select_type == "free") {
 			this.select_clipboard.selectType = selectionType.free;
 			//---将来のために一応セットまでしておく
 			var ang = locateMinMaxPosition(o.points);
-			imgdata = this.context.getImageData(ang.lt.x,ang.lt.y, 
-				ang.rb.x-ang.lt.x, ang.rb.y-ang.lt.y);
+			if (Draw.variables.copybtn.mode == "concat") {
+				var c = this.canvas.getContext("2d");
+				var tmpw = ang.rb.x-ang.lt.x;
+				var tmph = ang.rb.y-ang.lt.y;
+				this.canvas.width = tmpw;
+				this.canvas.height = tmph;
+				c.clearRect(0,0,tmpw,tmph);
+				var uptoindex = this.getSelectedLayerIndex();
+				for (var obj = 0; obj <= uptoindex; obj++) {
+					if (this.layer[obj].isvisible) {
+						c.globalAlpha = this.layer[obj].Alpha / 100;
+						c.globalCompositeOperation = this.layer[obj].CompositeOperation;
+						c.drawImage(this.layer[obj].canvas,
+							ang.lt.x,ang.lt.y, tmpw,tmph,
+							0,0, tmpw,tmph
+						);
+					}
+				}
+				imgdata = c.getImageData(0,0, tmpw, tmph);
+			}else{
+				imgdata = this.context.getImageData(ang.lt.x,ang.lt.y, 
+					ang.rb.x-ang.lt.x, ang.rb.y-ang.lt.y);
+			}
 			this.select_clipboard.oldx = ang.lt.x;
 			this.select_clipboard.oldy = ang.lt.y;
 			this.select_clipboard.w = ang.rb.x-ang.lt.x;
 			this.select_clipboard.h = ang.rb.y-ang.lt.y;
 			this.select_clipboard.destx = ang.lt.x;
 			this.select_clipboard.desty = ang.lt.y;
-			this.select_clipboard.origdestx = ang.lt.x;
-			this.select_clipboard.origdesty = ang.lt.y;
-			//console.log(ang);
+			this.select_clipboard.origdestx = ang.lt.x + (this.select_clipboard.w/2);
+			this.select_clipboard.origdesty = ang.lt.y + (this.select_clipboard.h/2);
 		}
 		tmpcan.width = imgdata.width;
 		tmpcan.height = imgdata.height;
@@ -312,7 +350,7 @@ Draw["select_function_execute"] = function(event) {
 		can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
 		can2d.putImageData(imgdata,0,0);
 		
-		document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton";
+		document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton operation_paste";
 	}else if (this.select_operation == "paste") {
 		var o = this.select_clipboard; //this.selectors.items[0];
 		if ((o.status == selectionStatus.pasting) || (o.status == selectionStatus.paste_begin)) {
@@ -346,7 +384,6 @@ Draw["select_function_execute"] = function(event) {
 			}
 			this.context.globalAlpha = 1.0;
 			this.context.shadowBlur = 0;
-			
 			this.context.save();
 			this.context.translate(o.origdestx,o.origdesty);
 			this.context.rotate(o.rotateangle/180*Math.PI);
@@ -364,7 +401,8 @@ Draw["select_function_execute"] = function(event) {
 			o.status = selectionStatus.end;
 			if (this.selectors.items.length > 0) this.selectors.remove(this.selectors.items[0].id);
 			document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title"); //"貼り付け";
-			document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
+			//document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
+			document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton operation_paste";
 			var selmove = document.getElementById("sel_seltype_box");
 			selmove.click();
 		}else{
@@ -378,7 +416,8 @@ Draw["select_function_execute"] = function(event) {
 			//this.opeselcontext.drawImage(this.canvas,this.selectors.items[0].x,this.selectors.items[0].y);
 			this.opeselcontext.drawImage(this.canvas,this.select_clipboard.destx,this.select_clipboard.desty);
 			document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title2"); //"貼り付けの確定";
-			document.getElementById("sel_operationtype_paste").innerHTML = "&#9745";
+			//document.getElementById("sel_operationtype_paste").innerHTML = "&#9745";
+			document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton operation_pastefix";
 			var selmove = document.getElementById("sel_seltype_move");
 			selmove.click();
 		}
@@ -1069,7 +1108,8 @@ Draw["prepare_drawhtml"] = function(src){
 	
 	//---クリップボードにコピー操作
 	var o = this.selectors.items[0];
-	var opt_align = $("#sel_htmlbox_align").val();
+	var opt_align = Draw.variables.htmlbox_align; //$("#sel_htmlbox_align").val();
+	console.log(opt_align);
 	this.select_clipboard.selectType = selectionType.box;
 	var ang = o.calculateAngle();
 	this.select_clipboard.oldx = ang.lt.x;
@@ -1087,22 +1127,22 @@ Draw["prepare_drawhtml"] = function(src){
 	//必要プロパティをメインのコンテキストからコピー
 	can2d.fillStyle = this.context.strokeStyle;
 	can2d.font = document.getElementById("inp_htmlbox_css").value;
-	can2d.textAlign = opt_align;
-	can2d.textBaseline = $("#sel_htmlbox_baseline").val();
+	//can2d.textAlign = opt_align;
+	//can2d.textBaseline = 
 	
 	//文字描画開始
-	if (document.getElementById("chk_text_vertical").checked) {
-		var fonttext = String(can2d.font).split(/\s/g);
-		var finx = -1;
-		for (var f = 0; f < fonttext.length; f++) {
-			if (fonttext[f].indexOf("px") > -1) {
-				finx = f;
-				break;
-			}
+	var fonttext = String(can2d.font).split(/\s/g);
+	var finx = -1;
+	for (var f = 0; f < fonttext.length; f++) {
+		if (fonttext[f].indexOf("px") > -1) {
+			finx = f;
+			break;
 		}
-		var unity = parseInt(fonttext[finx]);
-		if (isNaN(unity)) unity = 20;	//既定
-		var tmpy = 0;
+	}
+	var unity = parseInt(fonttext[finx]);
+	if (isNaN(unity)) unity = 20;	//既定
+	if (document.getElementById("chk_text_vertical").checked) {
+		var tmpy = unity;
 		var w = can2d.measureText(src[0]);
 		var maxw = w.width;
 		//---最大幅を取得
@@ -1117,14 +1157,14 @@ Draw["prepare_drawhtml"] = function(src){
 		for (var i = 0; i < src.length; i++) {
 			var w = can2d.measureText(src[i]);
 			var tmpw = 0;
-			if ((opt_align == "left") || (opt_align == "start")) {
+			if ((opt_align == "left")) {
 				tmpw = ((maxw - w.width)/2);
 			}else if (opt_align == "right") {
 				tmpw = o.w - (maxw) + ((maxw - w.width)/2);
-				can2d.textAlign = "start";
+				//can2d.textAlign = "start";
 			}else if (opt_align == "center") {
 				tmpw = (o.w * 0.5) - (maxw/2) + ((maxw - w.width)/2);
-				can2d.textAlign = "start";
+				//can2d.textAlign = "start";
 			}
 			//---Japanese: X座標とY座標を文字の半分の幅分ずらす
 			var targetchar = "、。ぁぃぅぇぉゃゅょっ";
@@ -1164,7 +1204,18 @@ Draw["prepare_drawhtml"] = function(src){
 			}
 		}
 	}else{
-		can2d.fillText(src, 0,0);
+		var maxw = can2d.measureText(src);
+		var tmpw = 0;
+		if ((opt_align == "left")) {
+			tmpw = 0;
+		}else if (opt_align == "right") {
+			tmpw = o.w - maxw.width;
+			//can2d.textAlign = "left";
+		}else if (opt_align == "center") {
+			tmpw = (o.w - maxw.width)/2;
+			//can2d.textAlign = "left";
+		}
+		can2d.fillText(src, tmpw,unity);
 	}
 	//移動線描画
 	//this.drawAssistLine(this.canvas,can2d);

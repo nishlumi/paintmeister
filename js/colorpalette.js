@@ -225,19 +225,26 @@
 							//移動量が多い向きが今回の動作モードとする
 							var saY = this.startY - offsetY;
 							var saX = this.startX - offsetX;
+							var rect = event.target.getBoundingClientRect();
+							var ch = rect.height*0.1;
+							var cw = rect.width * 0.1;
 							var whichMode = Math.abs(saX) - Math.abs(saY) > 0 ? "rl" : "tb";
 							if (whichMode == "tb") {
-								if ((saY > 0) && (saY > 2)) { //↑
+								//if ((saY > 0) && (saY > 2)) { //↑
+								if (saY > ch) { //↑
 										this.mode = "d"; //色の削除
-								}else if ((saY < 0) && ((saY * -1) > 2)) { //↓
+								//}else if ((saY < 0) && ((saY * -1) > 2)) { //↓
+								}else if ((saY < ch*-1) && ((saY * -1) > ch)) { //↓
 									this.mode = "a"; //色の追加
 								}else{
 									this.mode = "c";
 								}
 							}else if (whichMode == "rl") {
-								if (saX > 0) { //←
+								//if (saX > 0) { //←
+								if (saX > cw) { //←
 									this.mode = ""; 
-								}else if (saX < 0){ //→
+								//}else if (saX < 0){ //→
+								}else if (saX < cw*-1){ //→
 									this.mode = ""; 
 								}else{
 									this.mode = "";

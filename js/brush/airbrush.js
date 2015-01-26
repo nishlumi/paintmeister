@@ -27,13 +27,15 @@ PenSet.Add({
 		};
 		context.globalCompositeOperation = "source-over";
 		context.globalAlpha = 1.0;
-		context.strokeStyle = parentElement.colorpicker; 
+		var clr = new RGBColor(parentElement.colorpicker);
+		context.strokeStyle = clr.toRGBA(0.0); //parentElement.colorpicker; 
+		context.fillStyle = clr.toRGBA(0.0); //parentElement.colorpicker; 
 		context.lineWidth = current["size"];
-		context.shadowColor = parentElement.colorpicker;
+		context.shadowColor = clr.toRGBA(1.0); //parentElement.colorpicker;
 		context.shadowOffsetX = 0;
 		context.shadowOffsetY = 0;
 		context.shadowBlur = 10;
-		context.lineCap = "round";
+		context.lineCap = "butt";
 		
 		return current;
 	},
@@ -42,7 +44,7 @@ PenSet.Add({
 		var temppressure = pressure2;
 		//---Editable begin
 		//---エアブラシの筆圧感度を下げる。（強くペンを当てないと濃く描けないようにする）
-		temppressure = temppressure * 0.35;
+		temppressure = temppressure * 0.6;
 		//---Editable end
 		return {
 			"pressure" : temppressure,
@@ -58,6 +60,18 @@ PenSet.Add({
 			hairpressure = 1;
 		}
 		if (hairpressure > 0.5) hairpressure = 0.5;
+		
+		var clr = new RGBColor(parentElement.current["color"]);
+		context.strokeStyle = clr.toRGBA(0.0);
+		context.fillStyle = clr.toRGBA(0.0);
+		context.shadowOffsetY = offsetY * 2;
+		context.shadowColor = clr.toRGBA(0.5 * hairpressure);
+		context.shadowBlur = 10 * hairpressure;
+		context.beginPath();
+		context.arc(offsetX, offsetY * -1, parentElement.current["size"], 0, Math.PI * 2);
+		context.fill();
+		return;
+
 		var bakalp = context.globalAlpha;
 		var haircolor = [null,null,null,null];
 		for (var i = 0; i < haircolor.length; i++) {

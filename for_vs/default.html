@@ -11,6 +11,7 @@
     <script src="//Microsoft.WinJS.2.0/js/ui.js"></script>
 
     <!-- PaintMeister 参照 -->
+    <link href="css/paintmfont.css" rel="stylesheet" />
     <link href="css/palmrest.css" rel="stylesheet" />
     <link rel="stylesheet" href="/js/farbtastic/farbtastic.css">
     <link rel="stylesheet" href="/css/jquery-ui.min.css">
@@ -28,7 +29,7 @@
             <table class="peninfo" style="width:95%;">
                 <tbody>
                     <tr>
-                        <td class="infofont" style="width:9%;"><button id="btn_menu" class="info_opebutton" title="メニューパネル開閉(1キー, SPACEキー)">Menu</button></td>
+                        <td class="infofont" style="width:9%;"><button id="btn_menu" class="info_opebutton" title="メニューパネル開閉(1キー, SPACEキー)"></button></td>
                         <td class="infofont" style="width:18%;">
                             <button id="btn_undo" class="info_opebutton2" title="元に戻す(Ctrl + Z)">&#8678;</button>
                             <button id="btn_redo" class="info_opebutton2" title="やり直し(Ctrl + Y)">&#8680;</button>
@@ -45,11 +46,11 @@
         </div>
         <!--</td><td style="width:70%;">-->
         <div id="btn_panel" class="button-panel">
-            <span id="info_brush_size" style="color:blue;font-size:120%;" title="ブラシ太さ">&#9999;</span>:<span>1</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0 5px 0 5px;" title="ペンの太さ" />
+            <span id="info_brush_size" style="color:blue;font-size:120%;" title="ブラシ太さ&#9999;"></span>:<span>1</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0 5px 0 5px;" title="ペンの太さ" />
             <span>60</span> : <strong id="lab_pensize"></strong>
             <div id="colorpalette">
                 <input type="text" id="colorpicker" name="c1" value="#e4521e" class="color {hash:true}" title="色の選択" />
-                <span id="explain_palette" class="explain_panel explain_palette" title="当ボタン、 タッチあるいはマウスを当てる＝カラーパレットをすべて表示、カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存">?</span>
+                <span id="explain_palette" class="explain_palette" title="当ボタン、 タッチあるいはマウスを当てる＝カラーパレットをすべて表示、カラーパレット = 各ボタン：押す＝色を選択、上にドラッグ(フリック)＝色をクリア、下にドラッグ(フリック)＝カラーピッカーの色を保存"></span>
                 <table id="palettepanel" border="1"><tbody id="palettepanel_body"></tbody></table>
             </div>
         </div>
@@ -62,10 +63,10 @@
     <br />
     <div id="prespanel">
         <div id="pres_main">
-            <div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする">&#10002;</div>
-            <div id="btn_freescroll" class="sidebar_button switchbutton_off" title="スクロール有効にする">&#10021;</div>
-            <div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする">&#8968;</div>
-            <div id="btn_select" class="sidebar_button switchbutton_off" title="選択操作を有効にする">&#9640;</div>
+            <div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする&#10002;"></div>
+            <div id="btn_freescroll" class="sidebar_button switchbutton_off" title="スクロール有効にする&#10021;"></div>
+            <div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする&#8968;"></div>
+            <div id="btn_select" class="sidebar_button switchbutton_off" title="選択操作を有効にする&#9640;"></div>
             <div id="chk_enable_handpres" style="display:none;" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br />
             <div id="box_handpres">
                 <label id="pres_label" class="pres_vallabel">
@@ -80,20 +81,20 @@
                 <div id="chk_shapes_box" class="sidebar_radiobutton sidebar_radio_off" title="四角">&#9744;</div>
                 <div id="chk_shapes_circle" class="sidebar_radiobutton sidebar_radio_off" title="丸">&#9675;</div>
                 <div id="chk_shapes_triangle" class="sidebar_radiobutton sidebar_radio_off" title="三角">&#9651;</div>
-                <div id="chk_shapes_html" class="sidebar_radiobutton sidebar_radio_off" title="テキスト">&#9000;</div>
+                <div id="chk_shapes_html" class="sidebar_radiobutton sidebar_radio_off" title="テキスト&#9000;"></div>
             </div>
             <div id="box_select">
                 -<span id="lab_seltype" title="選択の種類">type</span><br />
-                <div id="sel_seltype_box" class="sidebar_radiobutton sidebar_radio_on" title="短形選択">&#9744;</div>
-                <div id="sel_seltype_free" class="sidebar_radiobutton sidebar_radio_off" title="自由選択">&#9729;</div>
-                <div id="sel_seltype_move" class="sidebar_radiobutton sidebar_radio_off" title="移動">&#10021;</div>
-                <div id="sel_seltype_rotate" class="sidebar_radiobutton sidebar_radio_off" title="回転">&#8634;</div>
-                <div id="sel_seltype_tempdraw" class="sidebar_radiobutton sidebar_radio_off" title="一時的にペン使用">&#9999;</div>
+                <div id="sel_seltype_box" class="sidebar_radiobutton sidebar_radio_on" title="短形選択&#9744;"></div>
+                <div id="sel_seltype_free" class="sidebar_radiobutton sidebar_radio_off" title="自由選択&#9729;"></div>
+                <div id="sel_seltype_move" class="sidebar_radiobutton sidebar_radio_off" title="移動&#10021;"></div>
+                <div id="sel_seltype_rotate" class="sidebar_radiobutton sidebar_radio_off" title="回転&#8634;"></div>
+                <div id="sel_seltype_tempdraw" class="sidebar_radiobutton sidebar_radio_off" title="一時的にペン使用&#9999;"></div>
                 -<span id="lab_operationtype" title="操作の種類">&#9988;&#10063;</span><br />
                 <div id="sel_operationtype_clip" class="button uibutton-mid flatbutton" title="クリップ領域作成">&#9626;</div>
-                <div id="sel_operationtype_copy" class="button uibutton-mid flatbutton2" title="コピー">&#10063;</div>
-                <div id="sel_operationtype_cut" class="button uibutton-mid flatbutton3" title="切り取り">&#9988;</div>
-                <div id="sel_operationtype_paste" class="button uibutton-mid flatbutton-disabled" title="貼り付け">&#9744;</div>
+                <div id="sel_operationtype_copy" class="button uibutton-mid flatbutton2" title="コピー&#10063;"></div>
+                <div id="sel_operationtype_cut" class="button uibutton-mid flatbutton3" title="切り取り&#9988;"></div>
+                <div id="sel_operationtype_paste" class="button uibutton-mid flatbutton-disabled operation_paste" title="貼り付け&#9744;"></div>
                 <hr>
                 <!--<div id="btn_operation_decide" class="button uibutton-mid flatbutton" title="選択操作を確定する">確定</div>
                 <div id="btn_operation_cancel" class="button uibutton-mid flatbutton2" title="選択操作を取り消す">Cancel</div>-->
@@ -202,8 +203,8 @@
     </div>
     <div id="dlg_layer">
         <span id="lab_explain_layer" class="explain_panel" title="各ボタン：押す＝レイヤー選択、左右にドラッグ＝レイヤー移動">レイヤー操作</span>
-        <button id="lay_add" class="laycontrol_button" title="レイヤーを追加">+</button>
-        <button id="lay_del" class="laycontrol_button" title="レイヤーを削除">-</button>
+        <button id="lay_add" class="laycontrol_button flatbutton2" title="レイヤーを追加"></button>
+        <button id="lay_del" class="laycontrol_button flatbutton2" title="レイヤーを削除"></button>
         <div id="lay_btns">
         </div>
         <div id="lay_preview">
@@ -211,9 +212,9 @@
         </div>
         <div id="lay_info">
             <span id="lab_layinfo_name">名前:</span><input type="text" id="layinfo_name" size="15" />
-            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle">表示</span></label><br />
+            <label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle" class="layer_viewbtn_visible">表示</span></label><br />
             <label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度"><span id="lab_layinfo_opacity">不透明度</span></label>
-            <label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock">編集ロック</span></label><br />
+            <label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock" class="layer_lockbtn_unlock" title="編集ロック">編集ロック</span></label><br />
             <label><input type="checkbox" id="layinfo_clip" class="layinfo_ui" disabled><span id="lab_layinfo_clip">クリップ領域ON</span></label>
             <button id="layinfo_clearclip" class="flatbutton uibutton" title="現在のレイヤーのクリップ領域を削除します" disabled>クリップ領域をクリア</button>
             <span id="lab_layinfo_cliphistory">過去のクリップ領域: </span>
@@ -256,22 +257,26 @@
         </div>
         <div id="dlg_htmlbox_main">
             <span id="lab_htmlbox_css">書式(CSS):</span> <input type="text" id="inp_htmlbox_css" size="30" /><br />
-            <span id="lab_htmlbox_align">揃え位置:</span> <select id="sel_htmlbox_align" class="sel_htmlbox">
+            <span id="lab_htmlbox_align">揃え位置:</span>
+            <!--<select id="sel_htmlbox_align" class="sel_htmlbox">
                 <option value="start">start</option>
                 <option value="end">end</option>
                 <option value="left">left</option>
                 <option value="right">right</option>
                 <option value="center">center</option>
-            </select>
-            <span id="lab_htmlbox_baseline">ベースライン:</span> <select id="sel_htmlbox_baseline" class="sel_htmlbox">
+            </select>-->
+            <div id="htmlbox_align_left" class="box_radiobutton radio_current"></div>
+            <div id="htmlbox_align_center" class="box_radiobutton radio_none"></div>
+            <div id="htmlbox_align_right" class="box_radiobutton radio_none"></div>
+            <!--<span id="lab_htmlbox_baseline">ベースライン:</span> <select id="sel_htmlbox_baseline" class="sel_htmlbox">
                 <option value="top">start</option>
                 <option value="middle">middle</option>
                 <option value="bottom">bottom</option>
                 <option value="alphabetic ">alphabetic</option>
                 <option value="ideographic">ideographic</option>
                 <option value="hanging">hanging</option>
-            </select>
-            <label><input type="checkbox" id="chk_text_vertical"><span id="lab_text_vertical" title="縦書にする">縦書にする</span></label><br />
+            </select>-->
+            <label><input type="checkbox" id="chk_text_vertical"><span id="lab_text_vertical" title="縦書にする"></span></label><br />
             <input type="text" id="inp_htmlbox_src">
         </div>
         <div id="dlg_htmlbox_footer_area">

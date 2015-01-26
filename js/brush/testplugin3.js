@@ -8,7 +8,7 @@ PenSet.Add({
 	name : {
 		"ja":"色替え+ぼかし",
 		"en":"Color change + Blur",
-		"eo":"Kolorŝanĝo + Nebuli
+		"eo":"Kolorŝanĝo + Nebuli"
 	},
 	element : null,
 	parent : null,
@@ -25,12 +25,13 @@ PenSet.Add({
 		};
 		context.globalCompositeOperation = "source-atop";
 		context.globalAlpha = 1.0;
-		context.strokeStyle = parentElement.colorpicker; 
+		var clr = new RGBColor(parentElement.colorpicker);
+		context.strokeStyle = clr.toRGBA(0.0); //parentElement.colorpicker; 
 		context.lineWidth = current["size"];
-		context.shadowColor = parentElement.colorpicker;
+		context.shadowColor = clr.toRGBA(0.3); //parentElement.colorpicker;
 		context.shadowOffsetX = 0;
 		context.shadowOffsetY = 0;
-		context.shadowBlur = 20;
+		context.shadowBlur = 10;
 		context.lineCap = "round";
 		
 		return current;
@@ -46,10 +47,26 @@ PenSet.Add({
 		};
 	},
 	drawMain : function(context,startX,startY,offsetX,offsetY,event,parentElement){
+		context.lineWidth = parentElement.current["size"];
+		var hairpressure = parentElement.lastpressure  ? parentElement.lastpressure : 1 ;
+		if (hairpressure == 0) {
+			hairpressure = 0.001;
+		}else if (hairpressure == undefined) {
+			hairpressure = 1;
+		}
+		if (hairpressure > 0.5) hairpressure = 0.5;
 		context.beginPath();
-		context.moveTo(startX, startY);
-		context.lineTo(offsetX, offsetY);
-		context.stroke();
+		//context.moveTo(startX, startY);
+		//context.lineTo(offsetX, offsetY);
+		//context.stroke();
+		var i = startX;
+		var j = startY;
+		var clr = new RGBColor(parentElement.current["color"]);
+		context.shadowOffsetY = offsetY * 2;
+		context.shadowColor = clr.toRGBA(1 * hairpressure);
+		context.arc(offsetX, offsetY * -1, parentElement.current["size"], 0, Math.PI * 2);
+		context.fill();
+
 	},
 	initialize : function(parentelement,ownelement){
 		this.parent = parentelement;

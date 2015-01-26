@@ -44,6 +44,7 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 	
 	this.ismain = false;
 	this.isremovable = true;
+	this.islocking = false;
 	this.btntouching = false;
 	this.startX = 0;
 	this.startY = 0;
@@ -68,8 +69,10 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		}
 		if (this.isvisible) {
 			own.control.className = "layer_button_selected layer_button_show";
+			document.getElementById("lab_layinfo_toggle").className = "layer_viewbtn_visible";
 		}else{
 			own.control.className = "layer_button_selected layer_button_hidden";
+			document.getElementById("lab_layinfo_toggle").className = "layer_viewbtn_invisible";
 		}
 		own.selected = true;
 		var newcontext = own.canvas.getContext("2d");
@@ -98,7 +101,12 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		document.getElementById("info_layer").textContent = own.title;
 		document.getElementById("layinfo_name").value = own.title;
 		document.getElementById("prev_img").src = own.canvas.toDataURL();
-		document.getElementById("layinfo_lock").checked = !own.isremovable;
+		document.getElementById("layinfo_lock").checked = own.islocking; //!own.isremovable;
+		if (own.islocking) {
+			document.getElementById("lab_layinfo_lock").className = "layer_lockbtn_lock";
+		}else{
+			document.getElementById("lab_layinfo_lock").className = "layer_lockbtn_unlock";
+		}
 		if (own.showcliparea) own.SetClip(false,null);
 		if (own.cliparea) {
 			document.getElementById("layinfo_clip").checked = own.showcliparea;
@@ -131,8 +139,10 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		var cname = "";
 		if (flag){
 			cname = "layer_button_show";
+			document.getElementById("lab_layinfo_toggle").className = "layer_viewbtn_visible";
 		}else{
 			cname = "layer_button_hidden";
+			document.getElementById("lab_layinfo_toggle").className = "layer_viewbtn_invisible";
 		}
 		own.control.className = (own.selected ? "layer_button_selected "+cname : "layer_button "+cname);
 	}
@@ -147,10 +157,17 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		own.canvas.style.zIndex = 10 + newpos;
 	}
 	this.SetLock = function (flag) {
-		own.isremovable = !flag;
+		//own.isremovable = !flag;
+		own.islocking = flag;
+		if (flag) {
+			document.getElementById("lab_layinfo_lock").className = "layer_lockbtn_lock";
+		}else{
+			document.getElementById("lab_layinfo_lock").className = "layer_lockbtn_unlock";
+		}
 	}
 	this.Locking = function () {
-		return !own.isremovable;
+		//return !own.isremovable;
+		return own.islocking;
 	}
 	this.SetClip = function(isclip,selector) {
 		/*
@@ -360,16 +377,16 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 			if (own.ismain) {
 				flag = false;
 			}else{
-				//console.log("canvasid="+own.canvas.id);
-				//console.log("controlid=");
-				//console.log(own.control.id);
-				//own.canvas.remove();
-				document.getElementById("canvaspanel").removeChild(document.getElementById(own.canvas.id));
-				//own.control.remove();
-				document.getElementById("lay_btns").removeChild(document.getElementById(own.control.id));
-				delete own.canvas;
-				delete own.control;
-				flag = true;
+				if (own.islocking) {
+					flag = false;
+				}else{
+					document.getElementById("canvaspanel").removeChild(document.getElementById(own.canvas.id));
+					//own.control.remove();
+					document.getElementById("lay_btns").removeChild(document.getElementById(own.control.id));
+					delete own.canvas;
+					delete own.control;
+					flag = true;
+				}
 			}
 		}else{
 			flag = false;

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.52.04";
+var appversion = "1.0.55.10";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -204,7 +204,7 @@ var Selector = function(id){
 		if (own.points.length > 0) {
 			Draw.context.beginPath();
 			Draw.context.moveTo(own.points[0].x,own.points[0].y);
-			console.log(own.points[0].x + "x" + own.points[0].y);
+			//console.log(own.points[0].x + "x" + own.points[0].y);
 			for (var i = 1; i < own.points.length; i++) {
 				Draw.context.lineTo(own.points[i].x,own.points[i].y);
 				console.log(own.points[i].x + "x" + own.points[i].y);
@@ -312,6 +312,13 @@ var Selectors = function(){
 			"eraser" : null
 		},
 		variables : {
+			"copybtn" : {
+				touching : false,
+				x : 0,
+				y : 0,
+				mode : ""
+			},
+			"htmlbox_align" : "",
 		},
 		drawing : false,
 		focusing : false,
@@ -879,6 +886,7 @@ var Selectors = function(){
 			document.getElementById("chk_shapes_circle").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_triangle").addEventListener("click", chk_shapes_clicking,false);
 			document.getElementById("chk_shapes_html").addEventListener("click", chk_shapes_clicking,false);
+			//---テキスト挿入ボタン
 			document.getElementById("dlg_htmlbox_close").addEventListener("click", function(event){
 				$("#dlg_htmlbox").css({"display":"none"});
 			},false);
@@ -892,6 +900,46 @@ var Selectors = function(){
 			document.getElementById("inp_htmlbox_src").addEventListener("keydown", function(event) {
 				event.stopPropagation();
 			},false);
+			var htmlbox_radio_clicking = function(element, parent) {
+				if (element.className == "box_radiobutton radio_none") { //オンにする
+					/*var elm = document.querySelectorAll(".box_radiobutton.radio_current");
+					for (var obj in elm) {
+						console.log(elm[obj].id);
+						if (elm[obj]["id"]) {
+							console.log("  " + parent);
+							if ((elm[obj].id.indexOf(parent) > -1)) {
+								elm[obj].className = "box_radiobutton radio_none";
+							}
+							console.log(elm[obj].className);
+						}
+					}*/
+					document.getElementById("htmlbox_align_left").className = "box_radiobutton radio_none";
+					document.getElementById("htmlbox_align_center").className = "box_radiobutton radio_none";
+					document.getElementById("htmlbox_align_right").className = "box_radiobutton radio_none";
+					element.className = "box_radiobutton radio_current";
+				}else{ //オフにする
+					var elm = document.querySelectorAll(".box_radiobutton");
+					for (var obj in elm) {
+						if (elm[obj]["className"] && elm[obj].className.indexOf("box_radiobutton")) {
+							if (elm[obj].id == element.id) {
+								return;
+							}
+						}
+					}
+					if ((elm[obj]["id"]) && (elm[obj].id.indexOf(parent) > -1)) {
+						element.className = "box_radiobutton radio_none";
+					}
+				}
+			};
+			var htmlbox_align_clicking = function(event) {
+				htmlbox_radio_clicking(event.target," htmlbox_align_");
+				if (event.target.className == "box_radiobutton radio_current") {
+					Draw.variables.htmlbox_align = String(event.target.id).replace("htmlbox_align_","");
+				}
+			};
+			document.getElementById("htmlbox_align_left").addEventListener("click", htmlbox_align_clicking,false);
+			document.getElementById("htmlbox_align_center").addEventListener("click", htmlbox_align_clicking,false);
+			document.getElementById("htmlbox_align_right").addEventListener("click", htmlbox_align_clicking,false);
 			//---選択操作ボタン
 			document.getElementById("btn_select").addEventListener("click", function(event) {
 				if (event.target.className == "sidebar_button switchbutton_off") {
@@ -914,9 +962,9 @@ var Selectors = function(){
 					$("#box_select").css({"display":"none"});
 					$("#prespanel").css({"width":"45px"});
 					$("#pres_sub").css({"display":"none"});
-					document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton-disabled";
+					document.getElementById("sel_operationtype_paste").className = "button uibutton-mid flatbutton-disabled operation_paste";
 					document.getElementById("sel_operationtype_paste").title = _T("sel_operationtype_paste_title"); //"貼り付け";
-					document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
+					//document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
 					Draw.is_selecting = false;
 					Draw.select_clipboard = new Selector();
 					Draw.opeselcontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
@@ -969,7 +1017,63 @@ var Selectors = function(){
 				Draw.select_operation = String(event.target.id).replace("sel_operationtype_","");
 				Draw.select_function_execute(event);
 			};
-			document.getElementById("sel_operationtype_copy").addEventListener("click", sel_operationtype_clicking,false);
+			var dcopy = document.getElementById("sel_operationtype_copy");
+			dcopy.addEventListener("click", sel_operationtype_clicking,false);
+			dcopy.addEventListener("pointerdown", function(event){
+				Draw.variables.copybtn.touching = true;
+				var pos  = calculatePosition("touchstart",event,event.target,{
+					"offset" : 0,
+					"canvasspace":0
+				});
+				Draw.variables.copybtn.x = pos.x;
+				Draw.variables.copybtn.y = pos.y;
+			},false);
+			dcopy.addEventListener("pointermove", function(event){
+				if (Draw.variables.copybtn.touching) {
+					var pos  = calculatePosition("touchstart",event,event.target,{
+						"offset" : 0,
+						"canvasspace":0
+					});
+					var saY = Draw.variables.copybtn.y - pos.y;
+					var saX = Draw.variables.copybtn.x - pos.x;
+					var rect = event.target.getBoundingClientRect();
+					var ch = rect.height*0.5;
+					var cw = rect.width * 0.5;
+					var whichMode = Math.abs(saX) - Math.abs(saY) > 0 ? "rl" : "tb";
+					if (whichMode == "tb") {
+						if (saY > ch) { //↑
+							Draw.variables.copybtn.mode = "";
+						}else if ((saY < ch*-1) && ((saY * -1) > ch)) { //↓
+							Draw.variables.copybtn.mode = "";
+						}else{
+							Draw.variables.copybtn.mode = "";
+						}
+					}else if (whichMode == "rl") {
+						if (saX > cw) { //←
+							Draw.variables.copybtn.mode = ""; 
+						}else if (saX < cw*-1){ //→
+							Draw.variables.copybtn.mode = "concat"; //結合コピー
+						}else{
+							Draw.variables.copybtn.mode = "";
+						}
+					}
+				}
+			},false);
+			dcopy.addEventListener("pointerleave", function(event){
+				if (Draw.variables.copybtn.touching) {
+					if (Draw.variables.copybtn.mode == "concat") {
+						//---結合コピー
+						/*
+							現在選択中のレイヤーから下のレイヤーの同一座標の
+							内容を全て結合した内容をクリップボードにコピーする
+						*/
+						console.log("結合コピー！");
+						sel_operationtype_clicking(event);
+					}
+					Draw.variables.copybtn.touching = false;
+					Draw.variables.copybtn.mode = "";
+				}
+			},false);
 			document.getElementById("sel_operationtype_cut").addEventListener("click", sel_operationtype_clicking,false);
 			document.getElementById("sel_operationtype_clip").addEventListener("click", sel_operationtype_clicking,false);
 			document.getElementById("sel_operationtype_paste").addEventListener("click", sel_operationtype_clicking,false);
@@ -999,6 +1103,7 @@ var Selectors = function(){
 				document.getElementById(nm).addEventListener("click", function(event) {
 					var name = String(event.target.id).replace("magni_","");
 					Draw.scale(Number(name));
+					document.getElementById("basepanel").scrollIntoView();
 				}, false);
 			}
 			//========================================================================================
@@ -1007,20 +1112,8 @@ var Selectors = function(){
 			document.getElementById("btn_menu").addEventListener("click", function(event) {
 				if (document.getElementById("menupanel").style.display == "none") { //開く
 					Draw.turnMenuPanel("menupanel","btn_menu",true);
-					/*document.getElementById("menupanel").style.display = "block";
-					document.getElementById("dlg_pen_mode").style.display = "none";
-					document.getElementById("dlg_layer").style.display = "none";
-					document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
-					document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
-					//event.target.innerHTML = "&#9650;";
-					event.target.style.backgroundColor = "#91d780";*/
 				}else{ //閉じる
 					Draw.turnMenuPanel("menupanel","btn_menu",false);
-					/*document.getElementById("menupanel").style.display = "none";
-					document.getElementById("dlg_pen_mode").style.display = "none";
-					document.getElementById("dlg_layer").style.display = "none";
-					//event.target.innerHTML = "&#9660;";
-					event.target.style.backgroundColor = "#c4fab3";*/
 					document.body.focus();
 				}
 			}, false);
@@ -1035,36 +1128,78 @@ var Selectors = function(){
 			document.getElementById("info_pen_mode").addEventListener("click", function(event) {
 				if (document.getElementById("dlg_pen_mode").style.display == "none") {
 					Draw.turnMenuPanel("dlg_pen_mode","info_pen_mode",true);
-					/*document.getElementById("dlg_pen_mode").style.display = "block";
-					document.getElementById("dlg_layer").style.display = "none";
-					document.getElementById("menupanel").style.display = "none";
-					document.getElementById("dlg_canvasinfo").style.display = "none";
-					document.getElementById("info_layer").style.backgroundColor = "#c4fab3";
-					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
-					event.target.style.backgroundColor = "#91d780";*/
 				}else{
 					Draw.turnMenuPanel("dlg_pen_mode","info_pen_mode",false);
-					//document.getElementById("dlg_pen_mode").style.display = "none";
-					//event.target.style.backgroundColor = "#c4fab3";
 				}
 			},false);
-			document.getElementById("info_layer").addEventListener("click", function(event) {
+			var blayer = document.getElementById("info_layer");
+			blayer.addEventListener("click", function(event) {
 				console.log(event.target.style.top + "," + event.target.style.left);
 				if (document.getElementById("dlg_layer").style.display == "none") {
 					Draw.turnMenuPanel("dlg_layer","info_layer",true);
-					/*document.getElementById("dlg_layer").style.display = "block";
-					document.getElementById("dlg_pen_mode").style.display = "none";
-					document.getElementById("menupanel").style.display = "none";
-					document.getElementById("dlg_canvasinfo").style.display = "none";
-					document.getElementById("info_pen_mode").style.backgroundColor = "#c4fab3";
-					document.getElementById("btn_menu").style.backgroundColor = "#c4fab3";
-					event.target.style.backgroundColor = "#91d780";*/
 					//プレビューを更新
 					document.getElementById("prev_img").src = Draw.getSelectedLayer().canvas.toDataURL();
 				}else{
 					Draw.turnMenuPanel("dlg_layer","info_layer",false);
-					//document.getElementById("dlg_layer").style.display = "none";
-					//event.target.style.backgroundColor = "#c4fab3";
+				}
+			},false);
+			blayer.addEventListener("click", sel_operationtype_clicking,false);
+			blayer.addEventListener("pointerdown", function(event){
+				Draw.variables.copybtn.touching = true;
+				var pos  = calculatePosition("touchstart",event,event.target,{
+					"offset" : 0,
+					"canvasspace":0
+				});
+				Draw.variables.copybtn.x = pos.x;
+				Draw.variables.copybtn.y = pos.y;
+			},false);
+			blayer.addEventListener("pointermove", function(event){
+				if (Draw.variables.copybtn.touching) {
+					var pos  = calculatePosition("touchstart",event,event.target,{
+						"offset" : 0,
+						"canvasspace":0
+					});
+					var saY = Draw.variables.copybtn.y - pos.y;
+					var saX = Draw.variables.copybtn.x - pos.x;
+					var whichMode = Math.abs(saX) - Math.abs(saY) > 0 ? "rl" : "tb";
+					var rect = event.target.getBoundingClientRect();
+					var ch = rect.height*0.5;
+					var cw = rect.width * 0.5;
+					if (whichMode == "tb") {
+						if (saY > ch) { //↑
+							Draw.variables.copybtn.mode = "";
+						}else if ((saY < ch*-1) && ((saY * -1) > ch)) { //↓
+							Draw.variables.copybtn.mode = "";
+						}else{
+							Draw.variables.copybtn.mode = "";
+						}
+					}else if (whichMode == "rl") {
+						if (saX > cw) { //←
+							Draw.variables.copybtn.mode = "prev"; //下のレイヤーへ
+						}else if (saX < cw*-1){ //→
+							Draw.variables.copybtn.mode = "next"; //上のレイヤーへ
+						}else{
+							Draw.variables.copybtn.mode = "";
+						}
+					}
+				}
+			},false);
+			blayer.addEventListener("pointerleave", function(event){
+				if (Draw.variables.copybtn.touching) {
+					var index = Draw.getSelectedLayerIndex();
+					if (Draw.variables.copybtn.mode == "prev") {
+						//console.log("prev");
+						if (index > 0) {
+							Draw.layer[index-1].select(Draw.context);
+						}
+					}else if (Draw.variables.copybtn.mode == "next") {
+						//console.log("next");
+						if (index < Draw.layer.length-1) {
+							Draw.layer[index+1].select(Draw.context);
+						}
+					}
+					Draw.variables.copybtn.touching = false;
+					Draw.variables.copybtn.mode = "";
 				}
 			},false);
 			//========================================================================================
@@ -1080,7 +1215,7 @@ var Selectors = function(){
 					if (l < 5) {
 						console.log("lines["+l+"]="+lines[l]);
 						var arr = lines[l].split(",");
-						ColorPalette.load(l,val);
+						ColorPalette.load(l,lines[l]);
 						AppStorage.set("sv_colorpalette"+l,lines[l]);
 					}
 				}
@@ -1334,7 +1469,7 @@ var Selectors = function(){
 			did("lab_dirloc").textContent = _T("lab_dirloc");
 			did("btn_openfolder").textContent = _T("btn_openfolder");
 			//main panel - menu bar
-			did("btn_menu").textContent = _T("btn_menu");
+			//did("btn_menu").textContent = _T("btn_menu");
 			did("btn_menu").title = _T("btn_menu_title");
 			did("btn_undo").title = _T("btn_undo_title");
 			did("btn_redo").title = _T("btn_redo_title");
@@ -1420,6 +1555,7 @@ var Selectors = function(){
 			did("lab_layinfo_toggle").textContent = _T("lab_layinfo_toggle");
 			did("layinfo_opacity").title = _T("layinfo_opacity_title");
 			did("lab_layinfo_opacity").textContent = _T("lab_layinfo_opacity");
+			did("lab_layinfo_lock").title = _T("lab_layinfo_lock");
 			did("lab_layinfo_lock").textContent = _T("lab_layinfo_lock");
 			did("lab_layinfo_clip").textContent = _T("lab_layinfo_clip");
 			did("layinfo_clearclip").textContent = _T("layinfo_clearclip");
@@ -1446,9 +1582,9 @@ var Selectors = function(){
 			did("dlg_htmlbox_header").textContent = _T("dlg_htmlbox_header");
 			did("lab_htmlbox_css").textContent = _T("lab_htmlbox_css");
 			did("lab_htmlbox_align").textContent = _T("lab_htmlbox_align");
-			did("lab_htmlbox_baseline").textContent = _T("lab_htmlbox_baseline");
+			//did("lab_htmlbox_baseline").textContent = _T("lab_htmlbox_baseline");
 			did("btn_insert_htmlbox").textContent = _T("btn_insert_htmlbox");
-			did("lab_text_vertical").textContent = _T("lab_text_vertical");
+			//did("lab_text_vertical").textContent = _T("lab_text_vertical");
 			did("lab_text_vertical").title = _T("lab_text_vertical");
 			
 		},
