@@ -2,6 +2,14 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.55.11)
+ÅEFix that fault cut and paste after box selection
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/02/08 15:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.55.10)
 **Support the Concat copy(to copy after to concat contents of same position in selected layer and below layers)
 **Use and change icons for each UI, controls.
