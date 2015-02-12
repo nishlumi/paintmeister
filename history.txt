@@ -2,12 +2,14 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
-PaintMeister (1.0.55.11)
+PaintMeister (1.0.55.12)
 ・短形選択で切り取りをすると正しく貼付けができなかったのを修正。
+・縦書の時、括弧などの一部の文字がずれるのを修正。
+・1.0.55.10にて新規ブラシ「色替え＋ぼかし」を実装してた
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/02/08 15:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/02/12 21:00:00
+Store app		- 2015/02/12 21:00:00
 
 
 PaintMeister (1.0.55.10)

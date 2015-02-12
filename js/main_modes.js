@@ -204,6 +204,7 @@ Draw["select_function_end"] = function (event, pos) {
 		o.directiony = (o.y < o.desty ? 1 : -1);
 		o.w = (o.destx - o.x) * o.directionx;
 		o.h = (o.desty - o.y) * o.directiony;
+		o.selectFormat = selectionType.box;
 		var ang = o.calculateAngle();
 		o.addPoint(o.x, o.y);
 		o.addPoint(o.x+o.w, o.y);
@@ -220,6 +221,7 @@ Draw["select_function_end"] = function (event, pos) {
 		this.opecontext.stroke();
 		this.opecontext.closePath();
 		o.addPoint(pos.x,pos.y);
+		o.selectFormat = selectionType.free;
 	}
 	o.status = selectionStatus.end;
 	//---本来のキャンバスにもサブパスをセット
@@ -363,7 +365,9 @@ Draw["select_function_execute"] = function(event) {
 			this.undo_function_begin(true);
 			if (o.action == selectActionType.cut) {
 				var ang = o.calculateAngle();
-				if (o.selectType = selectionType.free) {
+				console.log("o.selectType="+o.selectType);
+				console.log("selectionType.free="+selectionType.free);
+				if (o.selectFormat == selectionType.free) {
 					//---選択モードが自由の場合は保存したポイントからパスを設定して手動消しゴムクリア
 					o.cutfrom.save();
 					o.cutfrom.globalCompositeOperation = "destination-out";
@@ -379,6 +383,8 @@ Draw["select_function_execute"] = function(event) {
 					o.cutfrom.restore();
 					
 				}else{
+					console.log("paste o=");
+					console.log(o);
 					o.cutfrom.clearRect(o.oldx,o.oldy, o.w,o.h);
 				}
 			}
@@ -1183,19 +1189,20 @@ Draw["prepare_drawhtml"] = function(src){
 			if (targetchar.indexOf(src[i]) > 0) {
 				
 				can2d.save();
-				targetchar = "-ー－=＝～";
-				if (targetchar.indexOf(src[i]) > 0) {
-					can2d.translate(tmpw + (w.width),tmpy);
+				targetchar = "-ー－=＝～（｛【 『 ）」｝】』］";
+				if (targetchar.indexOf(src[i]) > -1) {
+					can2d.translate(tmpw+(w.width*0.15),(tmpy-(unity*0.75)));
 				}else{
-					can2d.translate(tmpw + (w.width*2),tmpy);
+					can2d.translate(tmpw+(w.width*1.0),tmpy);
 				}
 				can2d.rotate(90/180*Math.PI);
 				can2d.fillText(src[i],0,0);
-				targetchar = "(（「{｛[【『［";
-				if (targetchar.indexOf(src[i]) > 0) {
-					tmpy += (unity/2) + 5;
+				targetchar = "( （ 「 { ｛ [ 【 『 ［";
+				if (targetchar.indexOf(src[i]) > -1) {
+					console.log("targetchar="+targetchar.indexOf(src[i]));
+					tmpy += (unity * 1) + 5;
 				}else{
-					tmpy += unity + 5;
+					tmpy += (unity * 0.5) + 5;
 				}
 				can2d.restore();
 			}else{

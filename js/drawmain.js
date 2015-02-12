@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.55.10";
+var appversion = "1.0.55.12";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -158,6 +158,7 @@ var Selector = function(id){
 	this.status = selectionStatus.during;
 	this.action = selectActionType.clip;
 	this.selectType = selectionType.box;
+	this.selectFormat = selectionType.box;
 	this.addPoint = function(x,y) {
 		var o = {"x" : x, "y" : y};
 		own.points.push(o);
