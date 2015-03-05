@@ -2,6 +2,23 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.57.20)
+**Support rotation of the Canvas.
+**Improved functionallity of the Scroll and Scaling.(More freely and smoothly scroll)
+*Change size of the cursor by brush size
+*Save brush size & add reset button(blue pen mark on next to the size bar)
+*Add button for Concat copy
+*Can delete color of color palette by right click and eraser
+*Support up to 40 layers.
+*Adjust UI of layer panel
+*to be created on the canvas from more than 30 px ( step to 5px )
+*Fix that is drawn despite while scrolling and scaling operations
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/03/05 21:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.55.12)
 *Fix that fault cut and paste after box selection
 *Fix that displace some characters (brackets, etc) when vertical writing.
