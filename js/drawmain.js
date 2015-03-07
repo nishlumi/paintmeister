@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.55.12";
+var appversion = "1.0.57.20";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -128,7 +128,8 @@ var selectActionType = {
 	"clip" : 0,
 	"copy" : 1,
 	"cut" : 2,
-	"paste" : 3
+	"paste" : 3,
+	"copy_concat" : 4
 };
 var selectionStatus = {
 	"during" : 0,
@@ -273,7 +274,8 @@ var Selectors = function(){
 		screencan : null,	//実際の画面操作受付用のキャンバス
 		layer : [],
 		layermax : 0,
-		context : null, 
+		context : null,
+		screencontext : null,
 		gridcontext : null,
 		opecontext : null,
 		opeselcontext : null,
@@ -292,13 +294,15 @@ var Selectors = function(){
 		layer_del : null,
 		pres_curline : null,
 		progresspanel : null,
+		usercursor : null,
+		screendiv : null,
 		//currentpen : ["",-1,"#000000"], //0=mode, 1=size, 2=color
 		defaults : {
 			"canvas" : {
 				"size" : [600,400]   //0=w, 1=h
 			},
 			"layer" : {
-				"max" : 20
+				"max" : 40
 			},
 			"undo" : {
 				"divide" : 5,
@@ -307,6 +311,12 @@ var Selectors = function(){
 			"cliphistory" : 10,
 			"smooth_correction" : 3,
 			"sv_paletteloc_num" : 5,
+			"transform_style" : [
+				"translateX(%d)",
+				"translateY(%d)",
+				"scale(%d)",
+				"rorate(%ddeg)",
+			]
 		},
 		last : {
 			"pen" : null,
@@ -320,6 +330,8 @@ var Selectors = function(){
 				mode : ""
 			},
 			"htmlbox_align" : "",
+			"cursormode" : "",
+			"cursorpos" : {x : 0, y : 0}
 		},
 		drawing : false,
 		focusing : false,
@@ -337,6 +349,18 @@ var Selectors = function(){
 		keyLikePres : null,
 		pressedKey : 0,
 		canvasspace : 0,
+		transform_value : [
+			"0%",			//translateX
+			"25%",			//translateY
+			1.0,		//scale
+			0			//rotate
+		],
+		transform_style : [
+			"translateX(%d)",
+			"translateY(%d)",
+			"scale(%d)",
+			"rotate(%ddeg)",
+		],
 		is_scaling : false,
 		scale_pos : {
 			"begin" : null,
@@ -344,7 +368,14 @@ var Selectors = function(){
 		},
 		init_scale : 1.0,
 		during_scale : 1.0,
+		is_rotating : false,
+		init_rotate : 0,
+		during_rotate : 0,
 		during_distance : 0,
+		during_translate : { 
+			x : 0,
+			y : 0
+		},
 		touchpoints : {
 		},
 		drawpoints : [],
@@ -407,7 +438,7 @@ var Selectors = function(){
 			this.progresspanel = document.getElementById("progresspanel");
 			this.selectors = new Selectors();
 			this.select_clipboard = new Selector();
-			
+			this.usercursor = document.getElementById("dumcursor");
 			//---other control events setup
 			//---初期画面コントロール-----------------------------------------
 			this.canwidth.addEventListener("change", function(event) {
@@ -432,10 +463,22 @@ var Selectors = function(){
 			//========================================================================================
 			//---メイン画面
 			//========================================================================================
+			document.getElementById("info_brush_size").addEventListener("click", function(event) {
+				delete Draw.pen.saved.size[Draw.pen.current.mode];
+				if (Draw.pen.current.mode == "eraser") {
+					Draw.pen.setEraser(Draw.context);
+				}else{
+					//選択中のペンを呼び戻してデフォルト値をセット。
+					//Draw.pen.current["size"] = Draw.pen.items[Draw.pen.current.mode].defaults[0];
+					Draw.last.pen["func"].click();
+				}
+				Draw.start_drawCursor(event,Draw.pen.current.size,{x:Draw.startX, y:Draw.startY});
+			},false);
 			this.sizebar.addEventListener("change", function(event) {
 				document.getElementById("lab_pensize").innerHTML = event.target.value;
 				//Draw.currentpen["size"] = event.target.value;
 				Draw.pen.current["size"] = event.target.value;
+				Draw.pen.saved.size[Draw.pen.current.mode] = event.target.value;
 				//document.getElementById("info_pen_size").innerHTML = event.target.value;
 			},false);
 			this.colorpicker.addEventListener("change", function(event) {
@@ -1016,6 +1059,12 @@ var Selectors = function(){
 					return;
 				}
 				Draw.select_operation = String(event.target.id).replace("sel_operationtype_","");
+				if (Draw.select_operation == "copy_concat") {	//結合コピー時は名目上はただのCopy
+					Draw.select_operation = "copy";
+					Draw.variables.copybtn.mode = "concat";
+				}else{
+					Draw.variables.copybtn.mode = "";
+				}
 				Draw.select_function_execute(event);
 			};
 			var dcopy = document.getElementById("sel_operationtype_copy");
@@ -1075,6 +1124,7 @@ var Selectors = function(){
 					Draw.variables.copybtn.mode = "";
 				}
 			},false);
+			document.getElementById("sel_operationtype_copy_concat").addEventListener("click", sel_operationtype_clicking,false);
 			document.getElementById("sel_operationtype_cut").addEventListener("click", sel_operationtype_clicking,false);
 			document.getElementById("sel_operationtype_clip").addEventListener("click", sel_operationtype_clicking,false);
 			document.getElementById("sel_operationtype_paste").addEventListener("click", sel_operationtype_clicking,false);
@@ -1097,6 +1147,26 @@ var Selectors = function(){
 					document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 				}
 			},false);
+			//========================================================================================
+			//---キャンバスパネル関係
+			//========================================================================================
+			document.getElementById("btn_resetAllTransform").addEventListener("click", function(event) {
+				Draw.transformCanvas({
+					"translateX" : "0%",
+					"translateY" : "0%",
+					"scale" : 1.0,
+					"rotate" : 0,
+				});
+				
+				Draw.during_scale = 1.0;
+				Draw.during_rotate = 0;
+				Draw.during_translate = {
+					x : 0,
+					y : 0
+				};
+				$("#txt_rotation").val(0).trigger("change");
+			}, false);
+			//---拡大率ボタン
 			var magarr = ["25","50","100","150","200","400"];
 			for (var m in magarr) {
 				var nm = "magni_" + magarr[m];
@@ -1107,6 +1177,16 @@ var Selectors = function(){
 					document.getElementById("basepanel").scrollIntoView();
 				}, false);
 			}
+			/*document.getElementById("txt_rotation").addEventListener("change", function(event) {
+				document.getElementById("lab_txt_rotation").innerHTML = event.target.value;
+				Draw.transformCanvas({"rotate":event.target.value});
+				//Draw.rotate(event.target.value);
+			},false);*/
+			document.getElementById("txt_rotation").addEventListener("keydown", function(event) {
+				event.stopPropagation();
+			},false);
+
+
 			//========================================================================================
 			//---情報パネル関係
 			//========================================================================================
@@ -1185,7 +1265,7 @@ var Selectors = function(){
 					}
 				}
 			},false);
-			blayer.addEventListener("pointerleave", function(event){
+			blayer.addEventListener("pointerup", function(event){
 				if (Draw.variables.copybtn.touching) {
 					var index = Draw.getSelectedLayerIndex();
 					if (Draw.variables.copybtn.mode == "prev") {
@@ -1440,6 +1520,22 @@ var Selectors = function(){
 			$("#pickerpanel2").farbtastic("#txt_grid_color",function(color){
 				$("#pickerpanel2").hide();
 			});
+			
+			$("#txt_rotation").knob({
+				"min" : 0,
+				"max" : 360,
+				"step": 1,
+				"width" : "150",
+				"cursor" : true,
+				"thickness" : 0.3,
+				"inputColor" : "#91d780",
+				"fgColor" : "#91d780",
+				"change" : function(v){
+					//document.getElementById("lab_txt_rotation").innerHTML = event.target.value;
+					Draw.transformCanvas({"rotate":v});
+				}
+				
+			});
 		},
 		//===============================================================================================
 		//--------------ここまでinitialize--------------------------------------------------------------
@@ -1546,6 +1642,7 @@ var Selectors = function(){
 
 			//canvas info panel
 			did("lab_magni").textContent = _T("lab_magni_title");
+			did("lab_rotation").textContent = _T("lab_rotation_title");
 			//layer panel
 			did("lab_explain_layer").title = _T("lab_explain_layer_title");
 			did("lab_explain_layer").textContent = _T("lab_explain_layer");
@@ -1590,6 +1687,10 @@ var Selectors = function(){
 			
 		},
 		createbody : function(wi,he,isshow){
+			var touch = {
+				start : "pointerdown", move : "pointermove", end : "pointerup",
+				leave : "pointerleave", enter : "pointerenter"
+			};
 			document.getElementById("initialsetup").style.display = "none";
 			document.getElementById("apptitle").style.display = "none";
 			document.getElementById("ctrlpanel").style.display = "block";
@@ -1609,17 +1710,22 @@ var Selectors = function(){
 			document.getElementById("canvaspanel").style.transformOrigin = "left top";
 			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
 			//---画面操作受付用のキャンバス作成
+			console.log("createbody basepanel");
+			/*console.log(document.getElementById("basepanel").getBoundingClientRect());
+			Draw.screendiv = document.createElement("div");
+			Draw.screendiv.id = "screendiv";
+			Draw.screendiv.className = "screen-divelem";
+			document.getElementById("basepanel").appendChild(Draw.screendiv);
+			configEvent(Draw.screendiv,touch);*/
+			
 			Draw.screencan = document.createElement("canvas");
 			Draw.screencan.id = "screencanvas";
 			Draw.screencan.className = "mostbase-canvas";
 			Draw.screencan.width = wi;
 			Draw.screencan.height = he;
 			Draw.screencan.style.zIndex = 950;
+			Draw.screencontext = Draw.screencan.getContext("2d");
 			document.getElementById("canvaspanel").appendChild(Draw.screencan);
-			var touch = {
-				start : "pointerdown", move : "pointermove", end : "pointerup",
-				leave : "pointerleave", enter : "pointerenter"
-			};
 			configEvent(Draw.screencan,touch);
 			
 			//---メインのキャンバスを生成(レイヤー1)
@@ -1699,9 +1805,9 @@ var Selectors = function(){
 			Draw.toggleRedo(false);
 			document.getElementById("prg_btn_cancel").style.display = "block";
 			
-			var rect = document.getElementById("info_btn_canvassize").getBoundingClientRect();
-			console.log(rect);
-			document.getElementById("dlg_canvasinfo").style.left = rect.left + "px";
+			//var rect = document.getElementById("info_btn_canvassize").getBoundingClientRect();
+			//console.log(rect);
+			//document.getElementById("dlg_canvasinfo").style.left = rect.left + "px";
 
 			return true;
 		},
@@ -1754,9 +1860,14 @@ var Selectors = function(){
 			Draw.toggleRedo(false);
 			Draw.undoindex = -1;
 			//document.getElementById("previewer").src = null;
+			Draw.transform_value[0] = 1.0;
+			Draw.transform_value[1] = 0;
+			Draw.transform_style = Draw.transform_style.concat(Draw.defaults.transform_style);
 			Draw.init_scale = 1.0;
 			Draw.during_scale = 1.0;
 			Draw.during_distance = 0;
+			Draw.init_rotate = 0;
+			Draw.during_rotate = 0;
 			Draw.touchpoints = {};
 			Draw.drawpoints = [];
 			Draw.is_scaling = false;
@@ -1940,6 +2051,49 @@ var Selectors = function(){
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(" + this.during_scale + ") "+ "translateX("+space+"px," + spacey + "px)");
 			//ElementTransform(document.getElementById("canvaspanel"),"scale(1.5) translateY(" + spacey + "px)");
 		},
+		transformCanvas : function(obj){
+			var bkuptransvalue = [];
+			bkuptransvalue = bkuptransvalue.concat(this.transform_value);
+			bkuptransvalue[3] = 0;
+			var isnot_rotate = false;
+			if ("translateX" in obj) {
+				this.transform_value[0] = obj["translateX"];
+				isnot_rotate = true;
+			}
+			if ("translateY" in obj) {
+				this.transform_value[1] = obj["translateY"];
+				isnot_rotate = true;
+			}
+			if ("scale" in obj) {
+				this.transform_value[2] = obj["scale"];
+				isnot_rotate = true;
+			}
+			if ("rotate" in obj) {
+				this.transform_value[3] = obj["rotate"];
+			}
+			var tarr = [], bkuparr = [];
+			var bkuptransform = document.getElementById("canvaspanel").style.transform;
+			
+			if (isnot_rotate) {
+			//	this.transform_value[3] = 0;
+			}
+			//for (var i = 0; i < this.transform_value.length; i++) {
+			for (var i = this.transform_value.length-1; i >= 0; i--) {
+				tarr.push(this.transform_style[i].replace("%d",this.transform_value[i]));
+				bkuparr.push(this.transform_style[i].replace("%d",bkuptransvalue[i]));
+			}
+			//console.log("tarr=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";
+			//---rotate 0deg で一旦角度を戻して適用
+			//bkuparr[0] = tarr[0];
+			//bkuparr[1] = tarr[1];
+			//document.getElementById("canvaspanel").style.transform = bkuparr.join(" ");
+			//console.log("reset transform="+document.getElementById("canvaspanel").style.transform);
+			//---移動・拡縮・回転は常に rotate 0degで始めてみる
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); 
+			//console.log("finished transform="+document.getElementById("canvaspanel").style.transform);
+		},
 		configOperationCanvas : function (targetcanvas){
 			if (this.is_selecting || this.is_drawing_line) {
 				this.opecan.style.zIndex = targetcanvas.style.zIndex + 1;
@@ -1949,6 +2103,52 @@ var Selectors = function(){
 				if (this.opeselcan) this.opeselcan.style.zIndex = 6;
 			}
 		},
+		start_drawCursor : function(event,size,pos){
+			Draw.variables.cursorpos.x = pos.x;
+			Draw.variables.cursorpos.y = pos.y;
+			Draw.variables["cursorsize"] = ((size/2)*(this.during_scale*0.7));
+			
+			Draw.screencontext.lineWidth = 1; 
+			Draw.screencontext.strokeStyle = "#242424";
+			Draw.screencontext.lineCap = "round";
+			Draw.screencontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			Draw.screencontext.beginPath();
+				Draw.screencontext.arc(
+					Draw.variables.cursorpos.x,Draw.variables.cursorpos.y,
+					1,
+					0/180*Math.PI,360/180*Math.PI
+				);
+			Draw.screencontext.stroke();
+			Draw.screencontext.beginPath();
+				Draw.screencontext.arc(
+					Draw.variables.cursorpos.x,Draw.variables.cursorpos.y,
+					Draw.variables["cursorsize"],
+					0/180*Math.PI,360/180*Math.PI
+				);
+			Draw.screencontext.stroke();
+		},
+		move_drawCursor : function(event,pos){
+			Draw.screencontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			Draw.screencontext.beginPath();
+			//Draw.screencontext.moveTo(pos.x,pos.y);
+			//Draw.screencontext.lineTo(pos.x,pos.y);
+				Draw.screencontext.arc(
+					pos.x,pos.y,
+					1,
+					0/180*Math.PI,360/180*Math.PI
+				);
+			Draw.screencontext.stroke();
+			Draw.screencontext.beginPath();
+				Draw.screencontext.arc(
+					pos.x,pos.y,
+					Draw.variables["cursorsize"],
+					0/180*Math.PI,360/180*Math.PI
+				);
+			Draw.screencontext.stroke();
+		},
+		end_drawCursor : function(){
+			Draw.screencontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+		},
 		scale : function (val) {
 			var fnlbi = val / 100;
 			if (fnlbi > 4.0) {
@@ -1957,9 +2157,24 @@ var Selectors = function(){
 			if (fnlbi < 0.25) {
 				fnlbi = 0.25;
 			}
-			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
-			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
 			this.during_scale = fnlbi;
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			if (!this.is_selecting) {
+				Draw.variables["cursorsize"] = ((this.pen.current.size/2)*(this.during_scale*0.7))
+				
+			}
+			this.transformCanvas({"scale":fnlbi});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = fnlbi;
+			this.transform_value[1] = this.during_rotate;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
 		},
 		scaleUp : function (){
 			var fnlbi = 1.0;
@@ -1967,9 +2182,24 @@ var Selectors = function(){
 			if (fnlbi > 4.0) {
 				fnlbi = 4.0;
 			}
-			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
-			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
 			this.during_scale = fnlbi;
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			if (!this.is_selecting) {
+				Draw.variables["cursorsize"] = ((this.pen.current.size/2)*(this.during_scale*0.7))
+				
+			}
+			this.transformCanvas({"scale":fnlbi});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = fnlbi;
+			this.transform_value[1] = this.during_rotate;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
 		},
 		scaleDown : function() {
 			var fnlbi = 1.0;
@@ -1977,9 +2207,83 @@ var Selectors = function(){
 			if (fnlbi < 0.25) {
 				fnlbi = 0.25;
 			}
-			document.getElementById("canvaspanel").style.transform = "scale(" + fnlbi +  ")";
-			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
 			this.during_scale = fnlbi;
+			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
+			if (!this.is_selecting) {
+				Draw.variables["cursorsize"] = ((this.pen.current.size/2)*(this.during_scale*0.7))
+			}
+			this.transformCanvas({"scale":fnlbi});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = fnlbi;
+			this.transform_value[1] = this.during_rotate;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";// "left top 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
+		},
+		rotate : function(angle) {
+			var fnlang = angle;
+			if (fnlang > 360) tang = 0;
+			if (fnlang < 0) tang = 360;
+			
+			this.during_rotate = fnlang;
+			this.transformCanvas({"rotate":fnlang});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = this.during_scale;
+			this.transform_value[1] = fnlang;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
+			
+		},
+		rotateLeft : function() {
+			var fnlang = 0;
+			fnlang = this.during_rotate - 10;
+			if (fnlang < 0) tang = 360;
+			
+			this.during_rotate = fnlang;
+			this.transformCanvas({"rotate":fnlang});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = this.during_scale;
+			this.transform_value[1] = fnlang;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
+			
+		},
+		rotateRight : function() {
+			var fnlang = 0;
+			fnlang = this.during_rotate + 10;
+			if (fnlang > 360) tang = 0;
+			
+			this.during_rotate = fnlang;
+			this.transformCanvas({"rotate":fnlang});
+			return;
+			
+			var tarr = [];
+			this.transform_value[0] = this.during_scale;
+			this.transform_value[1] = fnlang;
+			tarr.push(this.transform_style[0].replace("%d",this.transform_value[0]));
+			tarr.push(this.transform_style[1].replace("%d",this.transform_value[1]));
+			console.log("transform=" + tarr.join(" "));
+			document.getElementById("canvaspanel").style.webkitTransformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";
+			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
+			
 		},
 		loadSetting : function (){
 			if (AppStorage.isEnable()) {
@@ -2204,14 +2508,30 @@ var Selectors = function(){
 					//それ以外の場合、消しゴムのデフォルト太さを採用
 					svv = 20;
 				}
+				if (this.pen.saved.size[this.last.eraser.name] != undefined) {
+					svv = this.pen.saved.size[this.last.eraser.name];
+				}
 				//this.pen.eraser.click();
 				this.pen.setEraser(this.context,{"size":svv});
+				/*if (this.is_selecting) {
+					this.operateCursor("select",svv);
+				}else{
+					this.operateCursor("draw",svv);
+				}*/
+				this.start_drawCursor(event,svv,pos);
 			}else{
 				//再びペンの先などでタッチされたら、前のペンを再採用する
 				if (this.last.pen.name != this.pen.current.mode) {
 					this.last.pen["func"].click();
+					/*if (this.is_selecting) {
+						this.operateCursor("select",this.pen.current.size);
+					}else{
+						this.operateCursor("draw",this.pen.current.size);
+					}*/
+					this.start_drawCursor(event,this.pen.current.size,pos);
 				}
 			}
+			
 			//document.getElementById("log3").innerHTML = event.keyCode;
 			//console.log("start, event.button=");
 			//console.log(event);
@@ -2274,7 +2594,8 @@ var Selectors = function(){
 					}
 					console.log(this.touchpoints);
 					this.scale_pos["begin"] = this.touchpoints["1"].pos;
-					this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+					//this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+					this.init_scale = this.transform_value[0];
 					this.init_scale = parseInt(this.init_scale);
 				}
 			}else{
@@ -2293,7 +2614,9 @@ var Selectors = function(){
 			if (event.altKey) {
 				this.is_scaling = true;
 				this.scale_pos["begin"] = pos;
-				this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+				//this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
+				console.log(this.transform_value);
+				this.init_scale = this.transform_value[0];
 				this.init_scale = parseInt(this.init_scale);
 				isundo = false;
 				this.drawing = false;
@@ -2358,10 +2681,28 @@ var Selectors = function(){
 					console.log(this.elementParameter["pointHistory"]);
 					console.log("this.delay.poshist=");
 					console.log(this.delay.poshist);*/
+					var a = this.is_selecting;
+					var b = this.is_scrolling;
+					var c = (this.is_selecting && (this.select_type == "tempdraw"));
+					var d = this.is_scaling;
+					
 					this.pen.prepare(event,this.context,null);
-					if (!this.is_selecting || (this.is_selecting && this.select_type == "tempdraw")) {
+					//---選択中でない or スクロール中ではない or 拡大縮小中ではない or 選択中でも一時ペン使用の場合
+					if (!a && !b && !d) {
 						this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+						console.log("touch start drawMain!!");
+						console.log(this.is_scrolling);
+					}else{
+						if (c) {
+							this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+							console.log("touch start drawMain!!");
+							console.log(this.is_scrolling);
+						}
 					}
+					/*if (!this.is_selecting || !this.is_scrolling || (this.is_selecting && this.select_type == "tempdraw")) {
+						this.pen.drawMain(this.context,this.startX,this.startY,this.startX,this.startY,event,this.elementParameter);
+						
+					}*/
 					//this.delay.poshist.push({"x":this.startX,"y":this.startY,"pressure":event.pressure});
 				}
 			//}
@@ -2403,6 +2744,7 @@ var Selectors = function(){
 			//if (event.mozPressure) offsetPressure = event.mozPressure;
 			if (penAPI) offsetPressure = penAPI.pressure;
 			//if (offsetPressure == 0) offsetPressure = 0.5;
+			this.move_drawCursor(event,pos);
 			document.getElementById("info_currentpos").textContent = Math.round(offsetX) + "x" + Math.round(offsetY);
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
@@ -2442,8 +2784,8 @@ var Selectors = function(){
 			if (this.is_scrolling) {
 				this.scale_pos["end"] = pos;
 				var db = {
-					"x": this.scale_pos["begin"].x,
-					"y" : this.scale_pos["begin"].y
+					"x": this.startX, //this.scale_pos["begin"].x,
+					"y" : this.startY, //this.scale_pos["begin"].y
 				};
 				var de = {
 					"x" : this.scale_pos["end"].x,
@@ -2456,6 +2798,17 @@ var Selectors = function(){
 				var cp = document.getElementById("basepanel");
 				cp.scrollTop = cp.scrollTop + (distance.y * 0.1);
 				cp.scrollLeft = cp.scrollLeft + (distance.x * 0.1);
+				
+				this.during_translate.x += de.x - db.x;
+				this.during_translate.y += de.y - db.y;
+				console.log("db.x -> de.x = during_translate.x : " + db.x + " -> " + de.x + " = " + this.during_translate.x);
+				console.log("db.y -> de.y = during_translate.y : " + db.y + " -> " + de.y + " = " + this.during_translate.y);
+				this.transformCanvas({
+					"translateX" : this.during_translate.x + "px",
+					"translateY" : this.during_translate.y + "px"
+				});
+				//this.startX = offsetX;
+				//this.startY = offsetY;
 				return;
 			}
 			//直線描画モード
@@ -2481,6 +2834,7 @@ var Selectors = function(){
 			}
 			//通常描画モード
 			if (this.drawing) {
+				//this.moveCursor(event.clientX,event.clientY);
 				//console.log("offsetPressure=" + offsetPressure);
 				//console.log("move, event.button=");
 				this.elementParameter["keyCode"] = this.pressedKey;
@@ -2830,6 +3184,7 @@ var Selectors = function(){
 			this.elementParameter["pointHistory"] = [];
 			this.elementParameter["pointHistoryLast"] = null;
 			this.focusing = false;
+			this.end_drawCursor(event,pos);
 			console.log("canvas touch leave");
 		},
 		touchEnter : function(event){
@@ -2837,16 +3192,27 @@ var Selectors = function(){
 			//console.log(event);
 			this.focusing = true;
 			//$("#" + Draw.screencan.id).css("cursor","crosshair");
+			var pos  = calculatePosition("touchmove",event,this.context.canvas,{
+				"offset" : this.offset,
+				"canvasspace":this.canvasspace
+			});
 			if (this.drawing) {
 				//this.drawing = false;
-				var pos  = calculatePosition("touchmove",event,this.context.canvas,{
-					"offset" : this.offset,
-					"canvasspace":this.canvasspace
-				});
 				this.startX = pos.x;
 				this.startY = pos.y;
 				//this.startPressure = offsetPressure;
 				
 			}
+			if (this.is_selecting) {
+				//this.operateCursor("select",this.sizebar.value);
+				//this.showCursor(false);
+				event.target.style.cursor = "default";
+			}else{
+				//this.operateCursor("draw",this.sizebar.value);
+				//this.showCursor(true);
+				this.start_drawCursor(event,this.pen.current.size,pos);
+				event.target.style.cursor = "none";
+			}
+			//this.moveCursor(event.clientX,event.clientY);
 		}
 	};

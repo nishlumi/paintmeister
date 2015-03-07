@@ -32,7 +32,7 @@ touch-action: none;
 	-webkit-touch-action:none;
 	-ms-touch-action:none;
 	touch-action:none;
-	cursor : crosshair;
+	cursor : default;
 
 }
 

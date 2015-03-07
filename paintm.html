@@ -49,7 +49,7 @@
 	</div>
 	<!--</td><td style="width:70%;">-->
 	<div id="btn_panel" class="button-panel">
-		<span id="info_brush_size" style="color:blue;font-size:120%;" title="ブラシ太さ&#9999;"></span>:<span>1</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0 5px 0 5px;" title="ペンの太さ"/>
+		<span id="info_brush_size" style="color:blue;font-size:120%;" title="ブラシ太さのリセット&#9999;"></span>:<span>1</span><input type="range" id="pensize" min="1" max="60" step="0.5" style="width:55%;margin:0;padding:0 5px 0 5px;" title="ペンの太さ"/>
 		<span>60</span> : <strong id="lab_pensize"></strong>
 		<div id="colorpalette">
 			<input type="text" id="colorpicker" name="c1" value="#e4521e" class="color {hash:true}" title="色の選択"/>
@@ -95,6 +95,7 @@
 			-<span id="lab_operationtype" title="操作の種類">&#9988;&#10063;</span><br/>
 			<div id="sel_operationtype_clip" class="button uibutton-mid flatbutton" title="クリップ領域作成">&#9626;</div>
 			<div id="sel_operationtype_copy" class="button uibutton-mid flatbutton2" title="コピー&#10063;"></div>
+			<div id="sel_operationtype_copy_concat" class="button uibutton-mid flatbutton" title="結合コピー&#10063;"></div>
 			<div id="sel_operationtype_cut" class="button uibutton-mid flatbutton3" title="切り取り&#9988;"></div>
 			<div id="sel_operationtype_paste" class="button uibutton-mid flatbutton-disabled operation_paste" title="貼り付け&#9744;"></div>
 			<hr>
@@ -105,8 +106,8 @@
 </div>
 <div id="initialsetup"><fieldset><legend id="lab_initialsetup">新規作成</legend>
 <strong id="lab_initial_canvassize">キャンバスのサイズ</strong><br/>
-<span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="100" max="1200" step="10" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
-<span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="100" max="1200" step="10" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
+<span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="30" max="1200" step="5" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
+<span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="30" max="1200" step="5" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
 <label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
 <button id="btn_makecanvas" class="button uibutton-large1 flatbutton">作成</button>
 </fieldset>
@@ -124,14 +125,15 @@
 </div>
 <div id="menupanel">
 	<strong id="appNameAndVer"></strong><span id="openedProjName"></span><br/>
+	<a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" id="lnk_help" class="statbutton2" target="_blank" title="機能早見表">
+		<strong id="lnk_help_msg" style="color:#575858;">使い方ヘルプ</strong></a>
+	<br/>
 	<div id="menu_left">
 		<br/>
 		<button id="btn_clear" class="statbutton2" title="キャンバスを全削除します">Clear</button><br/>
 		<button id="btn_new" class="statbutton2 stat_new" title="キャンバスをリセットして最初からやり直す">New</button><br/>
 		<button id="btn_save" class="statbutton2 stat_save" title="現在のキャンバス内容を画像として出力します。(Ctrl + S)">Save</button><br/>
 		<button id="btn_saveproj" class="statbutton2 stat_saveas" title="現在の編集状態をプロジェクトファイルに保存します">Save as Project</button><br/>
-		<a href="https://docs.google.com/document/d/1BKv5qlXYZUUFHqNzEdXmSWCzcmcVUdcbkfSILQv8CFw/edit?usp=sharing" id="lnk_help" class="statbutton2" target="_blank" title="機能早見表" style="padding-top:5px;">
-		<strong id="lnk_help_msg" style="color:#575858;">使い方ヘルプ</strong></a>
 	</div>
 	<div id="menu_right">
 		<br />
@@ -187,16 +189,23 @@
 	</div>
 </div>
 <div id="dlg_canvasinfo">
-	<span id="lab_magni">拡大率</span><br/>
-	<table id="tbl_magni">
-	<tbody>
-	<tr><td class="magni_element" id="magni_25">25%</td><td class="magni_element" id="magni_50">50%</td></tr>
-	<tr><td colspan="2" class="magni_strong" id="magni_100">100%</td></tr>
-	<tr><td class="magni_element" id="magni_150">150%</td><td class="magni_element" id="magni_200">200%</td></tr>
-	<tr><td colspan="2" class="magni_strong" id="magni_400">400%</td></tr>
-	</tbody>
-	</table>
-	
+	<button id="btn_resetAllTransform" class="button flatbutton2">Reset all</button>
+	<div id="area_magni">
+		<span id="lab_magni">拡大率</span><br/>
+		<table id="tbl_magni">
+		<tbody>
+		<tr><td class="magni_element" id="magni_25">25%</td><td class="magni_element" id="magni_50">50%</td></tr>
+		<tr><td colspan="2" class="magni_strong" id="magni_100">100%</td></tr>
+		<tr><td class="magni_element" id="magni_150">150%</td><td class="magni_element" id="magni_200">200%</td></tr>
+		<tr><td colspan="2" class="magni_strong" id="magni_400">400%</td></tr>
+		</tbody>
+		</table>
+	</div>
+	<div id="area_rotation">
+		<span id="lab_rotation">回転</span><br/>
+		<label>
+		<input type="text" value="0" id="txt_rotation" />
+	 </div>
 </div>
 <div id="dlg_layer">
 	<span id="lab_explain_layer" class="explain_panel" title="各ボタン：押す＝レイヤー選択、左右にドラッグ＝レイヤー移動">レイヤー操作</span>
@@ -209,9 +218,10 @@
 	</div>
 	<div id="lay_info">
 		<span id="lab_layinfo_name">名前:</span><input type="text" id="layinfo_name" size="15"/>
-		<label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle" class="layer_viewbtn_visible">表示</span></label><br/>
-		<label><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度"><span id="lab_layinfo_opacity">不透明度</span></label>
-		<label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock" class="layer_lockbtn_unlock" title="編集ロック">編集ロック</span></label><br/>
+		<label><input type="checkbox" id="layinfo_toggle" class="layinfo_ui" checked><span id="lab_layinfo_toggle" class="layer_viewbtn_visible">表示</span></label>
+		<label><input type="checkbox" id="layinfo_lock" class="layinfo_ui"><span id="lab_layinfo_lock" class="layer_lockbtn_unlock" title="編集ロック">編集ロック</span></label>
+		<label><span id="lab_layinfo_opacity">不透明度</span><input type="range" id="layinfo_opacity" class="layinfo_ui" min="0" max="100" value="100" title="不透明度"></label>
+		<br/>
 		<label><input type="checkbox" id="layinfo_clip" class="layinfo_ui"  disabled><span id="lab_layinfo_clip">クリップ領域ON</span></label>
 		<button id="layinfo_clearclip" class="flatbutton uibutton" title="現在のレイヤーのクリップ領域を削除します" disabled>クリップ領域をクリア</button>
 		<span id="lab_layinfo_cliphistory">過去のクリップ領域: </span>
@@ -327,6 +337,7 @@
 <script src="plugin/js/easyui-lang-jp.js"></script>-->
 <script src="plugin/js/jquery.jgrowl.min.js"></script>
 <script src="plugin/js/jquery-ui.min.js"></script>
+<script src="plugin/js/jquery.knob.min.js"></script>
 <script src="plugin/js/rgbcolor.js"></script>
 <script src="plugin/js/farbtastic/farbtastic.js"></script>
 <script src="plugin/js/alertify.js"></script>

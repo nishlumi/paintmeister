@@ -41,6 +41,7 @@
 	/*top : 6rem;*/
 	/*z-index : 1;*/
 	/*margin-bottom : 1rem;*/
+	cursor : none;
 }
 #canvaspanel .main-canvas{
 	-moz-touch-action:none;
@@ -53,7 +54,7 @@
 	top : 0px;
 	left : 0px;
 	/*z-index : 1;*/
-	cursor : crosshair;
+	/*cursor : crosshair;*/
 
 }
 .mostbase-canvas {
@@ -69,7 +70,21 @@
 	top : 0;
 	left : 0;
 	/*z-index : 1;*/
-	cursor : crosshair;
+	
+}
+.screen-divelem {
+	background-color: transparent;
+	-moz-touch-action:none;
+	-ms-touch-action:none;
+	-webkit-touch-action:none;
+	touch-action:none;
+	position : absolute;
+	top : 0;
+	left : 0;
+	z-index : 951;
+	width : 100%;
+	height : 100%;
+	
 }
 
 .dummy-canvas {
@@ -292,6 +307,7 @@ user-select: none; /* CSS3 */
 	width : 45px;
 	height : 100%;
 	display : inline-block;
+	z-index : 3;
 	padding-top : 2rem;
 }
 #pres_sub {
@@ -303,6 +319,7 @@ user-select: none; /* CSS3 */
 	display : none;
 	background-color : #BBBBBB;
 	color : #353535;
+	z-index : 3;
 	padding-top : 2rem;
 }
 #chk_enable_handpres {
@@ -420,6 +437,9 @@ div.dragover_indicate {
 #info_currentpos {
 	color : #FAFAFA;
 }
+#info_brush_size {
+	cursor : default;
+}
 #sysbtn_panel {
 	float : left;
 	/*margin-right : 1em;*/
@@ -458,7 +478,7 @@ div.dragover_indicate {
 #menupanel {
 	display : none;
 	width : 95%;
-	height : 50%;
+	height : 80%;
 	position : absolute;
 	top : 3rem;
 	left : 0;
@@ -616,7 +636,7 @@ input.text_line_s {
 	z-index : 12;
 }
 .layer_button {
-	width : 48px;
+	width : 45px;
 	height : 32px;
 	padding : 7px 15px 7px 15px;
 	background-color : #FFFFFF;
@@ -631,7 +651,7 @@ input.text_line_s {
 	text-decoration : line-through;
 }
 .layer_button_selected {
-	width : 48px;
+	width : 45px;
 	height : 32px;
 	padding : 7px 15px 7px 15px;
 	background-color : #AAAAFF;
@@ -642,8 +662,13 @@ input.text_line_s {
 	margin-left : 1rem;
 }
 #lay_btns {
-	margin-top : 10px;
-	margin-bottom : 10px;
+	padding-top : 10px;
+	padding-bottom : 10px;
+	width : 100%;
+	
+	max-height : 20%;
+	overflow-x : auto;
+	overflow-y : hidden;
 }
 .layer_main {
 }
@@ -651,7 +676,7 @@ input.text_line_s {
 	width : 20%;
 }
 .laycontrol_button {
-	width : 3.5rem;
+	width : 3.2rem;
 	height : 2rem;
 }
 #lay_preview {
@@ -679,12 +704,12 @@ img.clipthumb {
 /* =======================================brush panel=== */
 #dlg_pen_mode {
 	display : none;
-	width : 50%;
+	width : 95%;
 	height : 80%;
 	overflow : hidden;
 	position : absolute;
 	top : 3rem;
-	left : 44%;
+	left : 0%;
 	background-color : #B6BBE4; /*#E4D8E1;*/
 	-moz-border-radius : 3px;
 	-webkit-border-radius : 3px;
@@ -745,12 +770,12 @@ img.floatIcon {
 /* =======================================canvas panel=== */
 #dlg_canvasinfo {
 	display : none;
-	width : 32%;
-	height : 30%;
+	width : 95%;
+	height : calc(2.4rem + 1.7rem + 2.4rem + 1.7rem + 5rem);
 	overflow : hidden;
 	position : absolute;
 	top : 3rem;
-	left : 2%;
+	left : 0%;
 	padding: 0.5rem 0.5rem;
 	background-color : #B6BBE4;
 	-moz-border-radius : 3px;
@@ -759,14 +784,20 @@ img.floatIcon {
 	opacity : 0.9;
 	z-index : 11;
 }
+#area_magni {
+	width : 32%;
+	float : left;
+}
+#area_rotation {
+}
 #tbl_magni {
-	width : 95%;
+	width : 100%;
 }
 td.magni_element {
 	background-color : #F0EEC6;
 	cursor : default;
 	text-align : center;
-	height : 1.5rem;
+	height : 1.7rem;
 }
 td.magni_element:hover {
 	background-color : #D8CCA4;
@@ -778,6 +809,7 @@ td.magni_strong {
 	background-color : #E6E05B;
 	cursor : default;
 	text-align : center;
+	height : 2.4rem;
 }
 td.magni_strong:hover {
 	background-color : #C4B839;
@@ -1009,6 +1041,15 @@ animation-fill-mode : forwards;
 animation-iteration-count : infinite;
 }
 
+#dumcursor {
+	width : 2px;
+	height : 2px;
+	border : 1px dotted #454545;
+	border-radius : 25px;
+	display : none;
+	
+}
+
 /* --- web icon setup -- */
 #lab_initialsetup:before {
 	font-family : 'paintmfont';
@@ -1131,6 +1172,11 @@ animation-iteration-count : infinite;
 	font-family : 'paintmfont';
 	content : "O";
 }
+#sel_operationtype_copy_concat:before {
+	font-family : 'paintmfont';
+	content : "p";
+}
+
 #sel_operationtype_cut:before {
 	font-family : 'paintmfont';
 	content : "P";

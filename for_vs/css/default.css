@@ -14,10 +14,10 @@
 	width:600px;
 	float : left;*/
 	/*width : 95%;*/
-	height : 85%;
+	height : calc(100% - 6.1rem); /*85%;*/
 	
 	position : relative;
-	top : 6rem;
+	top : 6.2rem;
 	display : none;
 	z-index : 1;
 	/*overflow : scroll;*/

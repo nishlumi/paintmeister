@@ -64,11 +64,11 @@ PenSet.Add({
 		var clr = new RGBColor(parentElement.current["color"]);
 		context.strokeStyle = clr.toRGBA(0.0);
 		context.fillStyle = clr.toRGBA(0.0);
-		context.shadowOffsetY = offsetY * 2;
+		context.shadowOffsetY = (offsetY) * 2;
 		context.shadowColor = clr.toRGBA(0.5 * hairpressure);
 		context.shadowBlur = 10 * hairpressure;
 		context.beginPath();
-		context.arc(offsetX, offsetY * -1, parentElement.current["size"], 0, Math.PI * 2);
+		context.arc(offsetX, (offsetY ) * -1 , parentElement.current["size"], 0, Math.PI * 2);
 		context.fill();
 		return;
 

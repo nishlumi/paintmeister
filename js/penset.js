@@ -23,6 +23,9 @@ function call_parentEvent(removeLabel) {
 			"fillpen" : [0, "#000000"]
 		},
 		current : {"mode":"","size":-1,"color":"#000000","complete":false}, //0=mode, 1=size, 2=color, 3=complete?
+		saved : {
+			"size" : {}
+		},
 		pentype : 0,
 		penfolders : {
 			"special" : null,
@@ -303,6 +306,10 @@ function call_parentEvent(removeLabel) {
 					var it = PenSet.items[event.target.id];
 					if (it) {
 						PenSet.current = it.set(Draw.context,o);
+						if (PenSet.saved.size[PenSet.current.mode]) {	//savedに保存したブラシサイズがある？
+							PenSet.current.size = PenSet.saved.size[PenSet.current.mode];
+							Draw.context.lineWidth = PenSet.current.size;
+						}
 						var brushname = "";
 						if (it.name[curLocale.name]) {
 							brushname = it.name[curLocale.name];
@@ -358,7 +365,13 @@ function call_parentEvent(removeLabel) {
 				"func" : PenSet.eraser
 			};
 			this.eraser.addEventListener("click",function(event) {
-				Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
+				var svsize = 0;
+				if (PenSet.saved.size["eraser"]) {	//savedに保存したブラシサイズがある？
+					svsize = PenSet.saved.size["eraser"];
+					Draw.pen.setEraser(Draw.context,{"size":svsize});
+				}else{
+					Draw.pen.setEraser(Draw.context); // change edit style to "eraser".
+				}
 				PenSet.hiddenMenu(event);
 				PenSet.parent.last.eraser = {
 					"name" : "eraser",

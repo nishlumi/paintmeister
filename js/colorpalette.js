@@ -259,6 +259,10 @@
 					},false);
 					elem.addEventListener(touchend,function(event){
 						this.touching = false;
+						if ((event.button == 2) || (event.button == 5) || (penAPI && (penAPI.isEraser))) {
+							//右クリック、消しゴムの場合は色を消す
+							ColorPalette.manageColor("d",event);
+						}
 						/*if (this.mode == "a"){
 							event.target.style.backgroundColor = document.getElementById("colorpicker").value;
 						}else if (this.mode == "d"){

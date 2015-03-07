@@ -22,7 +22,7 @@ PenSet.Add({
 			"color":parentElement.colorpicker,
 			"pressure":true,
 			"complete":true,
-			"delay" : 1,
+			"delay" : 0,
 			"delay_assist" : false
 		};
 		context.globalCompositeOperation = "source-over";
