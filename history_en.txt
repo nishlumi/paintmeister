@@ -2,6 +2,14 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.57.21)
+*(Store app)Fix that if scaling from canvas panel, screen is broken.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/03/07 17:00:00
+ChromeApps		- 2015/03/07 
+Store app		- 2015/03/07 
+
+
 PaintMeister (1.0.57.20)
 **Support rotation of the Canvas.
 **Improved functionallity of the Scroll and Scaling.(More freely and smoothly scroll)
