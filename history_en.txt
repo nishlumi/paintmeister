@@ -15,8 +15,8 @@ PaintMeister (1.0.57.20)
 *Fix that is drawn despite while scrolling and scaling operations
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/03/05 21:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/03/07 15:00:00
+Store app		- 2015/03/07 15:00:00
 
 
 PaintMeister (1.0.55.12)
