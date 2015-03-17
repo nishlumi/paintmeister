@@ -2,12 +2,22 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.57.24)
+*Fix that the  Scroll mode with Ctrl key is sometimes runaway.
+*Reset Al button on the Canvas panel will cancel scroll mode and scaling mode forcely.
+*Fix that not save correction level for brush.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/03/17 21:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.57.21)
 *(Store app)Fix that if scaling from canvas panel, screen is broken.
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/03/07 17:00:00
-ChromeApps		- 2015/03/07 
-Store app		- 2015/03/07 
+ChromeApps		- 2015/03/07 19:00:00
+Store app		- 2015/03/10 17:00:00
 
 
 PaintMeister (1.0.57.20)

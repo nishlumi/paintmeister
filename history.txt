@@ -2,12 +2,22 @@ paintmeister 更新履歴
 ============
 ※特に影響があるプラットフォームについては()で記すものとする。
 
+PaintMeister (1.0.57.24)
+・Ctrlキーを押しながらのスクロールモードがキャンバス外にはみ出ると暴走することがあるのを修正。
+・キャンバスパネルのReset Allボタンでスクロールモードと拡大縮小モードを強制的に解除するようにした
+・ブラシの補正レベルがアプリケーション設定に保存されていなかったのを修正
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/03/17 21:00:00
+ChromeApps		- 
+Store app		- 
+
+
 PaintMeister (1.0.57.21)
 ・(ストアアプリ)キャンバスパネルの倍率ボタンから切り替えると画面がくずれるバグを修正。
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/03/07 17:00:00
-ChromeApps		- 2015/03/07 
-Store app		- 2015/03/07 
+ChromeApps		- 2015/03/07 19:00:00
+Store app		- 2015/03/10 17:00:00
 
 
 PaintMeister (1.0.57.20)
