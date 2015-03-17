@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.57.20";
+var appversion = "1.0.57.24";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -869,6 +869,8 @@ var Selectors = function(){
 					//event.target.title = "スクロール有効にする";
 					event.target.title = _T("btn_freescroll_title");
 					Draw.vCtrl_for_scroll = false;
+					//共通のスクロールフラグもオフにする
+					Draw.is_scrolling = false;
 				}
 			},false);
 			//---図形描画ボタン
@@ -1164,6 +1166,12 @@ var Selectors = function(){
 					x : 0,
 					y : 0
 				};
+				//スクロールモードも強制解除（スクロールボタンONじゃない場合）
+				if (!Draw.vCtrl_for_scroll) {
+					if (Draw.is_scrolling) Draw.is_scrolling = false;
+				}
+				//拡大縮小モードも強制解除
+				if (Draw.is_scaling) Draw.is_scaling = false;
 				$("#txt_rotation").val(0).trigger("change");
 			}, false);
 			//---拡大率ボタン
@@ -1174,7 +1182,7 @@ var Selectors = function(){
 				document.getElementById(nm).addEventListener("click", function(event) {
 					var name = String(event.target.id).replace("magni_","");
 					Draw.scale(Number(name));
-					document.getElementById("basepanel").scrollIntoView();
+					//document.getElementById("basepanel").scrollIntoView();
 				}, false);
 			}
 			/*document.getElementById("txt_rotation").addEventListener("change", function(event) {
@@ -1707,7 +1715,8 @@ var Selectors = function(){
 			document.getElementById("canvaspanel").style.marginTop = "auto";
 			document.getElementById("canvaspanel").style.marginBottom = "auto";
 			document.getElementById("canvaspanel").className = "canvaspanel";
-			document.getElementById("canvaspanel").style.transformOrigin = "left top";
+			//document.getElementById("canvaspanel").style.transformOrigin = "left top";
+			document.getElementById("canvaspanel").style.transformOrigin = "center center";
 			document.getElementById("canvaspanel").style.transform = "scale(1.0)";
 			//---画面操作受付用のキャンバス作成
 			console.log("createbody basepanel");
@@ -2291,6 +2300,12 @@ var Selectors = function(){
 				var chk = AppStorage.get("chk_sv_colorpalette","0");
 				chk = (chk == "1" ? true : false);
 				document.getElementById("chk_sv_colorpalette").checked = chk;
+				//---correction level
+				var ival = AppStorage.get("txt_correction_level","3");
+				document.getElementById("val_correction_level").innerHTML = ival;
+				document.getElementById("txt_correction_level").value = ival;
+				
+				this.pen.correction_level = ival;
 				//---brush plugin
 			}
 		},
@@ -2301,6 +2316,9 @@ var Selectors = function(){
 				chk = (chk == true ? "1" : "0");
 				AppStorage.set("chk_sv_colorpalette",chk);
 				if (chk == "0") AppStorage.remove("sv_colorpalette0");
+				//---correction level
+				var ival = parseInt(document.getElementById("txt_correction_level").value);
+				AppStorage.set("txt_correction_level",ival);
 			}
 		},
 		undo_function_begin : function(isundo) {
@@ -2614,6 +2632,7 @@ var Selectors = function(){
 			if (event.altKey) {
 				this.is_scaling = true;
 				this.scale_pos["begin"] = pos;
+				this.scale_pos["end"] = pos;
 				//this.init_scale = String(document.getElementById("canvaspanel").style.transform).replace("scale(","");
 				console.log(this.transform_value);
 				this.init_scale = this.transform_value[0];
@@ -2764,14 +2783,24 @@ var Selectors = function(){
 					var db = this.scale_pos["begin"].y; //(this.scale_pos["begin"].x + this.scale_pos["begin"].y) / 2;
 					var de = this.scale_pos["end"].y; //(this.scale_pos["end"].x + this.scale_pos["end"].y) / 2;
 					distance = de - db;
+					
+					//console.log("-----");
+					//console.log("scale_pos.begin=");
+					//console.log(this.scale_pos["begin"]);
 					//console.log("pos=");
 					//console.log(pos);
+					if (Math.abs(distance - this.during_distance) >= 50) {
+						//直前の距離との差が50以上だったらおかしい操作として無視する。
+						distance = 0;
+					}
 					if ((!event.altKey) && (this.scale_pos["end"].y == pos.y)) {
 						distance = 0;
 					}
 					//var distance = Math.sqrt(powsum);
 					var bi = (distance) / 100;
 					var fnlbi = 1.0;
+					//console.log("db -> de = " + db + ", " + de);
+					//console.log("distance="+distance);
 					if (distance > 0.0) {
 						this.scaleUp();
 					}else if (distance < 0.0) {

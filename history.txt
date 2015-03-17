@@ -8,8 +8,8 @@ PaintMeister (1.0.57.24)
 ・ブラシの補正レベルがアプリケーション設定に保存されていなかったのを修正
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/03/17 21:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/03/17 23:30:00
+Store app		- 2015/03/17 23:30:00
 
 
 PaintMeister (1.0.57.21)
