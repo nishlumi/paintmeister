@@ -10,8 +10,8 @@ PaintMeister (1.0.58.27)
 ・テキストの挿入字のフォントサイズのデフォルトをを20pxから20ptに変更。
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/03/29 13:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/04/08 00:00:00
+Store app		- 2015/04/08 00:00:00
 
 
 PaintMeister (1.0.57.24)

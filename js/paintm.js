@@ -480,16 +480,19 @@ var PluginManager = {
 				var touchstart = 'touchstart';
 				var touchmove = 'touchmove';
 				var touchend = 'touchend';
+				var touchenter = 'touchenter';
 				var touchleave = 'touchleave';
 				if (window.PointerEvent){
 					touchstart = "pointerdown";
 					touchmove = 'pointermove';
 					touchend = "pointerup";
+					touchenter = 'pointerenter';
 					touchleave = 'pointerleave';
 				}else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
 					touchstart = 'MSPointerDown';
 					touchmove = 'MSPointerMove';
 					touchend = 'MSPointerUp';
+					touchenter = 'MSPointerEnter';
 					touchleave = 'MSPointerLeave';
 				}
 				function operate_move(event) {
@@ -508,6 +511,11 @@ var PluginManager = {
 				document.body.addEventListener(touchstart, function(event) {}, false);
 				document.body.addEventListener(touchmove,function(event){}, false);
 				document.body.addEventListener(touchend, operate_endleave, false);
+				document.body.addEventListener(touchenter,function(event){
+					if (Draw.touchpoints["1"] != undefined) {
+						Draw.drawing = false;
+					}
+				}, false);
 				document.body.addEventListener(touchleave, operate_endleave, false);
 				//カラーピッカーでPointerEvent向け
 				$("#colorpicker").on(touchstart, function(event) {

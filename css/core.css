@@ -296,6 +296,7 @@ user-select: none; /* CSS3 */
 	overflow : hidden;
 	z-index : 2;
 	opacity : 1;
+	cursor : default;
 }
 /*#prespanel:hover{
 	opacity : 1.0;
@@ -1164,6 +1165,13 @@ animation-iteration-count : infinite;
 	font-family : 'paintmfont';
 	content : "a";
 }
+#sel_seltype_scale {
+	font-size : 60%;
+}
+/*#sel_seltype_scale:before {
+	font-family : 'paintmfont';
+	content : "g";
+}*/
 #sel_seltype_tempdraw:before {
 	font-family : 'paintmfont';
 	content : "D";

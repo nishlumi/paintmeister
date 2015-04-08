@@ -64,7 +64,17 @@ Draw["select_function_start"] = function (event,pos){
 		if (o.origdesty <= 0) o.origdesty = pos.y + (o.h/2);
 		return;
 	}
-	this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+	if (this.select_type == "scale") {
+		var o = this.select_clipboard;
+		o.selectType = selectionType.scale;
+		o.status = selectionStatus.pasting;
+		//o.rotateangle = 0;
+		if (o.destx <= 0) o.destx = pos.x;
+		if (o.desty <= 0) o.desty = pos.y;
+		if (o.origdestx <= 0) o.origdestx = pos.x + (o.destw/2);
+		if (o.origdesty <= 0) o.origdesty = pos.y + (o.desth/2);
+		return;
+	}	this.opecontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
 	this.selectors.clear();
 	var o = new Selector(new Date().valueOf());
 	if (this.select_type == "box") {
@@ -87,9 +97,11 @@ Draw["select_function_move"] = function (event, pos) {
 			//補助線は選択操作キャンバスのみで描く(元オブジェクトを汚さないため)
 			//this.drawAssistLine(this.canvas,this.opeselcontext,
 			//{"x":pos.x-(this.select_clipboard.w*0.5), "y":pos.y-(this.select_clipboard.h*0.5)});
+			var smagni = o.scalingMagni / 100;
 			this.opeselcontext.save();
 			this.opeselcontext.translate(o.origdestx,o.origdesty);
 			this.opeselcontext.rotate(o.rotateangle/180*Math.PI);
+			this.opeselcontext.scale(smagni,smagni);
 			this.opeselcontext.translate(-1 * (o.w/2),-1 * (o.h/2));
 			this.opeselcontext.drawImage(this.canvas,0,0);
 			//補助線は選択操作キャンバスのみで描く(元オブジェクトを汚さないため)
@@ -104,8 +116,7 @@ Draw["select_function_move"] = function (event, pos) {
 			this.select_clipboard.desty = pos.y;
 			this.select_clipboard.origdestx = pos.x;
 			this.select_clipboard.origdesty = pos.y;
-		}else
-		if (this.select_clipboard.selectType == selectionType.rotate) {
+		}else if (this.select_clipboard.selectType == selectionType.rotate) {
 			var basedistance = 1;
 			var o = this.select_clipboard;
 			//console.log(pos.x + " - " + o.destx);
@@ -121,11 +132,46 @@ Draw["select_function_move"] = function (event, pos) {
 				if (o.rotateangle > 360) o.rotateangle = 0;
 			}
 			//console.log("angle="+o.rotateangle);
+			var smagni = o.scalingMagni / 100;
 			this.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
 			this.opeselcontext.save();
 			this.opeselcontext.translate(o.origdestx,o.origdesty);
 			this.opeselcontext.rotate(o.rotateangle/180*Math.PI);
+			this.opeselcontext.scale(smagni,smagni);
 			this.opeselcontext.translate(-1 * (o.w/2),-1 * (o.h/2));
+			this.opeselcontext.drawImage(this.canvas,0,0);
+			//補助線は選択操作キャンバスのみで描く(元オブジェクトを汚さないため)
+			this.drawAssistLine(this.canvas,this.opeselcontext,
+			{"x":0, "y":0});
+			this.opeselcontext.restore();
+			o.destx = pos.x;
+			o.desty = pos.y;
+		}else if (this.select_clipboard.selectType == selectionType.scale) {
+			var basedistance = 1;
+			var o = this.select_clipboard;
+			//console.log(pos.x + " - " + o.destx);
+			if (pos.y < this.select_clipboard.desty) {
+				if ((o.desty - pos.y) > basedistance) {
+					o.scalingMagni--;
+				}
+				if (o.scalingMagni < 50) o.scalingMagni = 50;
+			}else{
+				if ((pos.y - o.desty) > basedistance) {
+					o.scalingMagni++;
+				}
+				if (o.scalingMagni > 1000) o.scalingMagni = 1000;
+			}
+			var smagni = o.scalingMagni / 100;
+			this.opeselcontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
+			this.opeselcontext.save();
+			//this.opeselcontext.canvas.width = this.canvassize[0]*smagni;
+			//this.opeselcontext.canvas.height = this.canvassize[0]*smagni;
+			//o.destw = this.opeselcontext.canvas.width;
+			//o.desth = this.opeselcontext.canvas.height;
+			this.opeselcontext.translate(o.origdestx,o.origdesty);
+			this.opeselcontext.rotate(o.rotateangle/180*Math.PI);
+			this.opeselcontext.scale(smagni,smagni);
+			this.opeselcontext.translate(-1 * (o.destw/2),-1 * (o.desth/2));
 			this.opeselcontext.drawImage(this.canvas,0,0);
 			//補助線は選択操作キャンバスのみで描く(元オブジェクトを汚さないため)
 			this.drawAssistLine(this.canvas,this.opeselcontext,
@@ -190,6 +236,17 @@ Draw["select_function_end"] = function (event, pos) {
 		o.desty = pos.y-(o.h*0.5);
 		return;
 	}
+	if (this.select_type == "scale") {
+		o = this.select_clipboard; //this.selectors.items[0];
+		
+		if (o.status == selectionStatus.end) return;
+		if (o.status == selectionStatus.pasting) {
+			o.status = selectionStatus.paste_begin;
+		}
+		o.destx = pos.x-(o.w*0.5);
+		o.desty = pos.y-(o.h*0.5);
+		return;
+	}
 	if (this.selectors.items.length == 0) return;
 	o = this.selectors.items[0];
 	this.opecontext.lineWidth = 2;
@@ -204,6 +261,8 @@ Draw["select_function_end"] = function (event, pos) {
 		o.directiony = (o.y < o.desty ? 1 : -1);
 		o.w = (o.destx - o.x) * o.directionx;
 		o.h = (o.desty - o.y) * o.directiony;
+		o.destw = o.w;
+		odesth = o.h;
 		o.selectFormat = selectionType.box;
 		var ang = o.calculateAngle();
 		o.addPoint(o.x, o.y);
@@ -274,6 +333,8 @@ Draw["select_function_execute"] = function(event) {
 			this.select_clipboard.oldy = ang.lt.y;
 			this.select_clipboard.destx = ang.lt.x;
 			this.select_clipboard.desty = ang.lt.y;
+			this.select_clipboard.destw = o.w;
+			this.select_clipboard.desth = o.h;
 			this.select_clipboard.origdestx = ang.lt.x + (o.w/2);
 			this.select_clipboard.origdesty = ang.lt.y + (o.h/2);
 			//console.log(ang);
@@ -308,6 +369,8 @@ Draw["select_function_execute"] = function(event) {
 			this.select_clipboard.oldy = ang.lt.y;
 			this.select_clipboard.w = ang.rb.x-ang.lt.x;
 			this.select_clipboard.h = ang.rb.y-ang.lt.y;
+			this.select_clipboard.destw = this.select_clipboard.w;
+			this.select_clipboard.desth = this.select_clipboard.h;
 			this.select_clipboard.destx = ang.lt.x;
 			this.select_clipboard.desty = ang.lt.y;
 			this.select_clipboard.origdestx = ang.lt.x + (this.select_clipboard.w/2);
@@ -388,11 +451,13 @@ Draw["select_function_execute"] = function(event) {
 					o.cutfrom.clearRect(o.oldx,o.oldy, o.w,o.h);
 				}
 			}
+			var smagni = o.scalingMagni / 100;
 			this.context.globalAlpha = 1.0;
 			this.context.shadowBlur = 0;
 			this.context.save();
 			this.context.translate(o.origdestx,o.origdesty);
 			this.context.rotate(o.rotateangle/180*Math.PI);
+			this.context.scale(smagni,smagni);
 			this.context.translate(-1 * (o.w/2),-1 * (o.h/2));
 			this.context.drawImage(this.canvas,0,0);
 			//this.context.drawImage(this.canvas,o.destx,o.desty);
@@ -1185,7 +1250,7 @@ Draw["prepare_drawhtml"] = function(src){
 				}
 			}
 			//---rotation: 90 angle right
-			targetchar = "：:-ー－～()（）「」{}｛｝[]【】『』［］=＝";
+			targetchar = "：:-ー－～()（）「」{}｛｝[]【】『』［］=＝…";
 			if (targetchar.indexOf(src[i]) > 0) {
 				
 				can2d.save();
@@ -1193,7 +1258,12 @@ Draw["prepare_drawhtml"] = function(src){
 				if (targetchar.indexOf(src[i]) > -1) {
 					can2d.translate(tmpw+(w.width*0.15),(tmpy-(unity*0.75)));
 				}else{
-					can2d.translate(tmpw+(w.width*1.0),tmpy);
+					targetchar = "…";
+					if (targetchar.indexOf(src[i]) > -1) {
+						can2d.translate(tmpw+(w.width*0.40),(tmpy));
+					}else{
+						can2d.translate(tmpw+(w.width*1.0),tmpy);
+					}
 				}
 				can2d.rotate(90/180*Math.PI);
 				can2d.fillText(src[i],0,0);

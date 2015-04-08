@@ -28,6 +28,12 @@ function configEvent(canvas,touch) {
 	canvas.addEventListener(touch.enter, function(event) {
 		Draw.touchEnter(event); // finish drawing.
 	}, false);
+	var mc = new Hammer.Manager(canvas);
+	var pinch = new Hammer.Pinch();
+	var rotate = new Hammer.Rotate();
+	pinch.recognizeWith(rotate);
+	mc.add([pinch, rotate]);
+	mc.on("pinch rotate", Draw.hammer_touches);
 }
 
 var DrawLayer = function(parentobj,size,is_main,removable){
@@ -95,6 +101,8 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		own.parent.select_clipboard.setToContext();
 		own.parent.currentLayer = own;
 		//own.parent.configOperationCanvas(own.canvas);
+		//---opeselcontext のz-indexを現在のレイヤーの-1に変更する（表示中・非表示に関係なく）
+		if (own.parent.opeselcan) own.parent.opeselcan.style.zIndex = parseInt(own.canvas.style.zIndex) + 1;
 		
 		document.getElementById("layinfo_opacity").value = own.Alpha;
 		document.getElementById("layinfo_toggle").checked = own.isvisible;

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.57.24";
+var appversion = "1.0.58.27";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -122,7 +122,8 @@ var selectionType = {
 	"free" : 1,
 	"move" : 2,
 	"rotate" : 3,
-	"tempdraw" : 4
+	"scale" : 4,
+	"tempdraw" : 5
 };
 var selectActionType = {
 	"clip" : 0,
@@ -149,12 +150,15 @@ var Selector = function(id){
 	this.origdesty = 0;
 	this.w = 0;
 	this.h = 0;
+	this.destw = 0;
+	this.desth = 0;
 	this.directionx = 1;
 	this.directiony = 1;
 	this.points = [];
 	this.oldx = 0;
 	this.oldy = 0;
 	this.rotateangle = 0;
+	this.scalingMagni = 100;
 	this.curfrom = null;
 	this.status = selectionStatus.during;
 	this.action = selectActionType.clip;
@@ -1013,8 +1017,8 @@ var Selectors = function(){
 					//document.getElementById("sel_operationtype_paste").innerHTML = "&#9744";
 					Draw.is_selecting = false;
 					Draw.select_clipboard = new Selector();
-					Draw.opeselcontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
-					Draw.opecontext.clearRect(0,0, Draw.canvassize[0],Draw.canvassize[1]);
+					Draw.opeselcontext.clearRect(0,0, Draw.opeselcontext.canvas.width,Draw.opeselcontext.canvas.height);
+					Draw.opecontext.clearRect(0,0, Draw.opecontext.canvas.width,Draw.opecontext.canvas.height);
 					if ((Draw.select_type != "box") && (Draw.select_type != "free")) {
 						document.getElementById("sel_seltype_box").click();
 					}
@@ -1040,6 +1044,7 @@ var Selectors = function(){
 			document.getElementById("sel_seltype_free").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_move").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_rotate").addEventListener("click", sel_seltype_clicking,false);
+			document.getElementById("sel_seltype_scale").addEventListener("click", sel_seltype_clicking,false);
 			document.getElementById("sel_seltype_tempdraw").addEventListener("click", sel_seltype_clicking,false);
 			var sel_operationtype_clicking = function(event) {
 				if (Draw.select_type == "free") {
@@ -1172,7 +1177,9 @@ var Selectors = function(){
 				}
 				//拡大縮小モードも強制解除
 				if (Draw.is_scaling) Draw.is_scaling = false;
+				if (Draw.is_rotating) Draw.is_rotating = false;
 				$("#txt_rotation").val(0).trigger("change");
+				document.getElementById("info_magni").innerText = "1.0";
 			}, false);
 			//---拡大率ボタン
 			var magarr = ["25","50","100","150","200","400"];
@@ -1524,7 +1531,7 @@ var Selectors = function(){
 			this.pen.correction_level = parseInt(document.getElementById("txt_correction_level").value);
 			document.getElementById("val_correction_level").textContent = this.pen.correction_level;
 			
-			document.getElementById("inp_htmlbox_css").value = "20px 'sans-serif'";
+			document.getElementById("inp_htmlbox_css").value = "20pt 'sans-serif'";
 			$("#pickerpanel2").farbtastic("#txt_grid_color",function(color){
 				$("#pickerpanel2").hide();
 			});
@@ -2580,8 +2587,11 @@ var Selectors = function(){
 					};
 				}
 				//--今後のために3本目のタッチ保持
-				/*if ((this.touchpoints["1"]) && (this.touchpoints["2"])) {
-					if ((event.pointerId != this.touchpoints["1"]["id"]) && (event.pointerId != this.touchpoints["2"]["id"])) {
+				/*if ((this.touchpoints["1"] != undefined) && (this.touchpoints["2"] != undefined)) {
+					console.log("pointerId="+event.pointerId);
+					console.log("touch 1="+this.touchpoints["1"].id);
+					console.log("touch 2="+this.touchpoints["2"].id);
+					if ((event.pointerId != this.touchpoints["1"].id) && (event.pointerId != this.touchpoints["2"].id)) {
 						this.touchpoints["3"] = {
 							"id" : event.pointerId,
 							"pos" : pos
@@ -2589,8 +2599,9 @@ var Selectors = function(){
 					}
 				}*/
 				console.log("secondary touch=" + event.pointerId + "=" + pos.x + "x" + pos.y);
+				//---タッチによる操作決定処理
 				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["1"].id != this.touchpoints["2"].id) {
-					this.is_scaling = true;
+					//this.is_scaling = true;
 					this.drawing = false;
 					if (this.is_drawing_line) { //直線描画モードがONのときはタッチによる拡大縮小は無効
 						this.is_scaling = false;
@@ -2609,6 +2620,12 @@ var Selectors = function(){
 						}
 					}else{
 						isundo = false;
+					}
+					console.log("touch 3=");
+					console.log(this.touchpoints["3"]);
+					if (this.touchpoints["3"]){ //---3点目のタッチがあった場合
+						this.is_scaling = false;
+						this.is_rotating = true;
 					}
 					console.log(this.touchpoints);
 					this.scale_pos["begin"] = this.touchpoints["1"].pos;
@@ -2755,6 +2772,12 @@ var Selectors = function(){
 						"pos" : pos
 					};
 				}
+				if (this.touchpoints["3"] && this.touchpoints["3"].id == event.pointerId) {
+					this.touchpoints["13"] = {
+						"id" : event.pointerId,
+						"pos" : pos
+					};
+				}
 			}
 			
 			offsetX = pos.x;
@@ -2768,6 +2791,25 @@ var Selectors = function(){
 			if (this.is_scaling) { //拡大縮小モード
 				var distance = 0;
 				if (this.touchpoints["1"] && this.touchpoints["2"] && this.touchpoints["11"] && this.touchpoints["12"]) {
+					var touchdir = [0,0];
+					touchdir[0] = this.touchpoints["11"].pos.y - this.touchpoints["1"].pos.y;
+					touchdir[1] = this.touchpoints["12"].pos.y - this.touchpoints["2"].pos.y;
+					for (var t = 0; t < touchdir.length; t++) {
+						if (touchdir[t] > 0) {
+							touchdir[t] = "u";
+						}else if (touchdir[t] < 0) {
+							touchdir[t] = "d";
+						}else{
+							touchdir[t] = "-";
+						}
+					}
+					console.log("0 - 1 = "+touchdir[0] + " - " + touchdir[1]);
+					if (touchdir[0] == touchdir[1]) { //指が両方同じ方向へ
+						console.log("rotating");
+					}else{ //指がそれぞれ違う方向へ
+						console.log("scaling");
+					}
+					
 					var scalebegin =  this.touchpoints["2"].pos.y - this.touchpoints["1"].pos.y;
 					var scaleend = this.touchpoints["12"].pos.y - this.touchpoints["11"].pos.y;
 					if (scalebegin < 0) scalebegin = scalebegin * -1;
@@ -2810,6 +2852,18 @@ var Selectors = function(){
 				}
 				return;
 			}
+			if (this.is_rotating) {
+				var rotbegin =  this.touchpoints["3"].pos.x - this.touchpoints["1"].pos.x;
+				var rotend = this.touchpoints["13"].pos.x - this.touchpoints["11"].pos.x;
+				if (rotbegin < 0) rotbegin = rotbegin * -1;
+				if (rotend < 0) rotend = rotend * -1;
+				if (rotend > rotbegin) {
+					this.rotateRight();
+				}else if (scaleend < scalebegin) {
+					this.rotateLeft();
+				}
+			}
+			//スクロールモード
 			if (this.is_scrolling) {
 				this.scale_pos["end"] = pos;
 				var db = {
@@ -3081,9 +3135,17 @@ var Selectors = function(){
 				this.touchpoints["2"] = null;
 				delete this.touchpoints["2"];
 			}
-			if (this.touchpoints["21"] && (event.pointerId == this.touchpoints["21"].id)){
-				this.touchpoints["21"] = null;
-				delete this.touchpoints["21"];
+			if (this.touchpoints["12"] && (event.pointerId == this.touchpoints["12"].id)){
+				this.touchpoints["12"] = null;
+				delete this.touchpoints["12"];
+			}
+			if (this.touchpoints["3"] && (event.pointerId == this.touchpoints["3"].id)){
+				this.touchpoints["3"] = null;
+				delete this.touchpoints["3"];
+			}
+			if (this.touchpoints["13"] && (event.pointerId == this.touchpoints["13"].id)){
+				this.touchpoints["13"] = null;
+				delete this.touchpoints["13"];
 			}
 			this.is_discomplete = false;
 			this.discomplete_count.startx = 0;
@@ -3243,5 +3305,16 @@ var Selectors = function(){
 				event.target.style.cursor = "none";
 			}
 			//this.moveCursor(event.clientX,event.clientY);
+		},
+		hammer_touches : function(event) {
+			console.log("---"+event.type);
+			if (event.type == "pinch") {
+				
+				console.log("pinch scale" + event.scale);
+				Draw.scale(event.scale*100);
+			}else if (event.type == "rotate") {
+				console.log("rotate rotation" + event.rotation);
+				Draw.rotate(event.rotation);
+			}
 		}
 	};
