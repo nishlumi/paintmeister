@@ -2,7 +2,25 @@
 ============
 * I referred to in () for the platform affected especially.
 
-PaintMeister (1.0.58.26)
+PaintMeister (1.0.60.36)
+**Add the option to enable opacity of the canvas on save in main menu.
+**Add the option to absorb drawing and selecting operation to the grid-line in side bar.
+*Extend the scaling up to 8.0. (added also button)
+*Change default color of grid-line and draw to semi-transparent.
+*Add the option "Allow protruding" to the insertion of text.
+*Add the spin button to configuration of size of canvas in initial screen.
+*Fix that the grid-line do not clear after the New button operation.
+*Fix that do not reflect to change only the color of the grid-line.
+*Fix that draw the grid-line on top of the main canvas.
+*Change do not scaling and rotating by multiple touch operation when draw shapes and selection mode.
+*Fix that old information remain in the title bar of the file list in initial screen.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/04/14 21:00:00
+ChromeApps		- 
+Store app		- 
+
+
+PaintMeister (1.0.58.27)
 **Support the rotation of the canvas by multi touch & improve functionality of pinchin-out.
 **Support the scaling  of selected area on selection mode.
 *Fix that do not return to the label of default magnification on clicking "Reset All" button.
