@@ -4,8 +4,10 @@ Draw["prepareSaveImage"] = function(w, h, isthumb){
 	Draw.canvas.width = w;
 	Draw.canvas.height = h;
 	c.clearRect(0,0,w,h);
-	c.fillStyle = "#FFFFFF";
-	c.fillRect(0, 0, w, h);
+	if (!document.getElementById("chk_sv_opacity4image").checked) {
+		c.fillStyle = "#FFFFFF";
+		c.fillRect(0, 0, w, h);
+	}
 	var magnrate = 0;
 	var magn = {"x":0,"y":0};
 	if (isthumb) {
@@ -22,8 +24,10 @@ Draw["prepareSaveImage"] = function(w, h, isthumb){
 			//Draw.canvas.height = 100;
 			c.translate((100-Draw.canvassize[0] * magnrate)*0.5,0);
 		}
-		c.fillStyle = "#FFFFFF";
-		c.fillRect(0, 0, Draw.canvas.width, Draw.canvas.height);
+		if (!document.getElementById("chk_sv_opacity4image").checked) {
+			c.fillStyle = "#FFFFFF";
+			c.fillRect(0, 0, Draw.canvas.width, Draw.canvas.height);
+		}
 		magn.x = magnrate;
 		magn.y = magnrate;
 		c.scale(magn.x,magn.y);

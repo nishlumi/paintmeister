@@ -68,6 +68,7 @@
 	<div id="pres_main">
 		<div id="btn_dropper" class="sidebar_button switchbutton_off" title="スポイト/色引き伸ばしを有効にする&#10002;"></div>
 		<div id="btn_freescroll" class="sidebar_button switchbutton_off" title="スクロール有効にする&#10021;"></div>
+		<div id="btn_aroundgrid" class="sidebar_button switchbutton_off" title="グリッド線に吸着させる&#10021;"></div>
 		<div id="btn_shapes" class="sidebar_button switchbutton_off" title="図形描画を有効にする&#8968;"></div>
 		<div id="btn_select" class="sidebar_button switchbutton_off" title="選択操作を有効にする&#9640;"></div>
 		<div id="chk_enable_handpres" style="display:none;" class="switchbutton_off" title="手動筆圧をONにする(筆圧感知のデバイスでもここの筆圧の数値が優先されます)">&#10001;</div><br/>
@@ -107,8 +108,15 @@
 </div>
 <div id="initialsetup"><fieldset><legend id="lab_initialsetup">新規作成</legend>
 <strong id="lab_initial_canvassize">キャンバスのサイズ</strong><br/>
-<span id="lab_canvas_width">幅　：</span><input type="range" id="canvas_width" min="30" max="1200" step="5" value="600" style="width:80%;" ><strong id="lab_canwidth">600</strong><br/>
-<span id="lab_canvas_height">高さ：</span><input type="range" id="canvas_height" min="30" max="1200" step="5" value="400" style="width:80%" ><strong id="lab_canheight">400</strong><br/>
+<table style="width:100%;"><tr>
+	<td class="initcan_1c"><span id="lab_canvas_width">幅　：</span></td>
+	<td class="initcan_2c"><input type="range" id="canvas_width" min="30" max="1200" step="5" value="600" style="width:100%;" ></td>
+	<td class="initcan_3c"><input type="number" id="lab_canwidth" size="4" value="600" min="30" max="4000" step="5" style="width:5rem;" ></td>
+	</tr><tr>
+	<td class="initcan_1c"><span id="lab_canvas_height">高さ：</span></td>
+	<td class="initcan_2c"><input type="range" id="canvas_height" min="30" max="1200" step="5" value="400" style="width:100%" ></td>
+	<td class="initcan_3c"><input type="number" id="lab_canheight" size="4" value="400" min="30" max="4000" step="5" style="width:5rem;"></td>
+</tr></table>
 <label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
 <button id="btn_makecanvas" class="button uibutton-large1 flatbutton">作成</button>
 </fieldset>
@@ -137,6 +145,8 @@
 		<button id="btn_saveproj" class="statbutton2 stat_saveas" title="現在の編集状態をプロジェクトファイルに保存します">Save as Project</button><br/>
 	</div>
 	<div id="menu_right">
+		<br />
+		<label id="lab_sv_opacity4image" title="保存時にキャンバスの透明度を有効にします"><input type="checkbox" id="chk_sv_opacity4image"><span id="sv_opacity4image_msg">保存時に透明度を保持する</span></label><br/>
 		<br />
 		<label id="lab_sv_colorpalette" title="現在のカラーパレットを保存します。次回起動時に読み込みも自動で行います。"><input type="checkbox" id="chk_sv_colorpalette" checked><span id="sv_colorpalette_msg">カラーパレットを保存する</span></label><br/>
 		<div>
@@ -174,8 +184,8 @@
 			</label>
 			<label style="margin-left:1rem;">
 				<span id="lab_grid_color"  title="グリッドの色を指定します">グリッドの色:</span>
-				<input type="text" id="txt_grid_color" value="#000000"  size="6" class="color {hash:true}" >
-			</label>
+				<input type="text" id="txt_grid_color" value="#333333"  size="6" class="color {hash:true}" >
+			</label><br/>
 		</div>
 		<div style="display:none;"><span id="lab_plugin">プラグイン管理:</span> <button id="btn_man_plugin" class="statbutton2">開く</button></div>
 		<fieldset style="display:none;"><legend><label title="絵を描く時間を計る、もしくは時間制限付きで絵を描くようにします"><input type="checkbox" id="chk_use_timer"><span id="lab_chk_use_timer">タイマー機能を使用する</span></label></legend>
@@ -196,9 +206,9 @@
 		<table id="tbl_magni">
 		<tbody>
 		<tr><td class="magni_element" id="magni_25">25%</td><td class="magni_element" id="magni_50">50%</td></tr>
-		<tr><td colspan="2" class="magni_strong" id="magni_100">100%</td></tr>
-		<tr><td class="magni_element" id="magni_150">150%</td><td class="magni_element" id="magni_200">200%</td></tr>
-		<tr><td colspan="2" class="magni_strong" id="magni_400">400%</td></tr>
+		<tr><td class="magni_strong" id="magni_100">100%</td><td class="magni_element" id="magni_150">150%</td></tr>
+		<tr><td class="magni_element" id="magni_200">200%</td><td class="magni_element" id="magni_400">400%</td></tr>
+		<tr><td colspan="2" class="magni_strong" id="magni_800">800%</td></tr>
 		</tbody>
 		</table>
 	</div>
@@ -282,7 +292,8 @@
 		<option value="ideographic">ideographic</option>
 		<option value="hanging">hanging</option>
 	</select>-->
-	<label><input type="checkbox" id="chk_text_vertical"><span id="lab_text_vertical" title="縦書にする"></span></label><br/>
+	<label><input type="checkbox" id="chk_text_vertical"><span id="lab_text_vertical" title="縦書にする"></span></label>
+	<label><input type="checkbox" id="chk_text_overflow"><span id="lab_text_overflow" title="はみ出すのを許可"></span></label><br/>
 	<input type="text" id="inp_htmlbox_src">
 	</div>
 	<div id="dlg_htmlbox_footer_area">

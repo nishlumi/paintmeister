@@ -1016,7 +1016,7 @@ Draw["drawAssistLine"] = function(canvas,context,pos) {
 	];
 	for (var p in posarr) {
 		var pos = posarr[p];
-		var xsa = 0, ysa = 0, linelength = 15;
+		var xsa = 0, ysa = 0, linelength = 5;
 		if (pos.start[0] < pos.end[0]) {
 			xsa = 1;
 		}else if (pos.start[0] > pos.end[0]) {
@@ -1106,6 +1106,7 @@ Draw["prepare_drawnewshape"] = function(event,drawtype,decidepos){
 	this.canvas.height = o.h;
 	this.select_clipboard.w = this.canvas.width;
 	this.select_clipboard.h = this.canvas.height;
+	this.select_clipboard.selectDrawtype = drawtype;
 	
 	//描き込み座標変換（フロートオブジェクトに描くのでtop-leftのところからマイナスする）
 	for (var i = 0; i < decidepos.length; i++) {
@@ -1180,15 +1181,19 @@ Draw["prepare_drawhtml"] = function(src){
 	//---クリップボードにコピー操作
 	var o = this.selectors.items[0];
 	var opt_align = Draw.variables.htmlbox_align; //$("#sel_htmlbox_align").val();
-	console.log(opt_align);
+	//console.log(opt_align);
 	this.select_clipboard.selectType = selectionType.box;
 	var ang = o.calculateAngle();
 	this.select_clipboard.oldx = ang.lt.x;
 	this.select_clipboard.oldy = ang.lt.y;
 	this.canvas.width = o.w; //移動線用に+2
 	this.canvas.height = o.h;
+	//--- ※あとで文字数に応じて自動拡張させるため仮のセット
+	//   特に縦書き時は最初にYのサイズを算出するのが面倒なため。
+		
 	this.select_clipboard.w = this.canvas.width;
 	this.select_clipboard.h = this.canvas.height;
+	this.select_clipboard.selectDrawtype = "html";
 	
 	var can2d = this.canvas.getContext("2d");
 	can2d.lineWidth = 1;
@@ -1206,12 +1211,38 @@ Draw["prepare_drawhtml"] = function(src){
 	var finx = -1;
 	for (var f = 0; f < fonttext.length; f++) {
 		if (fonttext[f].indexOf("px") > -1) {
-			finx = f;
+			finx = parseInt(fonttext[f]);
 			break;
 		}
+		if (fonttext[f].indexOf("pt") > -1) {
+			finx = Math.ceil(parseInt(fonttext[f]) / 72 * 96 * 100) / 100
+		}
 	}
-	var unity = parseInt(fonttext[finx]);
-	if (isNaN(unity)) unity = 20;	//既定
+	var unity = finx;
+	var vt_calculate_vertical = function(src,uy){
+		//仮想的に先にY軸（高さ）を算出
+		var tmpy = uy;
+		for (var i = 0; i < src.length; i++) {
+			var targetchar = "、。ぁぃぅぇぉゃゅょっ";
+			if ((targetchar.indexOf(src[i]) > 0) || (src[i].charCodeAt() == 12289)) {
+				tmpy -= (unity/2);
+			}
+			//---rotation: 90 angle right
+			targetchar = "：:-ー－～()（）「」{}｛｝[]【】『』［］=＝…";
+			if (targetchar.indexOf(src[i]) > 0) {
+				targetchar = "( （ 「 { ｛ [ 【 『 ［";
+				if (targetchar.indexOf(src[i]) > -1) {
+					tmpy += (unity * 1) + 5;
+				}else{
+					tmpy += (unity * 0.5) + 5;
+				}
+			}else{
+				tmpy += unity + 5;
+			}
+		}
+		return Math.ceil(tmpy);
+	}
+	if (isNaN(unity)) unity = 26;	//既定
 	if (document.getElementById("chk_text_vertical").checked) {
 		var tmpy = unity;
 		var w = can2d.measureText(src[0]);
@@ -1224,19 +1255,36 @@ Draw["prepare_drawhtml"] = function(src){
 			}
 		}
 		//console.log("maxw="+maxw);
-		//console.log(can2d.textAlign);
+		if (document.getElementById("chk_text_overflow").checked) {
+			//this.canvas.width = maxw;
+			this.canvas.height = vt_calculate_vertical(src,unity);
+			//this.select_clipboard.w = maxw;
+			this.select_clipboard.h = this.canvas.height;
+			console.log("tmpy="+tmpy);
+			//コンテキストを再セット
+			can2d = this.canvas.getContext("2d");
+			can2d.lineWidth = 1;
+			can2d.shadowBlur = 0;
+			can2d.strokeStyle = "rgba(0,0,0,1)";
+			//can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
+			//必要プロパティをメインのコンテキストからコピー
+			can2d.fillStyle = this.context.strokeStyle;
+			can2d.font = document.getElementById("inp_htmlbox_css").value;
+		}
+		
 		for (var i = 0; i < src.length; i++) {
 			var w = can2d.measureText(src[i]);
 			var tmpw = 0;
 			if ((opt_align == "left")) {
 				tmpw = ((maxw - w.width)/2);
 			}else if (opt_align == "right") {
-				tmpw = o.w - (maxw) + ((maxw - w.width)/2);
+				tmpw = this.canvas.width - (maxw) + ((maxw - w.width)/2);
 				//can2d.textAlign = "start";
 			}else if (opt_align == "center") {
-				tmpw = (o.w * 0.5) - (maxw/2) + ((maxw - w.width)/2);
+				tmpw = (this.canvas.width * 0.5) - (maxw/2) + ((maxw - w.width)/2);
 				//can2d.textAlign = "start";
 			}
+			
 			//---Japanese: X座標とY座標を文字の半分の幅分ずらす
 			var targetchar = "、。ぁぃぅぇぉゃゅょっ";
 			if ((targetchar.indexOf(src[i]) > 0) || (src[i].charCodeAt() == 12289)) {
@@ -1269,30 +1317,49 @@ Draw["prepare_drawhtml"] = function(src){
 				can2d.fillText(src[i],0,0);
 				targetchar = "( （ 「 { ｛ [ 【 『 ［";
 				if (targetchar.indexOf(src[i]) > -1) {
-					console.log("targetchar="+targetchar.indexOf(src[i]));
+					//console.log("targetchar="+targetchar.indexOf(src[i]));
 					tmpy += (unity * 1) + 5;
 				}else{
 					tmpy += (unity * 0.5) + 5;
 				}
 				can2d.restore();
 			}else{
+
 				can2d.fillText(src[i],tmpw,tmpy);
 				tmpy += unity + 5;
 			}
+			//console.log("tmpy="+tmpy);
 		}
 	}else{
-		var maxw = can2d.measureText(src);
+		if (document.getElementById("chk_text_overflow").checked) {
+			var maxw = can2d.measureText(src);
+			this.canvas.width = maxw.width;
+			this.canvas.height = unity + 5;
+			this.select_clipboard.w = this.canvas.width;
+			this.select_clipboard.h = this.canvas.height;
+			can2d = this.canvas.getContext("2d");
+			can2d.lineWidth = 1;
+			can2d.shadowBlur = 0;
+			can2d.strokeStyle = "rgba(0,0,0,1)";
+			//can2d.clearRect(0,0,this.canvas.width,this.canvas.height);
+			//必要プロパティをメインのコンテキストからコピー
+			can2d.fillStyle = this.context.strokeStyle;
+			can2d.font = document.getElementById("inp_htmlbox_css").value;
+		}
 		var tmpw = 0;
 		if ((opt_align == "left")) {
 			tmpw = 0;
 		}else if (opt_align == "right") {
-			tmpw = o.w - maxw.width;
+			tmpw = this.canvas.width - maxw.width;
 			//can2d.textAlign = "left";
 		}else if (opt_align == "center") {
-			tmpw = (o.w - maxw.width)/2;
+			tmpw = (this.canvas.width - maxw.width)/2;
 			//can2d.textAlign = "left";
 		}
 		can2d.fillText(src, tmpw,unity);
+		//console.log("maxw=");
+		//console.log(maxw);
+		//console.log("unity="+unity);
 	}
 	//移動線描画
 	//this.drawAssistLine(this.canvas,can2d);
@@ -1310,7 +1377,8 @@ Draw["changeGrid"] = function(flag,w,h,color){
 	
 	if (flag) {
 		Draw.gridcontext.strokeStyle = color;
-		Draw.gridcontext.lineWidth = 1;
+		Draw.gridcontext.globalAlpha = 0.5;
+		Draw.gridcontext.lineWidth = 0.25;
 		//X座標のグリッド線描画
 		for (var x = w; x < cw; x += w) {
 			Draw.gridcontext.beginPath();
@@ -1326,5 +1394,18 @@ Draw["changeGrid"] = function(flag,w,h,color){
 			Draw.gridcontext.stroke();
 		}
 	}
+	
+}
+Draw["decide_nearGrid"] = function(pos){ //===一番近いグリッド線の位置を返す
+	var cw = Draw.variables.gridwidth;
+	var ch = Draw.variables.gridheight;
+	var xbai = Math.round(pos.x / cw);
+	var ybai = Math.round(pos.y / ch);
+	
+	var minsample = {
+		x:cw * xbai, 
+		y:ch * ybai
+	};
+	return minsample;
 	
 }

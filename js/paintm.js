@@ -455,9 +455,11 @@ var PluginManager = {
 			var def = $.Deferred();
 			AppStorage.initialize(function(){
 				document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
-				document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
+				document.getElementById("lab_canwidth").value = document.getElementById("canvas_width").value;
 				document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-				document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
+				document.getElementById("lab_canheight").value = document.getElementById("canvas_height").value;
+				document.getElementById("lab_canwidth").max = document.getElementById("canvas_width").max;
+				document.getElementById("lab_canheight").max = document.getElementById("canvas_height").max;
 				document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
 					if (event.target.checked) {
 						document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
@@ -466,6 +468,46 @@ var PluginManager = {
 						document.getElementById("canvas_width").max = 2160;
 						document.getElementById("canvas_height").max = 1440;
 					}
+					document.getElementById("lab_canwidth").max = document.getElementById("canvas_width").max;
+					document.getElementById("lab_canheight").max = document.getElementById("canvas_height").max;
+				},false);
+				document.getElementById("canvas_width").addEventListener("change", function(event) {
+					document.getElementById("lab_canwidth").value = event.target.value;
+				},false);
+				document.getElementById("canvas_height").addEventListener("change", function(event) {
+					document.getElementById("lab_canheight").value = event.target.value;
+				},false);
+				document.getElementById("lab_canwidth").addEventListener("change", function(event) {
+					var a = parseInt(event.target.value);
+					if (isNaN(a)) {
+						a = document.getElementById("canvas_width").value;
+						event.target.value = a;
+					}
+					if (a > event.target.max) {
+						a = event.target.max;
+						event.target.value = a;
+					}
+					if (a < event.target.min) {
+						a = event.target.min;
+						event.target.value = a;
+					}
+					document.getElementById("canvas_width").value = event.target.value;
+				},false);
+				document.getElementById("lab_canheight").addEventListener("change", function(event) {
+					var a = parseInt(event.target.value);
+					if (isNaN(a)) {
+						a = document.getElementById("canvas_height").value;
+						event.target.value = a;
+					}
+					if (a > event.target.max) {
+						a = event.target.max;
+						event.target.value = a;
+					}
+					if (a < event.target.min) {
+						a = event.target.min;
+						event.target.value = a;
+					}
+					document.getElementById("canvas_height").value = event.target.value;
 				},false);
 				Draw.initialize();
 				ColorPalette.initialize();

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.58.27";
+var appversion = "1.0.60.36";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -164,6 +164,7 @@ var Selector = function(id){
 	this.action = selectActionType.clip;
 	this.selectType = selectionType.box;
 	this.selectFormat = selectionType.box;
+	this.selectDrawtype = "";
 	this.addPoint = function(x,y) {
 		var o = {"x" : x, "y" : y};
 		own.points.push(o);
@@ -205,6 +206,7 @@ var Selector = function(id){
 		own.status = selectionStatus.during;
 		own.action = selectActionType.clip;
 		own.selectType = selectionType.box;
+		own.selectDrawtype = orig.selectDrawtype;
 	}
 	this.setToContext = function(){
 		if (own.points.length > 0) {
@@ -300,6 +302,7 @@ var Selectors = function(){
 		progresspanel : null,
 		usercursor : null,
 		screendiv : null,
+		enablegrid : null,
 		//currentpen : ["",-1,"#000000"], //0=mode, 1=size, 2=color
 		defaults : {
 			"canvas" : {
@@ -312,6 +315,8 @@ var Selectors = function(){
 				"divide" : 5,
 				"max" : 99,
 			},
+			"scalemin" : 0.25,
+			"scalemax" : 8.0,
 			"cliphistory" : 10,
 			"smooth_correction" : 3,
 			"sv_paletteloc_num" : 5,
@@ -335,7 +340,9 @@ var Selectors = function(){
 			},
 			"htmlbox_align" : "",
 			"cursormode" : "",
-			"cursorpos" : {x : 0, y : 0}
+			"cursorpos" : {x : 0, y : 0},
+			"gridwidth" : 0,
+			"gridheight" : 0
 		},
 		drawing : false,
 		focusing : false,
@@ -385,6 +392,7 @@ var Selectors = function(){
 		drawpoints : [],
 		is_scrolling : false,
 		vCtrl_for_scroll : false,
+		vCtrl_for_aroundgrid : false,
 		is_spoiting : false,
 		is_drawing_line : false,
 		drawing_type : "line",
@@ -443,6 +451,7 @@ var Selectors = function(){
 			this.selectors = new Selectors();
 			this.select_clipboard = new Selector();
 			this.usercursor = document.getElementById("dumcursor");
+			this.enablegrid = document.getElementById("chk_enable_grid");
 			//---other control events setup
 			//---初期画面コントロール-----------------------------------------
 			this.canwidth.addEventListener("change", function(event) {
@@ -643,6 +652,7 @@ var Selectors = function(){
 				event.stopPropagation();
 				event.preventDefault();
 				document.getElementById("initialsetup").className = "";
+				document.getElementById("dlg_filelist_header").textContent = "";
 				var files = event.dataTransfer.files;
 				if (files.length > 1) {
 					//n 個のPaintMeisterプロジェクトファイル
@@ -875,6 +885,19 @@ var Selectors = function(){
 					Draw.vCtrl_for_scroll = false;
 					//共通のスクロールフラグもオフにする
 					Draw.is_scrolling = false;
+				}
+			},false);
+			document.getElementById("btn_aroundgrid").addEventListener("click", function(event) {
+				if (event.target.className == "sidebar_button switchbutton_off") {
+					event.target.className = "sidebar_button switchbutton_on";
+					//event.target.title = "グリッド線に吸着無効にする";
+					event.target.title = _T("btn_freescroll_click_title");
+					Draw.vCtrl_for_aroundgrid = true;
+				}else{
+					event.target.className = "sidebar_button switchbutton_off";
+					//event.target.title = "グリッド線に吸着有効にする";
+					event.target.title = _T("btn_freescroll_title");
+					Draw.vCtrl_for_aroundgrid = false;
 				}
 			},false);
 			//---図形描画ボタン
@@ -1182,7 +1205,7 @@ var Selectors = function(){
 				document.getElementById("info_magni").innerText = "1.0";
 			}, false);
 			//---拡大率ボタン
-			var magarr = ["25","50","100","150","200","400"];
+			var magarr = ["25","50","100","150","200","400","800"];
 			for (var m in magarr) {
 				var nm = "magni_" + magarr[m];
 				//console.log(nm);
@@ -1409,7 +1432,9 @@ var Selectors = function(){
 				event.stopPropagation();
 			},false);
 
-			$("#txt_grid_width,#txt_grid_height").on("change", function(event) {
+			$("#txt_grid_width,#txt_grid_height,#txt_grid_color").on("change", function(event) {
+				Draw.variables.gridwidth = parseInt(document.getElementById("txt_grid_width").value);
+				Draw.variables.gridheight = parseInt(document.getElementById("txt_grid_height").value);
 				Draw.changeGrid(document.getElementById("chk_enable_grid").checked,
 					parseInt(document.getElementById("txt_grid_width").value),
 					parseInt(document.getElementById("txt_grid_height").value),
@@ -1534,6 +1559,10 @@ var Selectors = function(){
 			document.getElementById("inp_htmlbox_css").value = "20pt 'sans-serif'";
 			$("#pickerpanel2").farbtastic("#txt_grid_color",function(color){
 				$("#pickerpanel2").hide();
+				Draw.changeGrid(document.getElementById("chk_enable_grid").checked,
+					parseInt(document.getElementById("txt_grid_width").value),
+					parseInt(document.getElementById("txt_grid_height").value),
+					document.getElementById("txt_grid_color").value);
 			});
 			
 			$("#txt_rotation").knob({
@@ -1591,6 +1620,8 @@ var Selectors = function(){
 			did("info_layer").title = _T("info_layer_title");
 			did("info_pen_mode").textContent = _T("info_pen_mode");
 			did("info_pen_mode").title = _T("info_pen_mode_title");
+			did("sv_opacity4image_msg").textContent = _T("sv_opacity4image_msg");
+			did("lab_sv_opacity4image").title = _T("lab_sv_opacity4image_title");
 			//brush bar
 			did("info_currentpos").title = _T("info_currentpos_title");
 			did("info_brush_size").title = _T("info_brush_size_title");
@@ -1600,6 +1631,7 @@ var Selectors = function(){
 			//side bar
 			did("btn_dropper").title = _T("btn_dropper_title");
 			did("btn_freescroll").title = _T("btn_freescroll_title");
+			did("btn_aroundgrid").title = _T("btn_aroundgrid_title");
 			did("chk_enable_handpres").title = _T("chk_enable_handpres_title");
 			did("pres_curline").title = _T("pres_curline_title");
 			did("btn_shapes").title = _T("btn_shapes_title");
@@ -1699,6 +1731,8 @@ var Selectors = function(){
 			did("btn_insert_htmlbox").textContent = _T("btn_insert_htmlbox");
 			//did("lab_text_vertical").textContent = _T("lab_text_vertical");
 			did("lab_text_vertical").title = _T("lab_text_vertical");
+			did("lab_text_overflow").title = _T("lab_text_overflow");
+			did("lab_text_overflow").textContent = _T("lab_text_overflow");
 			
 		},
 		createbody : function(wi,he,isshow){
@@ -1787,7 +1821,7 @@ var Selectors = function(){
 			Draw.gridcan.className = "operate-canvas";
 			Draw.gridcan.width = wi;
 			Draw.gridcan.height = he;
-			Draw.gridcan.style.zIndex = 947;	//5;
+			Draw.gridcan.style.zIndex = 9;	//5;
 			document.getElementById("canvaspanel").appendChild(Draw.gridcan);
 			//configEvent(Draw.opecan,touch);
 			Draw.gridcontext = Draw.gridcan.getContext("2d");
@@ -1887,6 +1921,7 @@ var Selectors = function(){
 			Draw.touchpoints = {};
 			Draw.drawpoints = [];
 			Draw.is_scaling = false;
+			Draw.is_scrolling = false;
 			Draw.is_selecting = false;
 			Draw.select_type = "box";
 			Draw_select_operation = "copy";
@@ -1895,6 +1930,7 @@ var Selectors = function(){
 			document.getElementById("layinfo_toggle").checked = true;
 			document.getElementById("layinfo_opacity").value = "100";
 			Draw.layer[0].opacity("100");
+			document.getElementById("btn_resetAllTransform").click();
 			return true;
 		},
 		returnTopMenu : function (){
@@ -1917,6 +1953,7 @@ var Selectors = function(){
 			if (Draw.palmrest.left.isEnable || Draw.palmrest.right.isEnable) {
 				document.getElementById("chk_enable_palmrest").click();
 			}
+			Draw.enablegrid.checked = false;
 			Draw.clearBody();
 			Draw.is_spoiting = false;
 			Draw.vCtrl_for_scroll = false;
@@ -1950,6 +1987,13 @@ var Selectors = function(){
 			//document.getElementById("layoutcontrol").style.display = "none";
 			document.getElementById("prespanel").style.display = "none";
 			document.getElementById("openedProjName").innerText = "";
+			//グリッド解除
+			document.getElementById("chk_enable_grid").checked = false;
+			Draw.changeGrid(false,
+				parseInt(document.getElementById("txt_grid_width").value),
+				parseInt(document.getElementById("txt_grid_height").value),
+				document.getElementById("txt_grid_color").value
+			);
 			Draw.saveSetting();
 			return true;
 		},
@@ -2167,11 +2211,11 @@ var Selectors = function(){
 		},
 		scale : function (val) {
 			var fnlbi = val / 100;
-			if (fnlbi > 4.0) {
-				fnlbi = 4.0;
+			if (fnlbi > this.defaults.scalemax) {
+				fnlbi = this.defaults.scalemax;
 			}
-			if (fnlbi < 0.25) {
-				fnlbi = 0.25;
+			if (fnlbi < this.defaults.scalemin) {
+				fnlbi = this.defaults.scalemin;
 			}
 			this.during_scale = fnlbi;
 			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
@@ -2195,8 +2239,8 @@ var Selectors = function(){
 		scaleUp : function (){
 			var fnlbi = 1.0;
 			fnlbi = this.during_scale + 0.05;
-			if (fnlbi > 4.0) {
-				fnlbi = 4.0;
+			if (fnlbi > this.defaults.scalemax) {
+				fnlbi = this.defaults.scalemax;
 			}
 			this.during_scale = fnlbi;
 			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
@@ -2220,8 +2264,8 @@ var Selectors = function(){
 		scaleDown : function() {
 			var fnlbi = 1.0;
 			fnlbi = this.during_scale - 0.05;
-			if (fnlbi < 0.25) {
-				fnlbi = 0.25;
+			if (fnlbi < this.defaults.scalemin) {
+				fnlbi = this.defaults.scalemin;
 			}
 			this.during_scale = fnlbi;
 			document.getElementById("info_magni").innerText = String(fnlbi).substr(0,3);
@@ -2313,7 +2357,14 @@ var Selectors = function(){
 				document.getElementById("txt_correction_level").value = ival;
 				
 				this.pen.correction_level = ival;
-				//---brush plugin
+				//---grid line
+				ival = parseInt(AppStorage.get("txt_grid_width",50));
+				document.getElementById("txt_grid_width").value = ival;
+				this.variables.gridwidth = ival;
+				ival = parseInt(AppStorage.get("txt_grid_height",50));
+				document.getElementById("txt_grid_height").value = ival;
+				this.variables.gridheight = ival;
+				document.getElementById("txt_grid_color").value = AppStorage.get("txt_grid_color","#333333");
 			}
 		},
 		saveSetting : function (){
@@ -2326,6 +2377,10 @@ var Selectors = function(){
 				//---correction level
 				var ival = parseInt(document.getElementById("txt_correction_level").value);
 				AppStorage.set("txt_correction_level",ival);
+				//---grid line
+				AppStorage.set("txt_grid_width",document.getElementById("txt_grid_width").value);
+				AppStorage.set("txt_grid_height",document.getElementById("txt_grid_height").value);
+				AppStorage.set("txt_grid_color",document.getElementById("txt_grid_color").value);
 			}
 		},
 		undo_function_begin : function(isundo) {
@@ -2497,6 +2552,14 @@ var Selectors = function(){
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
 			});
+			if (this.enablegrid.checked && this.vCtrl_for_aroundgrid) {
+				console.log("before pos=");
+				console.log(pos);
+				//描画位置をグリッドに吸着させる
+				pos = this.decide_nearGrid(pos);
+				console.log("after pos=");
+				console.log(pos);
+			}
 			this.startX = pos.x;
 			this.startY = pos.y;
 			this.startPressure = event.pressure;
@@ -2758,6 +2821,10 @@ var Selectors = function(){
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
 			});
+			if (this.enablegrid.checked && this.vCtrl_for_aroundgrid) {
+				//描画位置をグリッドに吸着させる
+				pos = this.decide_nearGrid(pos);
+			}
 			if (event.isPrimary && event.pointerType == "touch") {
 				if (this.touchpoints["1"] && (this.touchpoints["1"].id == event.pointerId)) {
 					this.touchpoints["11"] = {
@@ -3073,6 +3140,10 @@ var Selectors = function(){
 				"offset" : this.offset,
 				"canvasspace":this.canvasspace
 			});
+			if (this.enablegrid.checked && this.vCtrl_for_aroundgrid) {
+				//描画位置をグリッドに吸着させる
+				pos = this.decide_nearGrid(pos);
+			}
 			//---直線描画モード確定
 			if (this.is_drawing_line) {
 				this.drawshape_function_end(event,pos);
@@ -3206,10 +3277,18 @@ var Selectors = function(){
 			//console.log(event);
 			//---直線描画モード確定
 			if (this.is_drawing_line) {
+				if (this.enablegrid.checked && this.aroundgrid.checked) {
+					//描画位置をグリッドに吸着させる
+					pos = this.decide_nearGrid(pos);
+				}
 				this.drawshape_function_end(event,pos);
 
 			}
 			if (this.drawing)  {
+				if (this.enablegrid.checked && this.vCtrl_for_aroundgrid) {
+					//描画位置をグリッドに吸着させる
+					pos = this.decide_nearGrid(pos);
+				}
 				offsetX = pos.x;
 				offsetY = pos.y;
 				if (this.elementParameter["pointHistoryLast"]) {
@@ -3308,6 +3387,8 @@ var Selectors = function(){
 		},
 		hammer_touches : function(event) {
 			console.log("---"+event.type);
+			//図形描画・選択操作中は多点タッチ操作を中止
+			if (Draw.is_drawing_line || Draw.is_selecting) return false;
 			if (event.type == "pinch") {
 				
 				console.log("pinch scale" + event.scale);

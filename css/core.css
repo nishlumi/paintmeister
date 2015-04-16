@@ -416,6 +416,18 @@ div.dragover_indicate {
 	border : 3px dashed #858585;
 	background-color : #D9D9D9;
 }
+#initialsetup {
+	width : 100%;
+}
+.initcan_1c {
+	width : 5%;
+}
+.initcan_2c {
+	width : 85%;
+}
+.initcan_3c {
+	width : 10%;
+}
 /* ======================================panel=== */
 #ctrlpanel {
 	display : none;
@@ -1136,6 +1148,10 @@ animation-iteration-count : infinite;
 #btn_freescroll:before {
 	font-family : 'paintmfont';
 	content : "J";
+}
+#btn_aroundgrid:before {
+	font-family : 'paintmfont';
+	content : "k";
 }
 #btn_shapes:before {
 	font-family : 'paintmfont';
