@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.60.36";
+var appversion = "1.0.60.39";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -347,6 +347,7 @@ var Selectors = function(){
 		drawing : false,
 		focusing : false,
 		canvassize : [600,400],
+	    imagelength: 0,
 		startX : 0,
 		startY : 0,
 		startPressure : 0,
@@ -1784,6 +1785,7 @@ var Selectors = function(){
 			Draw.layer.push(lay);
 			Draw.layer[0].select(Draw.context);
 			Draw.canvassize = [wi, he];
+	        Draw.imagelength=Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length;
 			Draw.defaults.canvas.size = [wi, he];
 			document.getElementById("info_canvassize").innerHTML = wi + "x" + he;
 			document.getElementById("info_magni").innerText = "1.0";
@@ -2188,6 +2190,7 @@ var Selectors = function(){
 			Draw.screencontext.stroke();
 		},
 		move_drawCursor : function(event,pos){
+			Draw.screencontext.strokeStyle = "#242424";
 			Draw.screencontext.clearRect(0,0, this.canvassize[0],this.canvassize[1]);
 			Draw.screencontext.beginPath();
 			//Draw.screencontext.moveTo(pos.x,pos.y);
@@ -2202,6 +2205,15 @@ var Selectors = function(){
 				Draw.screencontext.arc(
 					pos.x,pos.y,
 					Draw.variables["cursorsize"],
+					0/180*Math.PI,360/180*Math.PI
+				);
+			Draw.screencontext.stroke();
+			
+			Draw.screencontext.strokeStyle = "#FFFFFF";
+			Draw.screencontext.beginPath();
+				Draw.screencontext.arc(
+					pos.x,pos.y,
+					Draw.variables["cursorsize"] * 0.75,
 					0/180*Math.PI,360/180*Math.PI
 				);
 			Draw.screencontext.stroke();

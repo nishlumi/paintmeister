@@ -4,13 +4,13 @@
 
 
 PaintMeister (1.0.60.39)
-ÅE(Store app)Fix that abend when return the app.
-ÅEFix that open an unknown file without error message.
-ÅEFix that can not look the cursor by a color of the canvas.
+*(Store app)Fix that abend when return the app.
+*Fix that open an unknown file without error message.
+*Fix that can not look the cursor by a color of the canvas.
 -- ISHII Eiju <lumidina@gmail.com> 
 WebApp			- 2015/07/31 22:00:00
-ChromeApps		- 
-Store app		- 
+ChromeApps		- 2015/08/02 10:00:00
+Store app		- 2015/08/02 10:00:00
 
 
 PaintMeister (1.0.60.36)

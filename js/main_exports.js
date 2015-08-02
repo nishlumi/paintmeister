@@ -59,7 +59,7 @@ Draw["prepareSaveProject"] = function (){
 	//Color Mode Data Block
 	projectdata.push("768");					//:8
 	//Image Resource Block
-	projectdata.push(Draw.context.getImageData(0,0,Draw.canvassize[0],Draw.canvassize[1]).data.length);	//:9
+    projectdata.push(Draw.imagelength);	//:9
 	//Image Data
 	projectdata.push(Draw.layer.length);		//:10
 	for (var obj in Draw.layer) {
@@ -138,6 +138,9 @@ Draw["loadProject"] = function(data){
 	var CST_height = 5;
 	var CST_layerCount = 10;
 	console.log("projectdata="+projectdata.length);
+	if  (data == undefined) {
+		return false;
+	}
 	if (projectdata.length < 8) {
 		//---ヘッダー部分ですでに8個ない場合は、不正なファイルとしてエラー
 		return false;
