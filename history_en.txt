@@ -2,6 +2,13 @@
 ============
 * I referred to in () for the platform affected especially.
 
+PaintMeister (1.0.60.40)
+*Fix that abend when draw outside the canvas, using option to absorb drawing.
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 2015/09/06 07:00:00
+ChromeApps		- 2015/09/06 11:00:00
+Store app		- 2015/09/06 11:00:00
+
 
 PaintMeister (1.0.60.39)
 *(Store app)Fix that abend when return the app.

@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.60.39";
+var appversion = "1.0.60.40";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -57,7 +57,7 @@ function calculatePosition(eventtype,event,target,opt) {
 		if (navigator.userAgent.indexOf("Firefox") > -1) {
 			
 			//pos.x = event.offsetX - opt.offset - event.target.offsetParent.offsetLeft - event.target.offsetParent.offsetParent.offsetLeft - event.target.offsetParent.clientLeft;
-			pos.x = event.clientX - bcrect.x;
+			pos.x = event.clientX - opt.offset; //bcrect.x;
 		}else{
 			pos.x = event.offsetX - opt.offset;
 		}
@@ -80,7 +80,7 @@ function calculatePosition(eventtype,event,target,opt) {
 	} else {
 		if (navigator.userAgent.indexOf("Firefox") > -1) {
 			//pos.y = event.offsetY - opt.offset - event.target.offsetParent.clientTop - event.target.offsetParent.offsetTop - event.target.offsetParent.offsetParent.offsetTop;
-			pos.y = event.clientY - bcrect.y;
+			pos.y = event.clientY - opt.offset; //bcrect.y;
 		}else{
 			pos.y = event.offsetY - opt.offset;
 		}
@@ -3289,7 +3289,7 @@ var Selectors = function(){
 			//console.log(event);
 			//---直線描画モード確定
 			if (this.is_drawing_line) {
-				if (this.enablegrid.checked && this.aroundgrid.checked) {
+				if (this.enablegrid.checked && this.vCtrl_for_aroundgrid) {
 					//描画位置をグリッドに吸着させる
 					pos = this.decide_nearGrid(pos);
 				}
