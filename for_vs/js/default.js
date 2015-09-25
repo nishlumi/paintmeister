@@ -61,9 +61,11 @@ function saveImage(data) {
             console.log(file);
             Windows.Storage.CachedFileManager.deferUpdates(file);
             var c = Draw.canvas.getContext("2d");
-            c.clearRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
-            c.fillStyle = "#FFFFFF";
-            c.fillRect(0, 0, Draw.canvassize[0], Draw.canvassize[1]);
+            c.clearRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+            if(!document.getElementById("chk_sv_opacity4image").checked) {
+                c.fillStyle="#FFFFFF";
+                c.fillRect(0,0,Draw.canvassize[0],Draw.canvassize[1]);
+            }
             for (var obj in Draw.layer) {
                 if (Draw.layer[obj].isvisible) {
                     c.globalAlpha = Draw.layer[obj].Alpha; //canvas.getContext("2d").globalAlpha;
@@ -123,7 +125,8 @@ function loadProjectFolder() {
     }
     var folpick = new Windows.Storage.Pickers.FolderPicker();
     folpick.fileTypeFilter.replaceAll([".pmpf"]);
-    folpick.pickSingleFolderAsync().then(function (folder) {
+    folpick.pickSingleFolderAsync().then(function(folder) {
+        if(!folder) return;
         console.log(folder.name);
         console.log(typeof folder);
         document.getElementById("dlg_filelist_header").textContent = folder.name;
@@ -336,275 +339,345 @@ var AppStorage = {
 
     //---ここから共通処理貼り付け
     //---ここからストアアプリも共通
-    document.addEventListener("keydown", function (event) {
-        if (!onKeyope) return false;
+    document.addEventListener("keydown",function(event) {
+        if(!onKeyope) return false;
         console.log(event.keyCode);
-        if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")) { //SPACE or 1
+        Draw.pressedKey=event.keyCode;
+        return Draw.appKeyEvent(event.keyCode,event.ctrlKey,event.altKey,event.shiftKey);
+        /*
+        if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")){ //SPACE or 1
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("btn_menu").click();
-
+                
                 //return event.preventDefault();
             }
-        } else if ((event.keyCode == "50") || (event.keyCode == "98")) { // 2
+        }else if ((event.keyCode == "50") || (event.keyCode == "98")) { // 2
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("info_btn_canvassize").click();
-
+                
                 //return event.preventDefault();
             }
-        } else if ((event.keyCode == "51") || (event.keyCode == "99")) { // 3
+        }else if ((event.keyCode == "51") || (event.keyCode == "99")) { // 3
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("info_layer").click();
-
+                
                 //return event.preventDefault();
             }
-        } else if ((event.keyCode == "52") || (event.keyCode == "100")) { // 4
+        }else if ((event.keyCode == "52") || (event.keyCode == "100")) { // 4
             if (document.getElementById("initialsetup").style.display == "none") {
                 document.getElementById("info_pen_mode").click();
-
+                
                 //return event.preventDefault();
             }
-        } else if (event.keyCode == "90" && event.ctrlKey) { //Ctrl + Z
+        }else if (event.keyCode == "90" && event.ctrlKey) { //Ctrl + Z
             if (document.getElementById("initialsetup").style.display == "none") {
                 Draw.undobtn.click();
                 return;
             }
-        } else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Y
+        }else if (event.keyCode == "89" && event.ctrlKey) { //Ctrl + Y
             if (document.getElementById("initialsetup").style.display == "none") {
                 Draw.redobtn.click();
                 return;
             }
-        } else if (event.keyCode == "83" && event.ctrlKey) { //Ctrl + S
+        }else if (event.keyCode == "83" && event.ctrlKey) { //Ctrl + S
             if (document.getElementById("initialsetup").style.display == "none") {
                 Draw.checkstat.click();
                 return;
             }
-        } else if (event.keyCode == "82") { // R
+        }else if (event.keyCode == "82") { // R
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_box").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "84") { // T
+        }else if (event.keyCode == "84") { // T
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_free").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "89") { // Y
+        }else if (event.keyCode == "89") { // Y
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_move").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "85") { // U
+        }else if (event.keyCode == "85") { // U
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_rotate").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "73") { // I
+        }else if (event.keyCode == "73") { // I
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_seltype_tempdraw").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "88" && event.ctrlKey) { //Ctrl + X
+        }else if (event.keyCode == "88" && event.ctrlKey) { //Ctrl + X
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_operationtype_cut").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "67" && event.ctrlKey) { //Ctrl + C
+        }else if (event.keyCode == "67" && event.ctrlKey) { //Ctrl + C
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_operationtype_copy").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "86" && event.ctrlKey) { //Ctrl + V
+        }else if (event.keyCode == "86" && event.ctrlKey) { //Ctrl + V
             if (document.getElementById("initialsetup").style.display == "none") {
                 if (document.getElementById("btn_select").className == "sidebar_button switchbutton_on") {
                     document.getElementById("sel_operationtype_paste").click();
                     return;
                 }
             }
-        } else if (event.keyCode == "48" && event.altKey) { // Alt + 0
+        }else if (event.keyCode == "48" && event.altKey) { // Alt + 0
             document.getElementById("canvaspanel").style.transform = "scale(1.0)";
             document.getElementById("info_magni").innerText = "1.0";
             Draw.canvassize[0] = Draw.defaults.canvas.size[0];
             Draw.canvassize[1] = Draw.defaults.canvas.size[0];
-            Draw.resizeCanvasMargin(window.innerWidth, window.innerHeight);
+            Draw.resizeCanvasMargin(window.innerWidth,window.innerHeight);
             Draw.init_scale = 1.0;
-        } else if (event.keyCode == "38" && event.altKey) { // Alt + Up key
+        }else if (event.keyCode == "38" && event.altKey) { // Alt + Up key
             Draw.scaleUp();
-        } else if (event.keyCode == "40" && event.altKey) { // Alt + Down key
+        }else if (event.keyCode == "107" && event.altKey) { //Alt + +
+            Draw.scaleUp();
+            event.returnValue = false;
+            return false;
+        }else if (event.keyCode == "40" && event.altKey) { // Alt + Down key
             Draw.scaleDown();
+        }else if (event.keyCode == "109" && event.altKey) { //Alt + -
+            Draw.scaleDown();
+            event.returnValue = false;
+            return false;
+        }else if (event.keyCode == "221" && event.altKey) { // Alt + ]
+            Draw.turnLayerUp();
+        }else if (event.keyCode == "219" && event.altKey) { // Alt + [
+            Draw.turnLayerDown();
+        }else if (event.keyCode == "221" && event.altKey) { // ]
+            Draw.changePensizeUp();
+        }else if (event.keyCode == "219" && event.altKey) { // [
+            Draw.changePensizeDown();
         }
-        var relkey = ["81", "87"];
+        var relkey = ["81","87"];
         //---手動筆圧イベント
         if (document.getElementById("chk_enable_handpres").className == "switchbutton_on") {
             if ((event.keyCode == "81") || (event.keyCode == "87")) { //--Q or W
                 Draw.keyLikePres += virtual_pressure[event.keyCode];
-                document.getElementById("pres_curline").value =
+                document.getElementById("pres_curline").value = 
                     parseInt(document.getElementById("pres_curline").value) + virtual_pressure[event.keyCode];
-            } else if (event.keyCode == "69") { //--E
+            }else if (event.keyCode == "69") { //--E
                 Draw.keyLikePres = virtual_pressure[event.keyCode];
                 document.getElementById("pres_curline").value = virtual_pressure[event.keyCode];
-            }/*else{
-					Draw.keyLikePres = virtual_pressure[event.keyCode];
-					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
-				}*/
+            }//else{
+            //	Draw.keyLikePres = virtual_pressure[event.keyCode];
+            //	document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
+            //}
             document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
         }
-        Draw.pressedKey = event.keyCode;
+        */
         //document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
-    }, false);
-    document.addEventListener("keyup", function (event) {
+    },false);
+    document.addEventListener("keyup",function(event) {
         //手動筆圧を既定の50に戻す
-        Draw.keyLikePres = 50;
-        document.getElementById("pres_curline").value = 50;
-        Draw.pressedKey = 0;
-    }, false);
-    if ((navigator.userAgent.indexOf("Chrome") > -1)) {
-        $("#area_projdir").css("visibility", "visible");
+        Draw.keyLikePres=50;
+        document.getElementById("pres_curline").value=50;
+        Draw.pressedKey=0;
+    },false);
+    //if ((navigator.userAgent.indexOf("Chrome") > -1)) {
+    if(checkBrowser().indexOf("chrome")!=-1) {
+        $("#area_projdir").css("visibility","visible");
     }
 
     //---メインのオブジェクト類の設定開始
     Draw.parseURL();
     setupLocale(Draw.urlparams)
-    .then(function (flag) {
-        var def = $.Deferred();
+    .then(function(flag) {
+        var def=$.Deferred();
         Draw.setupLocale();
         def.resolve(true);
         return def;
     })
-    .then(function (flag) {
-        var def = $.Deferred();
-        AppStorage.initialize(function () {
-            document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
-            document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-            document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-            document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-            document.getElementById("chk_limit_canvas").addEventListener("change", function (event) {
+    .then(function(flag) {
+        var def=$.Deferred();
+        AppStorage.initialize(function() {
+            //document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
+            document.getElementById("lab_canwidth").value=document.getElementById("canvas_width").value;
+            //document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+            document.getElementById("lab_canheight").value=document.getElementById("canvas_height").value;
+            document.getElementById("lab_canwidth").max=document.getElementById("canvas_width").max;
+            document.getElementById("lab_canheight").max=document.getElementById("canvas_height").max;
+            /*document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
                 if (event.target.checked) {
-                    document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
+                    document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
                     document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-                } else {
+                }else{
                     document.getElementById("canvas_width").max = 2160;
                     document.getElementById("canvas_height").max = 1440;
                 }
-            }, false);
+                document.getElementById("lab_canwidth").max = document.getElementById("canvas_width").max;
+                document.getElementById("lab_canheight").max = document.getElementById("canvas_height").max;
+            },false);*/
+            document.getElementById("canvas_width").addEventListener("change",function(event) {
+                document.getElementById("lab_canwidth").value=event.target.value;
+            },false);
+            document.getElementById("canvas_height").addEventListener("change",function(event) {
+                document.getElementById("lab_canheight").value=event.target.value;
+            },false);
+            document.getElementById("lab_canwidth").addEventListener("change",function(event) {
+                var a=parseInt(event.target.value);
+                if(isNaN(a)) {
+                    a=document.getElementById("canvas_width").value;
+                    event.target.value=a;
+                }
+                if(a>event.target.max) {
+                    a=event.target.max;
+                    event.target.value=a;
+                }
+                if(a<event.target.min) {
+                    a=event.target.min;
+                    event.target.value=a;
+                }
+                document.getElementById("canvas_width").value=event.target.value;
+            },false);
+            document.getElementById("lab_canheight").addEventListener("change",function(event) {
+                var a=parseInt(event.target.value);
+                if(isNaN(a)) {
+                    a=document.getElementById("canvas_height").value;
+                    event.target.value=a;
+                }
+                if(a>event.target.max) {
+                    a=event.target.max;
+                    event.target.value=a;
+                }
+                if(a<event.target.min) {
+                    a=event.target.min;
+                    event.target.value=a;
+                }
+                document.getElementById("canvas_height").value=event.target.value;
+            },false);
             Draw.initialize();
             ColorPalette.initialize();
             $("#pickerpanel,#pickerpanel2").hide();
-            $("#colorpicker").on("click", function (event) {
+            $("#colorpicker").on("click",function(event) {
                 $("#pickerpanel").show();
             });
             //---プログレスパネルの準備
-            document.getElementById("progresspanel").style.left = (Math.floor((window.innerWidth - 300) / 100) * 50) + "px";
-            document.getElementById("progresspanel").style.top = (Math.floor((window.innerHeight - 50) / 100) * 50) + "px";
+            document.getElementById("progresspanel").style.left=(Math.floor((window.innerWidth-300)/100)*50)+"px";
+            document.getElementById("progresspanel").style.top=(Math.floor((window.innerHeight-50)/100)*50)+"px";
             //---キャンバス外からタッチしたまま入ったときのための描画制御
-            var touchstart = 'touchstart';
-            var touchmove = 'touchmove';
-            var touchend = 'touchend';
-            var touchleave = 'touchleave';
-            if (window.PointerEvent) {
-                touchstart = "pointerdown";
-                touchmove = 'pointermove';
-                touchend = "pointerup";
-                touchleave = 'pointerleave';
-            } else if (window.navigator.msPointerEnabled) { // for Windows8 + IE10
-                touchstart = 'MSPointerDown';
-                touchmove = 'MSPointerMove';
-                touchend = 'MSPointerUp';
-                touchleave = 'MSPointerLeave';
+            var touchstart='touchstart';
+            var touchmove='touchmove';
+            var touchend='touchend';
+            var touchenter='touchenter';
+            var touchleave='touchleave';
+            if(window.PointerEvent) {
+                touchstart="pointerdown";
+                touchmove='pointermove';
+                touchend="pointerup";
+                touchenter='pointerenter';
+                touchleave='pointerleave';
+            } else if(window.navigator.msPointerEnabled) { // for Windows8 + IE10
+                touchstart='MSPointerDown';
+                touchmove='MSPointerMove';
+                touchend='MSPointerUp';
+                touchenter='MSPointerEnter';
+                touchleave='MSPointerLeave';
             }
             function operate_move(event) {
-                if (PalmRest.touching) {
+                if(PalmRest.touching) {
                     PalmRest.move(event);
                 }
             }
             function operate_endleave(event) {
-                if ("focusing" in Draw) {
-                    if (!Draw.focusing) {
-                        Draw.drawing = false;
+                if("focusing" in Draw) {
+                    if(!Draw.focusing) {
+                        Draw.drawing=false;
                     }
                 }
             }
             //---PointerEvent向け
-            document.body.addEventListener(touchstart, function (event) { }, false);
-            document.body.addEventListener(touchmove, function (event) { }, false);
-            document.body.addEventListener(touchend, operate_endleave, false);
-            document.body.addEventListener(touchleave, operate_endleave, false);
+            document.body.addEventListener(touchstart,function(event) { },false);
+            document.body.addEventListener(touchmove,function(event) { },false);
+            document.body.addEventListener(touchend,operate_endleave,false);
+            document.body.addEventListener(touchenter,function(event) {
+                if(Draw.touchpoints["1"]!=undefined) {
+                    Draw.drawing=false;
+                }
+            },false);
+            document.body.addEventListener(touchleave,operate_endleave,false);
             //カラーピッカーでPointerEvent向け
-            $("#colorpicker").on(touchstart, function (event) {
+            $("#colorpicker").on(touchstart,function(event) {
                 $("#pickerpanel").show();
             });
-            $("#pickerpanel").on(touchleave, function (event) {
+            $("#pickerpanel").on(touchleave,function(event) {
                 $("#pickerpanel").hide();
                 event.preventDefault();
             });
-            $("#pickerpanel2").on(touchleave, function (event) {
+            $("#pickerpanel2").on(touchleave,function(event) {
                 $("#pickerpanel2").hide();
                 event.preventDefault();
             });
 
-            touchstart = 'mousedown';
-            touchmove = 'mousemove';
-            touchend = 'mouseup';
-            touchleave = 'mouseleave';
+            touchstart='mousedown';
+            touchmove='mousemove';
+            touchend='mouseup';
+            touchleave='mouseleave';
             //---マウスイベント向け
-            document.body.addEventListener(touchstart, function (event) { }, false);
-            document.body.addEventListener(touchmove, function (event) { }, false);
-            document.body.addEventListener(touchend, operate_endleave, false);
-            document.body.addEventListener(touchleave, operate_endleave, false);
-            $("#colorpicker").on(touchstart, function (event) {
+            document.body.addEventListener(touchstart,function(event) { },false);
+            document.body.addEventListener(touchmove,function(event) { },false);
+            document.body.addEventListener(touchend,operate_endleave,false);
+            document.body.addEventListener(touchleave,operate_endleave,false);
+            $("#colorpicker").on(touchstart,function(event) {
                 $("#pickerpanel").show();
             });
-            $("#pickerpanel").on(touchleave, function (event) {
+            $("#pickerpanel").on(touchleave,function(event) {
                 $("#pickerpanel").hide();
                 event.preventDefault();
             });
-            $("#pickerpanel2").on(touchleave, function (event) {
+            $("#pickerpanel2").on(touchleave,function(event) {
                 $("#pickerpanel2").hide();
                 event.preventDefault();
             });
 
             //---その他グローバルなイベント
-            window.addEventListener("resize", function (event) {
-                console.log("width=" + event.target.innerWidth);
-                console.log("height=" + event.target.innerHeight);
-                document.getElementById("canvas_width").max = Math.floor((window.innerWidth - 100) / 100) * 100;
-                document.getElementById("lab_canwidth").innerHTML = document.getElementById("canvas_width").value;
-                document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
-                document.getElementById("lab_canheight").innerHTML = document.getElementById("canvas_height").value;
-                Draw.resizeCanvasMargin(event.target.innerWidth, event.target.innerHeight);
-            }, false);
+            window.addEventListener("resize",function(event) {
+                console.log("width="+event.target.innerWidth);
+                console.log("height="+event.target.innerHeight);
+                document.getElementById("canvas_width").max=Math.floor((window.innerWidth-100)/100)*100;
+                document.getElementById("lab_canwidth").innerHTML=document.getElementById("canvas_width").value;
+                document.getElementById("canvas_height").max=Math.floor((window.innerHeight)/100)*100;
+                document.getElementById("lab_canheight").innerHTML=document.getElementById("canvas_height").value;
+                Draw.resizeCanvasMargin(event.target.innerWidth,event.target.innerHeight);
+            },false);
             def.resolve(true);
         });
         return def;
     })
-    .then(function (flag) {
-        var def = $.Deferred();
+    .then(function(flag) {
+        var def=$.Deferred();
         //システムブラシ読み込み
-        var sysbru_pen = ["colorchangepen",
-                        "simplepen", "pencil", "fudepen", "calligraphy", "neonpen", "testplugin",
-                        "airbrush", "oilpaint", "oilpaintv", "waterpaint", "directpaint","testplugin3"];//,"testplugin2",
-        for (var i = 0; i < sysbru_pen.length; i++) {
-            var sc = document.createElement("script");
-            sc.src = "js/brush/" + sysbru_pen[i] + ".js";
+        var sysbru_pen=["colorchangepen",
+                        "simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
+                        "airbrush","oilpaint","oilpaintv","waterpaint","directpaint","testplugin3","sketchpen","blurpen"];//,"testplugin2","testplugin3"
+        for(var i=0;i<sysbru_pen.length;i++) {
+            var sc=document.createElement("script");
+            sc.src="js/brush/"+sysbru_pen[i]+".js";
             document.body.appendChild(sc);
             def.resolve(true);
         }
         return def;
     });
-    console.log(window.innerWidth + "/" + window.innerHeight);
+
 
     app.start();
 })();

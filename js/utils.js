@@ -18,10 +18,12 @@ function _T(){
 	}
 	var retstr = "";
 	//console.log(res);
-	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	//if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	if (checkBrowser() == "chromeapps"){
 		//---ChromeApps
 		retstr = chrome.i18n.getMessage(res);
-	}else if (("WinJS" in window)){
+	//}else if (("WinJS" in window)){
+	}else if (checkBrowser() == "windowsapp") {
 		//---Windows store app
 		retstr = WinJS.Resources.getString(res).value;
 	}else{
@@ -46,11 +48,13 @@ function _T(){
 function setupLocale(params){
 	var def = $.Deferred();
 	//only webapp, setup locale
-	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	//if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	if (checkBrowser() == "chromeapps"){
 		curLocale.name = String(chrome.i18n.getUILanguage()).split("-")[0];
 		curLocale.fullName = chrome.i18n.getUILanguage();
 		return def.resolve(true);
-	}else if (("WinJS" in window)){
+	//}else if (("WinJS" in window)){
+	}else if (checkBrowser() == "windowsapp") {
 		//---Windows store app
 		curLocale.name = String(Windows.Globalization.ApplicationLanguages.languages[0]).split("-")[0];
 		curLocale.fullName = Windows.Globalization.ApplicationLanguages.languages[0];
@@ -100,4 +104,31 @@ function locateMinMaxPosition(arr) {
 		if (arr[i].y > rb.y) rb.y = arr[i].y;
 	}
 	return {"lt":lt, "rb":rb};
+}
+function checkBrowser(){
+	if ("Windows" in window) {
+		return "windowsapp";
+	}
+	if ("chrome" in window) {
+		if ("storage" in chrome) {
+			return "chromeapps";
+		}else if ("runtime" in chrome){
+			return "chrome";
+		}
+	}
+	if (navigator.userAgent.toLowerCase().indexOf("edge") != -1) {
+		return "edge";
+	}
+	if (navigator.userAgent.toLowerCase().indexOf("trident") != -1) {
+		return "ie";
+	}
+	if (navigator.userAgent.toLowerCase().indexOf("firefox") != -1) {
+		return "firefox";
+	}
+	if (navigator.userAgent.toLowerCase().indexOf("opr") != -1) {
+		return "opera";
+	}
+	if (navigator.userAgent.toLowerCase().indexOf("vivaldi") != -1) {
+		return "vivaldi";
+	}
 }

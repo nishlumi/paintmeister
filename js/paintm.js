@@ -50,7 +50,8 @@ function prompt(message,callthen,defaultval){
 	});*/
 }
 function saveImage() {
-	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	//if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	if (checkBrowser() == "chromeapps") {
 		//---for ChromeApps
 		var blob = dataURItoBlob(Draw.canvas.toDataURL("image/png"));
 
@@ -127,7 +128,8 @@ function loadProjectFile(files){
 	}
 }
 function saveProject(data){
-	if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	//if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+	if (checkBrowser() == "chromeapps") {
 		var sugfilename;
 		if (Draw.filename == "") {
 			sugfilename = "New Project.pmpf"
@@ -162,7 +164,8 @@ function saveProject(data){
 			if (fl) {
 				var bb = new Blob([data],{type:"text/plain",encodings:"native"});
 				Draw.filename = fl + ".pmpf";
-				if (navigator.userAgent.indexOf("Trident") > -1){
+				//if (navigator.userAgent.indexOf("Trident") > -1){
+				if ((checkBrowser() == "ie") || (checkBrowser() == "edge")) {
 					window.navigator.msSaveBlob(bb, fl + ".pmpf");
 					document.getElementById("openedProjName").innerText = " - " + fl + ".pmpf";
 				}else{
@@ -276,10 +279,13 @@ var PluginManager = {
 	window.addEventListener("load",function(){
 		//console.log(wacom());
 		is_checkedAPI = false;
-		if (navigator.userAgent.indexOf("Trident") < 0) {
+		//if (navigator.userAgent.indexOf("Trident") < 0) {
+		if ((checkBrowser() != "ie") && (checkBrowser() != "edge")) {
+		//if (window.PointerEvent == undefined) {
 			
 		//}else{
-			if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+			//if ((navigator.userAgent.indexOf("Chrome") > -1) && (chrome.fileSystem)) {
+			if (checkBrowser() == "chromeapps") {
 				var obj = document.createElement("embed");
 				obj.id = "wtPlugin";
 				obj.type = "application/x-wacomtabletplugin";
@@ -306,6 +312,9 @@ var PluginManager = {
 		document.addEventListener("keydown", function(event) {
 			if (!onKeyope) return false;
 			console.log(event.keyCode);
+			Draw.pressedKey = event.keyCode;
+			return Draw.appKeyEvent(event.keyCode, event.ctrlKey,event.altKey,event.shiftKey);
+			/*
 			if ((event.keyCode == "32") || (event.keyCode == "49") || (event.keyCode == "97")){ //SPACE or 1
 				if (document.getElementById("initialsetup").style.display == "none") {
 					document.getElementById("btn_menu").click();
@@ -410,8 +419,24 @@ var PluginManager = {
 				Draw.init_scale = 1.0;
 			}else if (event.keyCode == "38" && event.altKey) { // Alt + Up key
 				Draw.scaleUp();
+			}else if (event.keyCode == "107" && event.altKey) { //Alt + +
+				Draw.scaleUp();
+				event.returnValue = false;
+				return false;
 			}else if (event.keyCode == "40" && event.altKey) { // Alt + Down key
 				Draw.scaleDown();
+			}else if (event.keyCode == "109" && event.altKey) { //Alt + -
+				Draw.scaleDown();
+				event.returnValue = false;
+				return false;
+			}else if (event.keyCode == "221" && event.altKey) { // Alt + ]
+				Draw.turnLayerUp();
+			}else if (event.keyCode == "219" && event.altKey) { // Alt + [
+				Draw.turnLayerDown();
+			}else if (event.keyCode == "221" && event.altKey) { // ]
+				Draw.changePensizeUp();
+			}else if (event.keyCode == "219" && event.altKey) { // [
+				Draw.changePensizeDown();
 			}
 			var relkey = ["81","87"];
 			//---手動筆圧イベント
@@ -423,13 +448,13 @@ var PluginManager = {
 				}else if (event.keyCode == "69") { //--E
 					Draw.keyLikePres = virtual_pressure[event.keyCode];
 					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode];
-				}/*else{
-					Draw.keyLikePres = virtual_pressure[event.keyCode];
-					document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
-				}*/
+				}//else{
+				//	Draw.keyLikePres = virtual_pressure[event.keyCode];
+				//	document.getElementById("pres_curline").value = virtual_pressure[event.keyCode]
+				//}
 				document.getElementById("presval").textContent = document.getElementById("pres_curline").value;
 			}
-			Draw.pressedKey = event.keyCode;
+			*/
 			//document.getElementById("log3").innerHTML = "key=" + event.keyCode + " - pressure=" + virtual_pressure[event.keyCode] + event.ctrlKey;
 		}, false);
 		document.addEventListener("keyup", function(event) {
@@ -438,7 +463,8 @@ var PluginManager = {
 			document.getElementById("pres_curline").value = 50;
 			Draw.pressedKey = 0;
 		}, false);
-		if ((navigator.userAgent.indexOf("Chrome") > -1)) {
+		//if ((navigator.userAgent.indexOf("Chrome") > -1)) {
+		if (checkBrowser().indexOf("chrome") != -1) {
 			$("#area_projdir").css("visibility","visible");
 		}
 
@@ -454,13 +480,13 @@ var PluginManager = {
 		.then(function(flag){
 			var def = $.Deferred();
 			AppStorage.initialize(function(){
-				document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
+				//document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
 				document.getElementById("lab_canwidth").value = document.getElementById("canvas_width").value;
-				document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
+				//document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
 				document.getElementById("lab_canheight").value = document.getElementById("canvas_height").value;
 				document.getElementById("lab_canwidth").max = document.getElementById("canvas_width").max;
 				document.getElementById("lab_canheight").max = document.getElementById("canvas_height").max;
-				document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
+				/*document.getElementById("chk_limit_canvas").addEventListener("change", function(event) {
 					if (event.target.checked) {
 						document.getElementById("canvas_width").max = Math.floor((window.innerWidth-100) / 100) * 100;
 						document.getElementById("canvas_height").max = Math.floor((window.innerHeight) / 100) * 100;
@@ -470,7 +496,7 @@ var PluginManager = {
 					}
 					document.getElementById("lab_canwidth").max = document.getElementById("canvas_width").max;
 					document.getElementById("lab_canheight").max = document.getElementById("canvas_height").max;
-				},false);
+				},false);*/
 				document.getElementById("canvas_width").addEventListener("change", function(event) {
 					document.getElementById("lab_canwidth").value = event.target.value;
 				},false);
@@ -612,7 +638,7 @@ var PluginManager = {
 			//システムブラシ読み込み
 			var sysbru_pen = ["colorchangepen",
 							"simplepen","pencil","fudepen","calligraphy","neonpen","testplugin",
-							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint","testplugin3","sketchpen"];//,"testplugin2","testplugin3"
+							"airbrush","oilpaint","oilpaintv","waterpaint","directpaint","testplugin3","sketchpen","blurpen"];//,"testplugin2","testplugin3"
 			for (var i = 0; i < sysbru_pen.length; i++) {
 				var sc = document.createElement("script");
 				sc.src = "js/brush/" + sysbru_pen[i] + ".js";

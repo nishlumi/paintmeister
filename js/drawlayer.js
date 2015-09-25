@@ -364,7 +364,7 @@ var DrawLayer = function(parentobj,size,is_main,removable){
 		for (var i = 0; i < data.length; i++) {
 			if (data[i].indexOf("0#") > -1) {
 				var zerocnt = parseInt(data[i].replace("0#",""));
-				if (i == 0) console.log("zerocnt="+zerocnt);
+				//if (i == 0) console.log("zerocnt="+zerocnt);
 				//---圧縮した0を復元
 				for (var j = 0; j < zerocnt; j++) {
 					imgd.data[imgdcnt] = 0;

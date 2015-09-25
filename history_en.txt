@@ -1,6 +1,20 @@
-6paintmeister Update history
+ paintmeister Update history
 ============
 * I referred to in () for the platform affected especially.
+
+PaintMeister (1.0.62.44)
+**Re-build for Windows10(print as "Universal Windows App" or "WinApp")(
+**Add shortcut keys
+Åibrush size - ][, change target layer - Alt + ][, rotation of canvas - Alt + F13, F14, scaling - Alt + +,-Åj
+(*)You can use initial setting of wheel on Intuos Pro ( excluding auto scroll/zoom).
+*Fix that do not change the UI for rotation of canvas when pinch-in/out etc...
+*(WinApp/EdgeÅjFix that occurs an error on opening project file (and renew to check the browser)
+*Remove following option: "Automatically adjust maximum size of the canvas that can be specified"
+*Fix maximum size of the canvas to 2160x2160(Please note the memory consumption at browser usage)
+-- ISHII Eiju <lumidina@gmail.com> 
+WebApp			- 
+ChromeApps		- 
+Store app		- 
 
 PaintMeister (1.0.60.40)
 *Fix that abend when draw outside the canvas, using option to absorb drawing.

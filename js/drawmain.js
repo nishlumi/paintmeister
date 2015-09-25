@@ -1,5 +1,5 @@
 var appname = "PaintMeister";
-var appversion = "1.0.60.40";
+var appversion = "1.0.62.44";
 var virtual_pressure = {
 	//absolute
 	'90' : 1,  //z
@@ -54,10 +54,11 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}
 	} else {
-		if (navigator.userAgent.indexOf("Firefox") > -1) {
+		//if (navigator.userAgent.indexOf("Firefox") > -1) {
+		if (checkBrowser() == "firefox") {
 			
 			//pos.x = event.offsetX - opt.offset - event.target.offsetParent.offsetLeft - event.target.offsetParent.offsetParent.offsetLeft - event.target.offsetParent.clientLeft;
-			pos.x = event.clientX - opt.offset; //bcrect.x;
+			pos.x = event.clientX - bcrect.x;
 		}else{
 			pos.x = event.offsetX - opt.offset;
 		}
@@ -78,9 +79,10 @@ function calculatePosition(eventtype,event,target,opt) {
 			}
 		}
 	} else {
-		if (navigator.userAgent.indexOf("Firefox") > -1) {
+		//if (navigator.userAgent.indexOf("Firefox") > -1) {
+		if (checkBrowser() == "firefox") {
 			//pos.y = event.offsetY - opt.offset - event.target.offsetParent.clientTop - event.target.offsetParent.offsetTop - event.target.offsetParent.offsetParent.offsetTop;
-			pos.y = event.clientY - opt.offset; //bcrect.y;
+			pos.y = event.clientY - bcrect.y;
 		}else{
 			pos.y = event.offsetY - opt.offset;
 		}
@@ -574,7 +576,8 @@ var Selectors = function(){
 			document.getElementById("btn_openfile").addEventListener("click", function(event) {
 				console.log(document.getElementById("fl_projpath").value);
 				var files = document.getElementById("fl_projpath").files;
-				if (navigator.userAgent.indexOf("Chrome") > -1) {
+				//if (navigator.userAgent.indexOf("Chrome") > -1) {
+				if (checkBrowser().indexOf("chrome") != -1) {
 					if (files.length == 0) {
 						//---ファイルが0件の場合はフォルダで選択
 						files = document.getElementById("fl_projdir").files;
@@ -582,7 +585,8 @@ var Selectors = function(){
 						var path = files[0].webkitRelativePath.split("/")[0];
 						document.getElementById("dlg_filelist_header").textContent = path;
 					}
-					if (chrome.fileSystem) {
+					//if (chrome.fileSystem) {
+					if (checkBrowser() == "chromeapps") {
 						//---chromeappsで0件の場合はフォルダから選択
 						if (files.length == 0) {
 							chrome.fileSystem.chooseEntry({
@@ -665,7 +669,8 @@ var Selectors = function(){
 						preloadProjectFile(f);
 					}
 				}else{
-					if (navigator.userAgent.indexOf("Chrome") > -1) {
+					//if (navigator.userAgent.indexOf("Chrome") > -1) {
+					if (checkBrowser().indexOf("chrome") != -1) {
 						var items = event.dataTransfer.items;
 						if (items.length > 0) {
 							$("#dlg_filelist").css({"display":"block"});
@@ -1306,7 +1311,8 @@ var Selectors = function(){
 			},false);
 			blayer.addEventListener("pointerup", function(event){
 				if (Draw.variables.copybtn.touching) {
-					var index = Draw.getSelectedLayerIndex();
+					Draw.turnLayer(Draw.variables.copybtn.mode);
+					/*var index = Draw.getSelectedLayerIndex();
 					if (Draw.variables.copybtn.mode == "prev") {
 						//console.log("prev");
 						if (index > 0) {
@@ -1317,7 +1323,7 @@ var Selectors = function(){
 						if (index < Draw.layer.length-1) {
 							Draw.layer[index+1].select(Draw.context);
 						}
-					}
+					}*/
 					Draw.variables.copybtn.touching = false;
 					Draw.variables.copybtn.mode = "";
 				}
@@ -1601,8 +1607,8 @@ var Selectors = function(){
 			did("lab_initial_canvassize").textContent = _T("lab_initial_canvassize");
 			did("lab_canvas_width").textContent = _T("lab_canvas_width");
 			did("lab_canvas_height").textContent = _T("lab_canvas_height");
-			did("txt_limit_canvas").textContent = _T("txt_limit_canvas");
-			did("lab_limit_canvas").title = _T("lab_limit_canvas_title");
+			//did("txt_limit_canvas").textContent = _T("txt_limit_canvas");
+			//did("lab_limit_canvas").title = _T("lab_limit_canvas_title");
 			did("btn_makecanvas").textContent = _T("btn_makecanvas");
 			
 			did("lab_loadproject").textContent = _T("lab_loadproject");
@@ -2299,10 +2305,11 @@ var Selectors = function(){
 		},
 		rotate : function(angle) {
 			var fnlang = angle;
-			if (fnlang > 360) tang = 0;
-			if (fnlang < 0) tang = 360;
+			if (fnlang > 360) fnlang = 0;
+			if (fnlang < 0) fnlang = 360;
 			
 			this.during_rotate = fnlang;
+			$("#txt_rotation").val(fnlang).trigger("change");
 			this.transformCanvas({"rotate":fnlang});
 			return;
 			
@@ -2320,9 +2327,10 @@ var Selectors = function(){
 		rotateLeft : function() {
 			var fnlang = 0;
 			fnlang = this.during_rotate - 10;
-			if (fnlang < 0) tang = 360;
+			if (fnlang < 0) fnlang = 360;
 			
 			this.during_rotate = fnlang;
+			$("#txt_rotation").val(fnlang).trigger("change");
 			this.transformCanvas({"rotate":fnlang});
 			return;
 			
@@ -2340,9 +2348,10 @@ var Selectors = function(){
 		rotateRight : function() {
 			var fnlang = 0;
 			fnlang = this.during_rotate + 10;
-			if (fnlang > 360) tang = 0;
+			if (fnlang > 360) fnlang = 0;
 			
 			this.during_rotate = fnlang;
+			$("#txt_rotation").val(fnlang).trigger("change");
 			this.transformCanvas({"rotate":fnlang});
 			return;
 			
@@ -2356,6 +2365,40 @@ var Selectors = function(){
 			document.getElementById("canvaspanel").style.transformOrigin = "center center 0px";
 			document.getElementById("canvaspanel").style.transform = tarr.join(" "); //"scale(" + fnlbi +  ")";
 			
+		},
+		turnLayer : function(mode) {
+			var index = this.getSelectedLayerIndex();
+			if (mode == "prev") {
+				if (index > 0) {
+					this.layer[index-1].select(Draw.context);
+				}
+			}else if (mode == "next") {
+				if (index < Draw.layer.length-1) {
+					this.layer[index+1].select(Draw.context);
+				}
+			}
+		},
+		turnLayerDown : function (){
+			this.turnLayer("prev");
+		},
+		turnLayerUp : function(){
+			this.turnLayer("next");
+		},
+		changePensize : function(size) {
+			if (size < this.sizebar.min) size = this.sizebar.min;
+			if (size > this.sizebar.max) size = this.sizebar.max;
+			
+			this.sizebar.value = size;
+			document.getElementById("lab_pensize").innerHTML = size;
+			this.pen.current["size"] = size;
+			this.pen.saved.size[this.pen.current.mode] = size;
+			
+		},
+		changePensizeUp : function(){
+			this.changePensize(parseFloat(this.sizebar.value)+0.5);
+		},
+		changePensizeDown : function(){
+			this.changePensize(parseFloat(this.sizebar.value)-0.5);
 		},
 		loadSetting : function (){
 			if (AppStorage.isEnable()) {
@@ -2543,7 +2586,8 @@ var Selectors = function(){
 		touchStart : function(event) {
 			//Wacom WebPlugin確認
 			if (!is_checkedAPI) {
-				if (navigator.userAgent.indexOf("Trident") > -1) {
+				//if (navigator.userAgent.indexOf("Trident") > -1) {
+				if ((checkBrowser() == "ie") || (checkBrowser() == "edge")) {
 					if (wacom()) {
 						if (wacom().penAPI && (wacom().penAPI.version > 0)){
 							penAPI = wacom().penAPI;

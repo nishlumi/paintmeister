@@ -110,14 +110,14 @@
 <strong id="lab_initial_canvassize">キャンバスのサイズ</strong><br/>
 <table style="width:100%;"><tr>
 	<td class="initcan_1c"><span id="lab_canvas_width">幅　：</span></td>
-	<td class="initcan_2c"><input type="range" id="canvas_width" min="30" max="1200" step="5" value="600" style="width:100%;" ></td>
-	<td class="initcan_3c"><input type="number" id="lab_canwidth" size="4" value="600" min="30" max="4000" step="5" style="width:5rem;" ></td>
+	<td class="initcan_2c"><input type="range" id="canvas_width" min="30" max="2160" step="5" value="600" style="width:100%;" ></td>
+	<td class="initcan_3c"><input type="number" id="lab_canwidth" size="4" value="600" min="30" max="2160" step="5" style="width:5rem;" ></td>
 	</tr><tr>
 	<td class="initcan_1c"><span id="lab_canvas_height">高さ：</span></td>
-	<td class="initcan_2c"><input type="range" id="canvas_height" min="30" max="1200" step="5" value="400" style="width:100%" ></td>
-	<td class="initcan_3c"><input type="number" id="lab_canheight" size="4" value="400" min="30" max="4000" step="5" style="width:5rem;"></td>
+	<td class="initcan_2c"><input type="range" id="canvas_height" min="30" max="2160" step="5" value="400" style="width:100%" ></td>
+	<td class="initcan_3c"><input type="number" id="lab_canheight" size="4" value="400" min="30" max="1440" step="5" style="width:5rem;"></td>
 </tr></table>
-<label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>
+<!--<label id="lab_limit_canvas" title="指定できるキャンバスの最大サイズを現在のウィンドウにおさまるようにします。これをはずすと2160x1440(QHD)まで指定可能になりますが、スクロール必須で見づらくなります" ><input type="checkbox" id="chk_limit_canvas" checked><span id="txt_limit_canvas">指定できる最大サイズを現在のウィンドウになるべくおさまるようにする</span></label>-->
 <button id="btn_makecanvas" class="button uibutton-large1 flatbutton">作成</button>
 </fieldset>
 <br/>
@@ -366,6 +366,7 @@
 <script src="js/main_layers.js"></script>
 <script src="js/main_modes.js"></script>
 <script src="js/main_correct.js"></script>
+<script src="js/main_key.js"></script>
 <script src="js/filectrl.js"></script>
 <script src="js/paintm.js"></script>
 
