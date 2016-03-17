@@ -6,7 +6,7 @@ current version:
 
 next version:
 2.0.0
-下記URLでテスト公開中。
+下記URLでテスト公開中。　
 http://www8.plala.or.jp/lumidina/apps/paintmeister/default.html
 
 動作環境：
