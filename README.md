@@ -1,16 +1,16 @@
 paintmeister
 ============
 
-current version: 
-1.0.62.44
+current version:  
+1.0.62.44  
 
-next version: 
-2.0.0 
-下記URLでテスト公開中。 
-http://www8.plala.or.jp/lumidina/apps/paintmeister/default.html
+next version:  
+2.0.0  
+下記URLでテスト公開中。  
+http://www8.plala.or.jp/lumidina/apps/paintmeister/default.html  
 
-動作環境：
-Webアプリ版：
+動作環境：  
+Webアプリ版：  
   Internet Explorer 11 ~  
   Google Chrome 35 ~  
   Opera 22 ~  
