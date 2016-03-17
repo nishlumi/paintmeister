@@ -15,7 +15,7 @@ Webアプリ版：
   Google Chrome 35 ~  
   Opera 22 ~  
   Firefox 30 ~  
-各プラットフォーム：
+各プラットフォーム：  
   Windows ストアアプリ  
   ChromeApps  
   
